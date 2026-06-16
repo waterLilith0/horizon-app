@@ -1,5 +1,6 @@
 ﻿using horizonapi.Shared;
 using Microsoft.AspNetCore.Mvc;
+using System.Data.Common;
 
 namespace horizonapi.Infrastructure
 {
@@ -13,6 +14,10 @@ namespace horizonapi.Infrastructure
 
         public List<Collection> AllCollections { get; set; } = [];
 
+        private static int CollectionIdCheck(DbDataReader reader)
+        {
+            return reader.IsDBNull(0) ? 0 : reader.GetInt32(0);
+        }
 
         private void ClearAllCollections()
         {
@@ -41,19 +46,21 @@ namespace horizonapi.Infrastructure
         public async Task<IActionResult> GetAllCollections()
         {
             _logger.LogInformation("GetAllCollections method called in CollectionController.");
+            AllCollections.Clear();
+
             var command = _mySqlAccess.CreateCommand(_sqlQueryStore.Get("GetAllCollections"));
-            using (var reader = await _mySqlAccess.ExecuteQueryAsync(command))
+            using var reader = await _mySqlAccess.ExecuteQueryAsync(command);
+
+            while (reader.Read())
             {
-                for (int i = 0; reader.Read(); i++)
+                AllCollections.Add(new Collection
                 {
-                    AllCollections.Add(new Collection
-                    {
-                        CollectionId = reader.GetInt32(i),
-                        CollectionName = reader.GetString(i + 1)
-                    });
-                }
-                _logger.LogInformation("Successfully retrieved all collections. Total collections: ", $"{AllCollections.Count}");
+                    CollectionId = CollectionIdCheck(reader),
+                    CollectionName = reader.IsDBNull(1) ? string.Empty : reader.GetString(1)
+                });
             }
+
+            _logger.LogInformation($"Successfully retrieved all collections. Total collections: {AllCollections.Count}");
             return Ok(AllCollections);
         }
 
@@ -70,8 +77,8 @@ namespace horizonapi.Infrastructure
                 {
                     var collection = new Collection
                     {
-                        CollectionId = reader.GetInt32(0),
-                        CollectionName = reader.GetString(1)
+                        CollectionId = CollectionIdCheck(reader),
+                        CollectionName = reader.IsDBNull(1) ? string.Empty : reader.GetString(1)
                     };
                     _logger.LogInformation("Successfully retrieved collection with ID: ", id.ToString());
                     return Ok(collection);

@@ -1,2 +1,2 @@
 ﻿SELECT *
-FROM PromptCollections;
+FROM horizon.PromptCollections;

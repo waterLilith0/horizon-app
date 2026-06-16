@@ -43,7 +43,7 @@ namespace horizonapi.Infrastructure
         private static int? CollectionIdCheck(DbDataReader reader)
         {
             return reader.IsDBNull(reader.GetOrdinal("collectionId"))
-                            ? (int?)null
+                            ? null
                             : reader.GetInt32("collectionId");
         }
 

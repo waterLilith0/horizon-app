@@ -1,3 +1,3 @@
 ﻿SELECT *
-FROM PromptCollections
+FROM horizon.PromptCollections
 WHERE collectionId = @collectionId;
