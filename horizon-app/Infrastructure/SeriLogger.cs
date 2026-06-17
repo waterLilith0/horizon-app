@@ -21,7 +21,15 @@ namespace horizonapi.Infrastructure
             //  protocol: Serilog.Sinks.OpenTelemetry.OtlpProtocol.HttpProtobuf)
             .CreateLogger();
 
+        private string nullCheck(string? input)
+        {
+            return input ?? string.Empty;
+        }
 
+        private string[] nullCheck(string[]? input)
+        {
+            return input ?? new string[0];
+        }
 
         /// <summary>
         /// Information logging method that logs informational messages using the Serilog logger.
@@ -29,7 +37,7 @@ namespace horizonapi.Infrastructure
         /// <param name="message"></param>
         public async void LogInformation(string message, params string[] restOfArgs)
         {
-            _logger.Information(message + string.Join(" ", restOfArgs));
+            _logger.Information(nullCheck(message) + string.Join(" ", nullCheck(restOfArgs)));
         }
 
         /// <summary>
@@ -38,7 +46,7 @@ namespace horizonapi.Infrastructure
         /// <param name="message"></param>
         public async void LogError(string message, params string[] restOfArgs)
         {
-            _logger.Error(message + string.Join(" ", restOfArgs));
+            _logger.Error(nullCheck(message) + string.Join(" ", nullCheck(restOfArgs)));
         }
 
         /// <summary>
@@ -47,7 +55,7 @@ namespace horizonapi.Infrastructure
         /// <param name="message"></param>
         public async void LogWarning(string message, params string[] restOfArgs)
         {
-            _logger.Warning(message + string.Join(" ", restOfArgs));
+            _logger.Warning(nullCheck(message) + string.Join(" ", nullCheck(restOfArgs)));
         }
 
         /// <summary>
@@ -56,7 +64,7 @@ namespace horizonapi.Infrastructure
         /// <param name="message"></param>
         public async void LogDebug(string message, params string[] restOfArgs)
         {
-            _logger.Debug(message + string.Join(" ", restOfArgs));
+            _logger.Debug(nullCheck(message) + string.Join(" ", nullCheck(restOfArgs)));
         }
 
         /// <summary>
@@ -66,7 +74,7 @@ namespace horizonapi.Infrastructure
         /// <param name="message"></param>
         public async void LogVerbose(string message, params string[] restOfArgs)
         {
-            _logger.Verbose(message + string.Join(" ", restOfArgs));
+            _logger.Verbose(nullCheck(message) + string.Join(" ", nullCheck(restOfArgs)));
         }
 
         /// <summary>
@@ -75,7 +83,7 @@ namespace horizonapi.Infrastructure
         /// <param name="message"></param>
         public async void LogFatal(string message, params string[] restOfArgs)
         {
-            _logger?.Fatal(message + string.Join(" ", restOfArgs));
+            _logger?.Fatal(nullCheck(message) + string.Join(" ", nullCheck(restOfArgs)));
         }
     }
 }
