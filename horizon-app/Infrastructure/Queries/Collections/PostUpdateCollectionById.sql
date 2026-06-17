@@ -1,3 +1,3 @@
 ﻿UPDATE horizon.PromptCollections
-	SET name=@newname
+	SET name=@name
 	WHERE collectionId=@collectionId;

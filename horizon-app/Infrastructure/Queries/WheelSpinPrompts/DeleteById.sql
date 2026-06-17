@@ -1,2 +1,2 @@
 ﻿DELETE FROM horizon.WheelSpinPrompts
-WHERE 'promptId'=@promptId;
+WHERE promptId=@promptId;

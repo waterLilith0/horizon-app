@@ -1,4 +1,4 @@
-﻿namespace horizonapi.Shared
+﻿namespace horizon_app.Shared
 {
     public class Collection
     {

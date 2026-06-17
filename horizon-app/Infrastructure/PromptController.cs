@@ -1,9 +1,10 @@
-﻿using horizonapi.Shared;
+﻿using horizonapi.Infrastructure;
+using horizonapi.Shared;
 using Microsoft.AspNetCore.Mvc;
 using System.Data;
 using System.Data.Common;
 
-namespace horizonapi.Infrastructure
+namespace horizon_app.Infrastructure
 {
     [ApiController]
     [Route("[controller]")]
@@ -63,6 +64,51 @@ namespace horizonapi.Infrastructure
             }
         }
 
+        // GET: PromptController/create/?CollectionId=5&promptText="Example"
+        [HttpPost("create")]
+        public async Task<IActionResult> PostCreate([FromQuery] int collectionId, [FromQuery] string promptText)
+        {
+            _logger.LogInformation("Create action called in PromptController with CollectionId: {CollectionId}, PromptText: {promptText}", collectionId.ToString(), promptText);
+            var command = _mySqlAccess.CreateCommand(_sqlQueryStore.Get("PostInsert"));
+            command.Parameters.AddWithValue("@collectionId", collectionId);
+            command.Parameters.AddWithValue("@promptText", promptText.Trim('"'));
+            var affectedRows = await _mySqlAccess.ExecuteNonQueryAsync(command);
+            if (affectedRows > 0)
+            {
+                _logger.LogInformation("Successfully created a new prompt with CollectionId: {CollectionId}, PromptText: {promptText}", collectionId.ToString(), promptText);
+                return await Task.FromResult<IActionResult>(Ok("Prompt created successfully."));
+            }
+            else
+            {
+                _logger.LogError("Failed to create a new prompt with CollectionId: {CollectionId}, PromptText: {promptText}", collectionId.ToString(), promptText);
+                return await Task.FromResult<IActionResult>(StatusCode(500, "Failed to create prompt."));
+            }
+        }
+
+        // GET: PromptController/prompt/5
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetPrompt(int id)
+        {
+            _logger.LogInformation("Called for a specific prompt: " + id);
+            var command = _mySqlAccess.CreateCommand(_sqlQueryStore.Get("GetById"));
+            command.Parameters.AddWithValue("@promptId", id);
+            command.Parameters.AddWithValue("@collectionId", DBNull.Value);
+            using (var reader = await _mySqlAccess.ExecuteQueryAsync(command))
+            {
+                if (await reader.ReadAsync())
+                {
+                    var temp = CollectionIdCheck(reader);
+                    return Ok(new Prompt
+                    {
+                        PromptId = reader.GetInt32("promptId"),
+                        PromptText = reader.GetString("promptText"),
+                        CollectionId = temp
+                    });
+                }
+            }
+            return NotFound("Could not find Prompt with ID: " + id);
+        }
+
         // GET: PromptController/allprompts or PromptController/allprompts?CollectionId=5
         [HttpGet("allprompts")]
         public async Task<IActionResult> GetAllPrompts([FromQuery] int? collectionId)
@@ -70,7 +116,7 @@ namespace horizonapi.Infrastructure
             ClearAllPrompts();
             _logger.LogInformation("GetAllPrompts action called in PromptController.");
             var command = _mySqlAccess.CreateCommand(_sqlQueryStore.Get("GetAll"));
-            command.Parameters.AddWithValue("@CollectionId", collectionId.HasValue ? collectionId.Value : DBNull.Value);
+            command.Parameters.AddWithValue("@collectionId", collectionId.HasValue ? collectionId.Value : DBNull.Value);
             using (var reader = await _mySqlAccess.ExecuteQueryAsync(command))
             {
                 for (int i = 0; await reader.ReadAsync(); i++)
@@ -118,51 +164,6 @@ namespace horizonapi.Infrastructure
             }
             _logger.LogInformation("Randomly got prompt: " + randomId, collectionId != null ? $"for collection {collectionId.Value}" : "");
             return NotFound("Could not find Prompt with ID: " + randomId);
-        }
-
-        // GET: PromptController/prompt/5
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetPrompt(int id)
-        {
-            _logger.LogInformation("Called for a specific prompt: " + id);
-            var command = _mySqlAccess.CreateCommand(_sqlQueryStore.Get("GetById"));
-            command.Parameters.AddWithValue("@promptId", id);
-            command.Parameters.AddWithValue("@collectionId", DBNull.Value);
-            using (var reader = await _mySqlAccess.ExecuteQueryAsync(command))
-            {
-                if (await reader.ReadAsync())
-                {
-                    var temp = CollectionIdCheck(reader);
-                    return Ok(new Prompt
-                    {
-                        PromptId = reader.GetInt32("promptId"),
-                        PromptText = reader.GetString("promptText"),
-                        CollectionId = temp
-                    });
-                }
-            }
-            return NotFound("Could not find Prompt with ID: " + id);
-        }
-
-        // GET: PromptController/create/?CollectionId=5&promptText="Example"
-        [HttpPost("create")]
-        public Task<IActionResult> PostCreate([FromQuery] int collectionId, [FromQuery] string promptText)
-        {
-            _logger.LogInformation("Create action called in PromptController with CollectionId: {CollectionId}, PromptText: {promptText}", collectionId.ToString(), promptText);
-            var command = _mySqlAccess.CreateCommand(_sqlQueryStore.Get("PostInsert"));
-            command.Parameters.AddWithValue("@CollectionId", collectionId);
-            command.Parameters.AddWithValue("@promptText", promptText.Trim('"'));
-            var affectedRows = _mySqlAccess.ExecuteNonQueryAsync(command).Result;
-            if (affectedRows > 0)
-            {
-                _logger.LogInformation("Successfully created a new prompt with CollectionId: {CollectionId}, PromptText: {promptText}", collectionId.ToString(), promptText);
-                return Task.FromResult<IActionResult>(Ok("Prompt created successfully."));
-            }
-            else
-            {
-                _logger.LogError("Failed to create a new prompt with CollectionId: {CollectionId}, PromptText: {promptText}", collectionId.ToString(), promptText);
-                return Task.FromResult<IActionResult>(StatusCode(500, "Failed to create prompt."));
-            }
         }
 
         // GET: PromptController/edit/5

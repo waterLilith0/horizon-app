@@ -37,6 +37,26 @@ namespace horizonapi.Infrastructure
             }
         }
 
+        private string CheckSqlFormat(string sql)
+        {
+            var regex = new System.Text.RegularExpressions
+                .Regex(@"^\s*(SELECT|INSERT|UPDATE|DELETE|CREATE|DROP|ALTER)\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+            if (string.IsNullOrWhiteSpace(sql))
+            {
+                _logger.LogError("SQL query is null or empty.");
+                throw new ArgumentException("SQL query cannot be null or empty.");
+            }
+
+            if (!regex.IsMatch(sql))
+            {
+                _logger.LogError("Invalid SQL query format.");
+                throw new ArgumentException("Invalid SQL query format.");
+            }
+
+            return sql;
+        }
+
         private async Task CloseConnection()
         {
             if (_connection != null && _connection.State == System.Data.ConnectionState.Open)
@@ -56,12 +76,13 @@ namespace horizonapi.Infrastructure
 
         /// <summary>
         /// CreateCommand method that creates and returns a MySqlCommand object with the specified query and the current MySQL connection. 
-        /// It includes error handling to log any exceptions that occur during the command creation process.
+        /// It includes error handling to log wrong SQL formats and other exceptions that may occur during command creation.
         /// </summary>
         /// <param name="query">The SQL query to execute.</param>
         /// <returns>A MySqlCommand object.</returns>
         public MySqlCommand CreateCommand(string query)
         {
+            query = CheckSqlFormat(query);
             try
             {
                 var command = new MySqlCommand(query, _connection);

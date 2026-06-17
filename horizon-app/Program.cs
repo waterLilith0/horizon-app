@@ -1,7 +1,7 @@
 using horizonapi.Infrastructure;
 using MySqlConnector;
 
-namespace horizonapi
+namespace horizon_app
 {
     public class Program
     {
