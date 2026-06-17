@@ -190,7 +190,7 @@ namespace horizon_api_integration_tests
             sqlQueryStore.Get("GetAllCollections");
             var actualQuery = sqlQueryStore.Get("GetAllCollections");
 
-            actualQuery.Should().Contain("SELECT *\r\nFROM horizon.PromptCollections;");
+            actualQuery.Should().MatchEquivalentOf("SELECT * FROM PromptCollections");
         }
 
         [Fact]
