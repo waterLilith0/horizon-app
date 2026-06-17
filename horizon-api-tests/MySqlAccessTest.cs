@@ -1,13 +1,13 @@
 ﻿using FluentAssertions;
-using horizonapi.Infrastructure;
+using horizon_app.Infrastructure;
 using MySqlConnector;
 
 namespace horizon_api_tests
 {
     public class MySqlAccessTest
     {
-        private SeriLogger serilogger = new SeriLogger();
-        private MySqlDataSource dataSource = new MySqlDataSource("server=localhost;user=root;password=password;database=test");
+        private readonly SeriLogger serilogger = new();
+        private readonly MySqlDataSource dataSource = new("server=localhost;user=root;password=password;database=test");
 
         [Fact]
         public void ShouldReturnNotNull_WhenInitialized()
@@ -38,8 +38,8 @@ namespace horizon_api_tests
         public void ShouldReturnArgumentException_WhenCreateCommandIsCalledWithNullQuery()
         {
             var result = new MySqlAccess(serilogger, dataSource);
-            var query = (string)null;
-            result.Invoking(x => x.CreateCommand(query)).Should().Throw<ArgumentException>();
+            var query = (string?)null;
+            result.Invoking(x => x.CreateCommand(query: query)).Should().Throw<ArgumentException>();
         }
 
         [Fact]

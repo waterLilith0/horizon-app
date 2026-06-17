@@ -1,9 +1,10 @@
 ﻿using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 using MySqlConnector;
 
-namespace horizonapi.Infrastructure
+namespace horizon_app.Infrastructure
 {
     /// <summary>
     /// MySqlAccess is a utility class that provides methods for connecting to a MySQL database, executing queries, and managing the database connection. 
@@ -11,7 +12,7 @@ namespace horizonapi.Infrastructure
     /// events and errors during database operations.
     /// </summary>
     /// <completionlist cref="MySqlAccess"/>
-    public class MySqlAccess(SeriLogger logger, MySqlDataSource dataSource) : IDisposable
+    public partial class MySqlAccess(SeriLogger logger, MySqlDataSource dataSource) : IDisposable
     {
         /// <summary>
         /// ConnectionString is a property that holds the connection string used to connect to the MySQL database.
@@ -37,10 +38,10 @@ namespace horizonapi.Infrastructure
             }
         }
 
-        private string CheckSqlFormat(string sql)
+        private string CheckSqlFormat(string? sql)
         {
-            var regex = new System.Text.RegularExpressions
-                .Regex(@"^\s*(SELECT|INSERT|UPDATE|DELETE|CREATE|DROP|ALTER)\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            
+            var regex = SqlRegexMatch();
 
             if (string.IsNullOrWhiteSpace(sql))
             {
@@ -80,7 +81,7 @@ namespace horizonapi.Infrastructure
         /// </summary>
         /// <param name="query">The SQL query to execute.</param>
         /// <returns>A MySqlCommand object.</returns>
-        public MySqlCommand CreateCommand(string query)
+        public MySqlCommand CreateCommand(string? query)
         {
             query = CheckSqlFormat(query);
             try
@@ -166,5 +167,8 @@ namespace horizonapi.Infrastructure
             GC.SuppressFinalize(this);
             await CloseConnection();
         }
+
+        [GeneratedRegex(@"^\s*(SELECT|INSERT|UPDATE|DELETE|CREATE|DROP|ALTER)\b", RegexOptions.IgnoreCase, "en-US")]
+        private static partial Regex SqlRegexMatch();
     }
 }

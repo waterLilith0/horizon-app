@@ -1,4 +1,6 @@
-﻿namespace horizonapi.Infrastructure
+﻿using horizon_app.Infrastructure;
+
+namespace horizonapi.Infrastructure
 {
     public sealed class SqlQueryStore
     {

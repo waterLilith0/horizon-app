@@ -1,3 +1,4 @@
+using horizon_app.Infrastructure;
 using horizonapi.Infrastructure;
 using MySqlConnector;
 

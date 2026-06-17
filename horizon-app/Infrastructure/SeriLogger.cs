@@ -1,6 +1,6 @@
 ﻿using Serilog;
 
-namespace horizonapi.Infrastructure
+namespace horizon_app.Infrastructure
 {
     /// <summary>
     /// SeriLogger is a logging utility class that provides methods for logging messages at various levels 
@@ -21,50 +21,44 @@ namespace horizonapi.Infrastructure
             //  protocol: Serilog.Sinks.OpenTelemetry.OtlpProtocol.HttpProtobuf)
             .CreateLogger();
 
-        private string nullCheck(string? input)
-        {
-            return input ?? string.Empty;
-        }
+        private static string NullCheck(string? input) => input ?? string.Empty;
 
-        private string[] nullCheck(string[]? input)
-        {
-            return input ?? new string[0];
-        }
+        private static string[] NullCheck(string[]? input) => input ?? [];
 
         /// <summary>
         /// Information logging method that logs informational messages using the Serilog logger.
         /// </summary>
         /// <param name="message"></param>
-        public async void LogInformation(string message, params string[] restOfArgs)
+        public async void LogInformation(string? message, params string[]? restOfArgs)
         {
-            _logger.Information(nullCheck(message) + string.Join(" ", nullCheck(restOfArgs)));
+            _logger.Information(NullCheck(message) + string.Join(" ", NullCheck(restOfArgs)));
         }
 
         /// <summary>
         /// Error logging method that logs error messages using the Serilog logger.
         /// </summary>
         /// <param name="message"></param>
-        public async void LogError(string message, params string[] restOfArgs)
+        public async void LogError(string? message, params string[]? restOfArgs)
         {
-            _logger.Error(nullCheck(message) + string.Join(" ", nullCheck(restOfArgs)));
+            _logger.Error(NullCheck(message) + string.Join(" ", NullCheck(restOfArgs)));
         }
 
         /// <summary>
         /// Warning logging method that logs warning messages using the Serilog logger.
         /// </summary>
         /// <param name="message"></param>
-        public async void LogWarning(string message, params string[] restOfArgs)
+        public async void LogWarning(string? message, params string[]? restOfArgs)
         {
-            _logger.Warning(nullCheck(message) + string.Join(" ", nullCheck(restOfArgs)));
+            _logger.Warning(NullCheck(message) + string.Join(" ", NullCheck(restOfArgs)));
         }
 
         /// <summary>
         /// Debug logging method that logs debug messages using the Serilog logger.
         /// </summary>
         /// <param name="message"></param>
-        public async void LogDebug(string message, params string[] restOfArgs)
+        public async void LogDebug(string? message, params string[]? restOfArgs)
         {
-            _logger.Debug(nullCheck(message) + string.Join(" ", nullCheck(restOfArgs)));
+            _logger.Debug(NullCheck(message) + string.Join(" ", NullCheck(restOfArgs)));
         }
 
         /// <summary>
@@ -72,18 +66,18 @@ namespace horizonapi.Infrastructure
         /// Verbose logs are typically used for detailed debugging information that may not be necessary in production environments.
         /// </summary>
         /// <param name="message"></param>
-        public async void LogVerbose(string message, params string[] restOfArgs)
+        public async void LogVerbose(string? message, params string[]? restOfArgs)
         {
-            _logger.Verbose(nullCheck(message) + string.Join(" ", nullCheck(restOfArgs)));
+            _logger.Verbose(NullCheck(message) + string.Join(" ", NullCheck(restOfArgs)));
         }
 
         /// <summary>
         /// Fatal logging method that logs fatal error messages using the Serilog logger.
         /// </summary>
         /// <param name="message"></param>
-        public async void LogFatal(string message, params string[] restOfArgs)
+        public async void LogFatal(string? message, params string[]? restOfArgs)
         {
-            _logger?.Fatal(nullCheck(message) + string.Join(" ", nullCheck(restOfArgs)));
+            _logger?.Fatal(NullCheck(message) + string.Join(" ", NullCheck(restOfArgs)));
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using FluentAssertions;
 using horizon_app;
+using horizon_app.Infrastructure;
 using horizonapi.Infrastructure;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
