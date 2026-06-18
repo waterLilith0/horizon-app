@@ -1,37 +1,26 @@
+import { themeAtom } from "@/atoms";
 import Footer from "@/components/custom/Footer";
 import Navbar from "@/components/custom/Navbar";
-import { Outlet } from "react-router";
-import styled, { createGlobalStyle } from "styled-components";
-
-const GlobalStyle = createGlobalStyle`
-  body {
-    margin: 0;
-    padding: 0;
-    left: 0;
-    top: 0;
-    overflow: hidden;
-}
-`;
-
-const Style = styled.div`
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-
-  * {
-    top: 0;
-    left: 0;
-  }
-`;
+import { useAtom } from "jotai";
+import { Outlet, useLocation } from "react-router";
 
 function Layout() {
+  const location = useLocation();
+  const isIframePage = location.pathname === "/yt-embed";
+  const [theme] = useAtom(themeAtom);
+
   return (
-    <Style>
-      <GlobalStyle />
+    <div className={`"flex flex-col ${theme === "dark" ? "dark" : ""}`}>
       <Navbar />
-      <Outlet />
+      <main className="flex flex-col bg-secondary items-center">
+        <div
+          className={`flex flex-col items-center bg-primary w-[80%] p-2 ${isIframePage ? "overflow-none h-full" : "overflow-hidden"}`}
+        >
+          <Outlet />
+        </div>
+      </main>
       <Footer />
-    </Style>
+    </div>
   );
 }
 

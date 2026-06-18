@@ -1,61 +1,15 @@
-import { memo, useCallback, useEffect, useState } from "react";
-import styled from "styled-components";
+import { memo, useCallback, useEffect } from "react";
 import { useAtom } from "jotai";
 import { themeAtom } from "../../atoms";
 import { Switch } from "@/components/ui/switch";
-
-const StickyNavbar = styled.nav`
-  display: flex;
-  align-items: center;
-  justify-content: left;
-  position: sticky;
-  background-color: darkgray;
-  width: 100%;
-  height: 50px;
-  z-index: 1000;
-  flex-shrink: 0;
-
-  ul {
-    display: flex;
-    flex-direction: row;
-    list-style: none;
-    gap: 20px;
-    height: 100%;
-    margin: 0;
-    padding: 0;
-
-    li:first-child {
-      justify-self: left;
-    }
-
-    li {
-      display: flex;
-      align-items: center;
-      height: 100%;
-    }
-  }
-`;
-
-const StyledLink = styled.a`
-  color: white;
-  text-decoration: none;
-  display: block;
-  height: 100%;
-  padding: 0 20px;
-  align-items: center;
-  display: flex;
-  transition: background-color 0.2s ease;
-
-  &:hover {
-    color: white;
-    text-decoration: none;
-    background-color: gray;
-  }
-`;
+import { NavLink } from "react-router";
+import { links, socials } from "@/configAtoms";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 function Navbar() {
-  const [links] = useState([{ link: "http://localhost:5173", name: "Home" }]);
   const [theme, setTheme] = useAtom(themeAtom);
+  const [navLinks] = useAtom(links);
+  const [socialLinks] = useAtom(socials);
 
   const initializeTheme = useCallback(() => {
     const savedTheme = localStorage.getItem("theme");
@@ -72,26 +26,56 @@ function Navbar() {
   }, [initializeTheme]);
 
   return (
-    <StickyNavbar>
-      <ul>
-        {links.map((item) => {
-          const randomKey = crypto.randomUUID();
+    <nav className="sticky top-0 flex flex-row items-center z-50 text-sidebar-foreground dark:text-sidebar-foreground bg-sidebar dark:bg-sidebar w-full h-12 shrink-0">
+      <ul className="flex w-full h-full flex-row items-center list-none m-0 p-0">
+        {navLinks.map((item) => {
+          const linkKey = item.link;
           return (
-            <li key={randomKey}>
-              <StyledLink href={item.link}>{item.name}</StyledLink>
+            <li
+              key={linkKey}
+              className="flex h-full items-center first:justify-self-start"
+            >
+              <NavLink
+                to={item.link}
+                className="flex h-full no-underline items-center px-5 hover:bg-gray-500 hover::h-full hover:w-full"
+              >
+                {item.name}
+              </NavLink>
             </li>
           );
         })}
-        <Switch
-          checked={theme === "dark"}
-          onCheckedChange={(checked) => {
-            const newTheme = checked ? "dark" : "light";
-            localStorage.setItem("theme", newTheme);
-            setTheme(newTheme);
-          }}
-        />
+        {socialLinks.map((item) => {
+          const linkKey = item.link;
+          return (
+            <li
+              key={linkKey}
+              className="flex h-full items-center first:justify-self-start"
+            >
+              <a
+                href={item.link}
+                target="_blank"
+                className="flex justify-end h-full items-center px-5 hover:bg-gray-500 hover::h-full hover:w-full"
+              >
+                <FontAwesomeIcon icon={item.icon} className="mr-2" />
+                {item.name}
+              </a>
+            </li>
+          );
+        })}
+        <li className="flex items-center h-full last:ml-auto last:pr-5">
+          <Switch
+            checked={theme === "dark"}
+            size="default"
+            className={theme}
+            onCheckedChange={(checked) => {
+              const newTheme = checked ? "dark" : "light";
+              localStorage.setItem("theme", newTheme);
+              setTheme(newTheme);
+            }}
+          />
+        </li>
       </ul>
-    </StickyNavbar>
+    </nav>
   );
 }
 

@@ -1,22 +1,10 @@
 import { useState } from "react";
-import styled from "styled-components";
-
-const FooterStyled = styled.footer`
-  display: flex;
-  flex-direction: row;
-  flex-shrink: 0;
-  position: static;
-  bottom: 0;
-  left: 0;
-  background-color: darkgray;
-  height: 15vh;
-`;
 
 function Footer() {
   const [links] = useState(["http://waterlilith.space"]);
 
   return (
-    <FooterStyled>
+    <div className="flex flex-row px-5 items-center w-full h-35 text-sidebar-foreground dark:text-sidebar-foreground bg-sidebar dark:bg-sidebar">
       {links.map((link) => {
         return (
           <a href={link} key={crypto.randomUUID()}>
@@ -24,7 +12,7 @@ function Footer() {
           </a>
         );
       })}
-    </FooterStyled>
+    </div>
   );
 }
 
