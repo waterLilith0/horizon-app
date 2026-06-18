@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+// TODO: Make the footer
 function Footer() {
   const [links] = useState(["http://waterlilith.space"]);
 

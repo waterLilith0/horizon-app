@@ -1,3 +1,4 @@
+// TODO : Add a gallery of images here
 function Gallery() {
   return (
     <div className="flex flex-col items-center overflow-y-scroll h-full w-3xl">
