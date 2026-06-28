@@ -3,7 +3,7 @@ import { Item, ItemMedia } from "@/components/ui/item";
 
 function About() {
   return (
-    <div className="flex flex-col items-center justify-center w-full h-full p-4">
+    <div className="flex flex-col items-center justify-center w-full h-full p-4 gap-4">
       <h1 className="pb-6">About Page</h1>
       <Item variant="muted" className="w-full flex-nowrap">
         <ItemMedia>

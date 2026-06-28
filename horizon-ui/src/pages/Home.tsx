@@ -1,5 +1,4 @@
-import CardFitter from "@/components/custom/CardFitter";
-import { ResponsiveImage } from "@/components/custom/Image";
+import { ResponsiveImage } from "@/components/custom/ResponsiveImage";
 import {
   Card,
   CardContent,
@@ -7,14 +6,67 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import MasonryGrid from "@/components/custom/MasonryGrid";
+import { useResponsiveColumns } from "@/lib/utils";
 
 const cards = [
-  { title: "Test", content: "This is a test card." },
-  { title: "Test 2", content: "This is another test card." },
-  { title: "Test 3", content: "This is yet another test card." },
-  { title: "Test 4", content: "This is yet another test card." },
-  { title: "Test 5", content: "This is yet another test card." },
-  { title: "Test 6", content: "This is yet another test card." },
+  {
+    image: "",
+    title: "Steampunk",
+    content:
+      "One of my favorite topics to talk about is Steampunk." +
+      " It's a genre, scene, style and a lifestyle. Steampunk usually plays in a victorian fantasy scenario.",
+  },
+  {
+    image: "",
+    title: "Cyberpunk",
+    content:
+      "Yet another of my favorite topics, following the same vein as" +
+      " Steampunk. The difference here is that Cyberpunk plays in a" +
+      " dark dystopian future (as thought of from an 80s perspective)." +
+      " Big works that influenced me here were most of William" +
+      " Gibson's books, as well as the pen-and-paper Shadowrun.",
+    footer: "This is the footer of the card.",
+  },
+  {
+    image: "",
+    title: "Programming",
+    content:
+      "Kinda plays into the Cyberpunk that I like so much, I like" +
+      " programming while listening to some chill beats.",
+    footer: "This is the footer of the card.",
+  },
+  {
+    image: "",
+    title: "Music",
+    content:
+      "Metal, Cabaret, some Pop, some Soundtracks (Made in Abyss by" +
+      " Kevin Penkin) as well as most things electronic I'm constantly" +
+      " listening to. There's only a few things that you will never" +
+      " hear me listen to, german Schlager, gangster Rap, etc.",
+    footer: "This is the footer of the card.",
+  },
+  {
+    image: "",
+    title: "Made in Abyss",
+    content:
+      "I'm a bit of a weeb so I like and have watched plenty of Manga" +
+      " and Anime. My absolute favorite out of the literal over 100 is" +
+      " by far Made in Abyss. It is a tragic and beautiful journey" +
+      " filled with blessings and curses.",
+    footer: "This is the footer of the card.",
+  },
+  {
+    image: "",
+    title: "Lord of the Rings",
+    content:
+      "Having first read the books as a child and then later watched" +
+      " all of the movies, I can say that Tolkien's worldbuilding is" +
+      " inspiring and fascinating. I've also read a lot of his lesser" +
+      " known works, such as the Silmarillion (that was a big pain to" +
+      " sit through!).",
+    footer: "This is the footer of the card.",
+  },
 ];
 
 function Home() {
@@ -34,24 +86,30 @@ function Home() {
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
       <h1 className="text-4xl">Main Page</h1>
-      <p>Test</p>
-      <CardFitter>
+      <p>
+        This is my own little website/tinkering space. I'm gonna continue
+        updating this as I go (might be a good idea to look at this as kinda my
+        own little blog I suppose).
+      </p>
+      <MasonryGrid columns={useResponsiveColumns()}>
         {cards.map((card, index) => (
           <Card className="w-md" key={index}>
-            <ResponsiveImage
-              src="../src/assets/pics/irl/20210323_184154.jpg"
-              alt="Test Image"
-              width="200px"
-              ratio={16 / 9}
-            />
+            {card.image && (
+              <ResponsiveImage
+                src={card.image}
+                alt={card.title}
+                width="200px"
+                ratio={16 / 9}
+              />
+            )}
             <CardHeader>
               <CardTitle>{card.title}</CardTitle>
             </CardHeader>
             <CardContent>{card.content}</CardContent>
-            <CardFooter>This is the footer of the card.</CardFooter>
+            {card.footer && <CardFooter>{card.footer}</CardFooter>}
           </Card>
         ))}
-      </CardFitter>
+      </MasonryGrid>
     </>
   );
 }
