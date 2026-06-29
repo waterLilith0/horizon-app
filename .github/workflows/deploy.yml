@@ -2,7 +2,7 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [dev, staging, main]
+    branches: [dev, staging, master]
 
 env:
   IMAGE_NAME: ${{ secrets.DOCKER_USERNAME }}/horizonapp
@@ -30,7 +30,7 @@ jobs:
       - name: Set Environment Tag
         id: vars
         run: |
-          if [ "${{ github.ref_name }}" = "main" ]; then
+          if [ "${{ github.ref_name }}" = "master" ]; then
             echo "tag=prod" >> $GITHUB_OUTPUT
           else
             echo "tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
