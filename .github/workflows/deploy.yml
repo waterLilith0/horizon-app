@@ -37,26 +37,6 @@ jobs:
             type=raw,value=staging,enable=${{ github.ref_name == 'staging' }}
             type=raw,value=prod,enable=${{ github.ref_name == 'main' }}
 
-      - name: Build and Push Docker Image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          platforms: linux/arm/v7,linux/arm64
-          push: true
-          tags: ${{ steps.meta.outputs.tags }} # Uses the tag generated above
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Build and Push Docker Image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          platforms: linux/arm/v7,linux/arm64
-          push: true
-          tags: ${{ steps.meta.outputs.tags }} # Uses the tag generated above
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
       # Build multi-architecture image (supports both 32-bit and 64-bit Pi OS versions)
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v5
