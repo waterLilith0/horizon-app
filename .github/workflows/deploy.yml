@@ -40,7 +40,8 @@ jobs:
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./horizon-app
+          file: ./horizon-app/Dockerfile
           platforms: linux/arm/v7,linux/arm64
           push: true
           tags: ${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.tag }}
