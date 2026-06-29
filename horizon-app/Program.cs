@@ -8,6 +8,7 @@ namespace horizon_app
     {
         public static void Main(string[] args)
         {
+            Serilog.Debugging.SelfLog.Enable(Console.Error);
             var builder = WebApplication.CreateBuilder(args);
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
