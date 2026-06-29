@@ -26,15 +26,36 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # Determine environment tag based on target branch
-      - name: Set Environment Tag
-        id: vars
-        run: |
-          if [ "${{ github.ref_name }}" = "main" ]; then
-            echo "tag=prod" >> $GITHUB_OUTPUT
-          else
-            echo "tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
-          fi
+      # Automatically handles tags based on your branches
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=dev,enable=${{ github.ref_name == 'dev' }}
+            type=raw,value=staging,enable=${{ github.ref_name == 'staging' }}
+            type=raw,value=prod,enable=${{ github.ref_name == 'main' }}
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/arm/v7,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }} # Uses the tag generated above
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/arm/v7,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }} # Uses the tag generated above
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       # Build multi-architecture image (supports both 32-bit and 64-bit Pi OS versions)
       - name: Build and Push Docker Image
