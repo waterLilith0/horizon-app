@@ -26,18 +26,6 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # Automatically handles tags based on your branches
-      - name: Extract Docker metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.IMAGE_NAME }}
-          tags: |
-            type=raw,value=dev,enable=${{ github.ref_name == 'dev' }}
-            type=raw,value=staging,enable=${{ github.ref_name == 'staging' }}
-            type=raw,value=prod,enable=${{ github.ref_name == 'main' }}
-
-      # Build multi-architecture image (supports both 32-bit and 64-bit Pi OS versions)
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v5
         with:
@@ -45,6 +33,7 @@ jobs:
           file: ./horizon-app/Dockerfile
           platforms: linux/arm/v7,linux/arm64
           push: true
-          tags: ${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.tag }}
+          # This line forces 'prod' for main, and uses the exact branch name for dev/staging
+          tags: ${{ env.IMAGE_NAME }}:${{ github.ref_name == 'main' && 'prod' || github.ref_name }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
