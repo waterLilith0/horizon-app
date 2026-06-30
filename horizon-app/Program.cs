@@ -1,6 +1,7 @@
 using horizon_app.Infrastructure;
 using horizonapi.Infrastructure;
 using MySqlConnector;
+using Serilog;
 
 namespace horizon_app
 {
@@ -20,6 +21,7 @@ namespace horizon_app
             builder.Services.AddSingleton<SqlQueryStore>();
             builder.Services.AddMySqlDataSource(connectionString!);
             builder.Services.AddTransient<MySqlAccess>();
+            builder.Host.UseSerilog();
 
             var app = builder.Build();
 
