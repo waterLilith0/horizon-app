@@ -1,6 +1,13 @@
 # See https://aka.ms/customizecontainer to learn how to customize your debug container and how Visual Studio uses this Dockerfile to build your images for faster debugging.
 
-# 1. Build stage (Natively runs on the GitHub Action host platform)
+# 1. Base stage (Sets up runtime environment and ports)
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+USER $APP_UID
+WORKDIR /app
+EXPOSE 8080
+EXPOSE 8081
+
+# 2. Build stage (Natively runs on the GitHub Action host platform)
 FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG TARGETARCH
 WORKDIR /src
@@ -13,18 +20,11 @@ RUN dotnet restore -a $TARGETARCH
 COPY . ./
 RUN dotnet publish -c Release -a $TARGETARCH -o /app --no-restore
 
-# 2. Runtime stage (Matches the target environment architecture)
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
+# 3. Final runtime stage (Must be at the bottom to be the default output)
+FROM base AS final
 WORKDIR /app
 COPY --from=build /app .
 ENTRYPOINT ["dotnet", "horizon-api.dll"]
-
-# This stage is used when running from VS in fast mode (Default for Debug configuration)
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
-USER $APP_UID
-WORKDIR /app
-EXPOSE 8080
-EXPOSE 8081
 
 ####################################################################
 # This stage is used to build the service project
