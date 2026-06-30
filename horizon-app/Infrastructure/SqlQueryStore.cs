@@ -14,6 +14,8 @@ namespace horizonapi.Infrastructure
             _configuration = configuration;
 
             var folderPath = _configuration["SqlSettings:QueriesFolderPath"] ?? "none";
+            logger.LogInformation($"Loading SQL queries from folder: {folderPath}");
+            logger.LogInformation($"Content root path: {_env.ContentRootPath}");
             var queryDirs = new List<string>(Directory.GetDirectories(Path.Combine(_env.ContentRootPath, folderPath!)));
 
             foreach (var queryDir in queryDirs)
