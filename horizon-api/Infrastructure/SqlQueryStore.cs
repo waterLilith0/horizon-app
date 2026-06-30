@@ -1,10 +1,8 @@
-﻿using horizon_app.Infrastructure;
-
-namespace horizonapi.Infrastructure
+﻿namespace horizon_api.Infrastructure
 {
     public sealed class SqlQueryStore
     {
-        private readonly Dictionary<string, string> _queries = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, string> _queries = new(StringComparer.OrdinalIgnoreCase);
         private readonly SeriLogger _logger;
         private readonly IConfiguration _configuration;
 

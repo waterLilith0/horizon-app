@@ -1,6 +1,6 @@
 ﻿using Serilog;
 
-namespace horizon_app.Infrastructure
+namespace horizon_api.Infrastructure
 {
     /// <summary>
     /// SeriLogger is a logging utility class that provides methods for logging messages at various levels 

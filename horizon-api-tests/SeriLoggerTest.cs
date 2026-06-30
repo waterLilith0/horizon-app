@@ -1,5 +1,5 @@
 ﻿using FluentAssertions;
-using horizon_app.Infrastructure;
+using horizon_api.Infrastructure;
 
 namespace horizon_api_tests
 {

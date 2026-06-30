@@ -1,7 +1,6 @@
 ﻿using FluentAssertions;
-using horizon_app;
-using horizon_app.Infrastructure;
-using horizonapi.Infrastructure;
+using horizon_api;
+using horizon_api.Infrastructure;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
@@ -372,7 +371,7 @@ namespace horizon_api_integration_tests
         {
             var (linesChanged, _) = await AddEntriesToPromptsDatabase();
             var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
-            
+
             var updatedPromptText = "Updated Prompt Text";
             var sqlQuery = sqlQueryStore.Get("PostUpdateById");
             var command = connection.CreateCommand(sqlQuery);
@@ -380,14 +379,14 @@ namespace horizon_api_integration_tests
             command.Parameters.AddWithValue("@collectionId", DBNull.Value);
             command.Parameters.AddWithValue("@promptText", updatedPromptText);
             var changedRows = await connection.ExecuteNonQueryAsync(command);
-            
+
             changedRows.Should().Be(linesChanged);
-            
+
             var getByIdCommand = connection.CreateCommand(sqlQueryStore.Get("GetById"));
             getByIdCommand.Parameters.AddWithValue("@promptId", 1);
             getByIdCommand.Parameters.AddWithValue("@collectionId", DBNull.Value);
             using var reader = await connection.ExecuteQueryAsync(getByIdCommand);
-            
+
             reader.Read();
             reader.GetString(1).Should().Be(updatedPromptText);
         }
@@ -397,7 +396,7 @@ namespace horizon_api_integration_tests
         {
             var (linesChanged, _) = await AddEntriesToPromptsDatabase();
             var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
-            
+
             var sqlQuery = sqlQueryStore.Get("DeleteById");
             var command = connection.CreateCommand(sqlQuery);
             command.Parameters.AddWithValue("@promptId", 1);

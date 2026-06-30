@@ -1,9 +1,8 @@
-using horizon_app.Infrastructure;
-using horizonapi.Infrastructure;
+using horizon_api.Infrastructure;
 using MySqlConnector;
 using Serilog;
 
-namespace horizon_app
+namespace horizon_api
 {
     public class Program
     {
@@ -20,7 +19,7 @@ namespace horizon_app
             // Add services to the container.
             builder.Services.AddAuthorization();
             builder.Services.AddMvc();
-            builder.Environment.ApplicationName = "horizonapi";
+            builder.Environment.ApplicationName = "horizon_api";
             builder.Services.AddSingleton<SeriLogger>();
             builder.Services.AddSingleton<SqlQueryStore>();
             builder.Services.AddMySqlDataSource(connectionString!);

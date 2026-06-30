@@ -28,7 +28,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\horizon-app\horizon-api.csproj" />
+		<ProjectReference Include="..\horizon-api\horizon-api.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

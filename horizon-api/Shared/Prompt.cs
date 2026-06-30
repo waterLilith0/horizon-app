@@ -1,4 +1,4 @@
-﻿namespace horizonapi.Shared
+﻿namespace horizon_api.Shared
 {
     public class Prompt
     {

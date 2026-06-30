@@ -1,10 +1,10 @@
-﻿using System.Data;
+﻿using MySqlConnector;
+using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
-using MySqlConnector;
 
-namespace horizon_app.Infrastructure
+namespace horizon_api.Infrastructure
 {
     /// <summary>
     /// MySqlAccess is a utility class that provides methods for connecting to a MySQL database, executing queries, and managing the database connection. 
@@ -40,7 +40,7 @@ namespace horizon_app.Infrastructure
 
         private string CheckSqlFormat(string? sql)
         {
-            
+
             var regex = SqlRegexMatch();
 
             if (string.IsNullOrWhiteSpace(sql))
