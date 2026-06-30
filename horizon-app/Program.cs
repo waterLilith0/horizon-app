@@ -12,6 +12,8 @@ namespace horizon_app
             Serilog.Debugging.SelfLog.Enable(Console.Error);
             var builder = WebApplication.CreateBuilder(args); 
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+            SeriLogger logger = new();
+            logger.LogDebug("Connected to Serilogger");
 
             // Add services to the container.
             builder.Services.AddAuthorization();
@@ -22,6 +24,8 @@ namespace horizon_app
             builder.Services.AddMySqlDataSource(connectionString!);
             builder.Services.AddTransient<MySqlAccess>();
             builder.Host.UseSerilog();
+
+            logger.LogDebug("DI configured");
 
             var app = builder.Build();
 
