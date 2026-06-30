@@ -4,6 +4,7 @@ using horizon_app.Infrastructure;
 using horizonapi.Infrastructure;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MySqlConnector;
 using NSubstitute;
@@ -120,9 +121,10 @@ namespace horizon_api_integration_tests
         {
             using var scope = _factory.Services.CreateScope();
             var realIWebHostEnvironment = scope.ServiceProvider.GetRequiredService<IWebHostEnvironment>();
+            var realIConfiguration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
             var subSeriLogger = Substitute.For<SeriLogger>();
             var connection = new MySqlAccess(subSeriLogger, MySqlDataSource);
-            var sqlQueryStore = new SqlQueryStore(realIWebHostEnvironment, subSeriLogger);
+            var sqlQueryStore = new SqlQueryStore(realIWebHostEnvironment, subSeriLogger, realIConfiguration);
             return (connection, sqlQueryStore);
         }
 

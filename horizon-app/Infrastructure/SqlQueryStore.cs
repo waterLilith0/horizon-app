@@ -6,12 +6,15 @@ namespace horizonapi.Infrastructure
     {
         private readonly Dictionary<string, string> _queries = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         private readonly SeriLogger _logger;
+        private readonly IConfiguration _configuration;
 
-        public SqlQueryStore(IWebHostEnvironment _env, SeriLogger logger)
+        public SqlQueryStore(IWebHostEnvironment _env, SeriLogger logger, IConfiguration configuration)
         {
             _logger = logger;
+            _configuration = configuration;
 
-            var queryDirs = new List<string>(Directory.GetDirectories(Path.Combine(_env.ContentRootPath, "Infrastructure", "Queries")));
+            var folderPath = _configuration["SqlSettings:QueriesFolderPath"] ?? "none";
+            var queryDirs = new List<string>(Directory.GetDirectories(Path.Combine(_env.ContentRootPath, folderPath!)));
 
             foreach (var queryDir in queryDirs)
             {
