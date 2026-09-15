@@ -1,4 +1,4 @@
-import { themeAtom } from "@/atoms";
+import { themeAtom } from "@/configAtoms";
 import Footer from "@/components/custom/Footer";
 import Navbar from "@/components/custom/Navbar";
 import { useAtom } from "jotai";

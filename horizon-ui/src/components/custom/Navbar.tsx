@@ -1,9 +1,9 @@
 import { memo, useCallback, useEffect } from "react";
 import { useAtom } from "jotai";
-import { themeAtom } from "../../atoms";
+import { themeAtom } from "../../configAtoms";
 import { Switch } from "@/components/ui/switch";
 import { NavLink } from "react-router";
-import { links, socials } from "@/configAtoms";
+import { links, socials } from "@/dataAtoms";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 function Navbar() {

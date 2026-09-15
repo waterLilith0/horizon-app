@@ -7,7 +7,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import MasonryGrid from "@/components/custom/MasonryGrid";
-import { useResponsiveColumns } from "@/lib/utils";
 
 const cards = [
   {
@@ -91,7 +90,7 @@ function Home() {
         updating this as I go (might be a good idea to look at this as kinda my
         own little blog I suppose).
       </p>
-      <MasonryGrid columns={useResponsiveColumns()}>
+      <MasonryGrid>
         {cards.map((card, index) => (
           <Card className="w-md" key={index}>
             {card.image && (

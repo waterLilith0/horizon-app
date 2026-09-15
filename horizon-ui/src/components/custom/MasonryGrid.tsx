@@ -1,16 +1,36 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { splitIntoColumns } from "@/lib/utils";
 
-interface CardFitterProps {
-  columns: number;
-  children: React.ReactNode;
-}
-
-function MasonryGrid({ columns, children }: CardFitterProps) {
+function MasonryGrid(props: { children: React.ReactNode }) {
+  const { children } = props;
   const allColumnElements: React.ReactNode[] = [];
   const childrenArray = React.Children.toArray(children);
 
-  const allColums = splitIntoColumns(childrenArray, columns);
+  const handleResize = () => {
+    const width = window.innerWidth;
+
+    if (width >= 1800) {
+      return 3;
+    } else if (width >= 1280) {
+      return 2;
+    } else {
+      return 1;
+    }
+  };
+
+  const [columnCount, setColumnCount] = useState<number>(() => handleResize());
+
+  useEffect(() => {
+    const updateColumns = () => setColumnCount(handleResize());
+
+    updateColumns();
+    window.addEventListener("resize", updateColumns);
+    return () => {
+      window.removeEventListener("resize", updateColumns);
+    };
+  }, []);
+
+  const allColums = splitIntoColumns(childrenArray, columnCount);
 
   allColums.forEach((column, index) => {
     allColumnElements.push(
