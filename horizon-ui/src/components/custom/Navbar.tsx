@@ -6,7 +6,7 @@ import { NavLink } from "react-router";
 import { links, socials } from "@/dataAtoms";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
-function Navbar() {
+function Navbar({ mobileMenuEnabled }: { mobileMenuEnabled: boolean }) {
   const [theme, setTheme] = useAtom(themeAtom);
   const [navLinks] = useAtom(links);
   const [socialLinks] = useAtom(socials);
@@ -27,7 +27,10 @@ function Navbar() {
 
   return (
     <>
-      <nav className="h-screen w-1/3 flex flex-col fixed items-center z-50 dark:text-sidebar-foreground bg-sidebar dark:bg-sidebar shrink-0 text-sidebar-foreground lg:sticky lg:top-0 lg:w-full lg:h-12 lg:flex-row">
+      <nav
+        id="navbar"
+        className={`${mobileMenuEnabled ? "flex flex-col" : "hidden"} h-screen w-1/3 fixed items-center z-50 dark:text-sidebar-foreground bg-sidebar dark:bg-sidebar shrink-0 text-sidebar-foreground lg:flex lg:sticky lg:top-0 lg:w-full lg:h-12 lg:flex-row`}
+      >
         <ul className="flex w-full h-full flex-col items-center list-none m-0 p-0 lg:flex-row">
           {navLinks.map((item) => {
             const linkKey = item.link;
