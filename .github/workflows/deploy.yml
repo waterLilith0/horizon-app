@@ -9,8 +9,8 @@ env:
   BACKEND_IMAGE: ${{ secrets.DOCKER_USERNAME }}/horizonapp-backend
 
 jobs:
-  # --- BUILD FRONTEND (Vite React) ---
-  build-frontend:
+  # --- BUILD FRONTEND AND BACKEND ---
+  build-images:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -38,8 +38,18 @@ jobs:
             echo "tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
           fi
 
-      # Build multi-architecture image (supports both 32-bit and 64-bit Pi OS versions)
-      - name: Build and Push Docker Image
+      - name: Build and Push Frontend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./horizon-ui/Dockerfile
+          platforms: linux/arm64
+          push: true
+          tags: ${{ env.FRONTEND_IMAGE }}:${{ github.ref_name == 'master' && 'prod' || github.ref_name }}
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,mode=max,scope=frontend
+
+      - name: Build and Push Backend Image
         uses: docker/build-push-action@v5
         with:
           context: .
