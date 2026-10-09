@@ -43,7 +43,7 @@ namespace horizon_api_integration_tests
         public SqlIntegrationTest(WebApplicationFactory<Program> factory, MySqlDatabaseFixture dbFixture)
         {
             _dbFixture = dbFixture;
-            var realApiPath = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "horizon-app");
+            var realApiPath = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "horizon-api");
 
             _factory = factory.WithWebHostBuilder(builder =>
             {

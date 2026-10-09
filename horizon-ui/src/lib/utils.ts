@@ -1,5 +1,4 @@
 import { clsx, type ClassValue } from "clsx";
-import { useEffect, useState } from "react";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
@@ -20,29 +19,4 @@ export function splitIntoColumns<T>(
   });
 
   return columns;
-}
-
-export function useResponsiveColumns(): number {
-  const [columnCount, setColumnCount] = useState(1);
-
-  useEffect(() => {
-    const handleResize = () => {
-      const width = window.innerWidth;
-
-      if (width >= 1280) {
-        setColumnCount(3);
-      } else if (width >= 1024) {
-        setColumnCount(2);
-      } else if (width >= 768) {
-        setColumnCount(1);
-      } else {
-        setColumnCount(1);
-      }
-    };
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  return columnCount;
 }
