@@ -26,56 +26,58 @@ function Navbar() {
   }, [initializeTheme]);
 
   return (
-    <nav className="sticky top-0 flex flex-row items-center z-50 text-sidebar-foreground dark:text-sidebar-foreground bg-sidebar dark:bg-sidebar w-full h-12 shrink-0">
-      <ul className="flex w-full h-full flex-row items-center list-none m-0 p-0">
-        {navLinks.map((item) => {
-          const linkKey = item.link;
-          return (
-            <li
-              key={linkKey}
-              className="flex h-full items-center first:justify-self-start"
-            >
-              <NavLink
-                to={item.link}
-                className="flex h-full no-underline items-center px-5 hover:bg-gray-500 hover::h-full hover:w-full"
+    <div>
+      <nav className="h-screen w-1/3 flex flex-col fixed items-center z-50 dark:text-sidebar-foreground bg-sidebar dark:bg-sidebar shrink-0 text-sidebar-foreground lg:sticky lg:top-0 lg:w-full lg:h-12 lg:flex-row">
+        <ul className="flex w-full h-full flex-col items-center list-none m-0 p-0 lg:flex-row">
+          {navLinks.map((item) => {
+            const linkKey = item.link;
+            return (
+              <li
+                key={linkKey}
+                className="flex h-full w-full items-center first:justify-self-start"
               >
-                {item.name}
-              </NavLink>
-            </li>
-          );
-        })}
-        {socialLinks.map((item) => {
-          const linkKey = item.link;
-          return (
-            <li
-              key={linkKey}
-              className="flex h-full items-center first:justify-self-start"
-            >
-              <a
-                href={item.link}
-                target="_blank"
-                className="flex justify-end h-full items-center px-5 hover:bg-gray-500 hover::h-full hover:w-full"
+                <NavLink
+                  to={item.link}
+                  className="flex h-full w-full no-underline items-center px-5 hover:bg-gray-500 hover::h-full hover:w-full"
+                >
+                  {item.name}
+                </NavLink>
+              </li>
+            );
+          })}
+          {socialLinks.map((item) => {
+            const linkKey = item.link;
+            return (
+              <li
+                key={linkKey}
+                className="flex h-full w-full items-center justify-center lg:first:justify-self-start"
               >
-                <FontAwesomeIcon icon={item.icon} className="mr-2" />
-                {item.name}
-              </a>
-            </li>
-          );
-        })}
-        <li className="flex items-center h-full last:ml-auto last:pr-5">
-          <Switch
-            checked={theme === "dark"}
-            size="default"
-            className={theme}
-            onCheckedChange={(checked) => {
-              const newTheme = checked ? "dark" : "light";
-              localStorage.setItem("theme", newTheme);
-              setTheme(newTheme);
-            }}
-          />
-        </li>
-      </ul>
-    </nav>
+                <a
+                  href={item.link}
+                  target="_blank"
+                  className="flex justify-end h-full w-full items-center px-5 hover:bg-gray-500 hover::h-full hover:w-full"
+                >
+                  <FontAwesomeIcon icon={item.icon} className="mr-2" />
+                  {item.name}
+                </a>
+              </li>
+            );
+          })}
+          <li className="flex items-center justify-center h-full w-full lg:last:ml-auto lg:last:pr-5">
+            <Switch
+              checked={theme === "dark"}
+              size="default"
+              className={theme}
+              onCheckedChange={(checked) => {
+                const newTheme = checked ? "dark" : "light";
+                localStorage.setItem("theme", newTheme);
+                setTheme(newTheme);
+              }}
+            />
+          </li>
+        </ul>
+      </nav>
+    </div>
   );
 }
 
