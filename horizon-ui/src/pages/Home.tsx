@@ -92,13 +92,13 @@ function Home() {
       </p>
       <MasonryGrid>
         {cards.map((card, index) => (
-          <Card className="w-md" key={index}>
+          <Card className="" key={index}>
             {card.image && (
               <ResponsiveImage
                 src={card.image}
                 alt={card.title}
-                width="200px"
-                ratio={16 / 9}
+                width="20px"
+                // ratio={16 / 9}
               />
             )}
             <CardHeader>
