@@ -34,11 +34,11 @@ function Navbar() {
             return (
               <li
                 key={linkKey}
-                className="flex h-full w-full items-center first:justify-self-start"
+                className="flex h-full w-full justify-center items-center lg:first:justify-self-start"
               >
                 <NavLink
                   to={item.link}
-                  className="flex h-full w-full no-underline items-center px-5 hover:bg-gray-500 hover::h-full hover:w-full"
+                  className="flex h-full w-full no-underline justify-center items-center px-5 hover:bg-gray-500 hover::h-full hover:w-full"
                 >
                   {item.name}
                 </NavLink>
@@ -55,7 +55,7 @@ function Navbar() {
                 <a
                   href={item.link}
                   target="_blank"
-                  className="flex justify-end h-full w-full items-center px-5 hover:bg-gray-500 hover::h-full hover:w-full"
+                  className="flex justify-center h-full w-full items-center px-5 hover:bg-gray-500 hover::h-full hover:w-full"
                 >
                   <FontAwesomeIcon icon={item.icon} className="mr-2" />
                   {item.name}
@@ -63,7 +63,8 @@ function Navbar() {
               </li>
             );
           })}
-          <li className="flex items-center justify-center h-full w-full lg:last:ml-auto lg:last:pr-5">
+          <li className="flex items-center justify-center h-full w-full lg:last:ml-auto lg:last:pr-5 lg:justify-end">
+            <p className="lg:hidden">Dark Mode</p>
             <Switch
               checked={theme === "dark"}
               size="default"

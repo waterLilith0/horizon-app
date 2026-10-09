@@ -3,6 +3,7 @@ import Footer from "@/components/custom/Footer";
 import Navbar from "@/components/custom/Navbar";
 import { useAtom } from "jotai";
 import { Outlet, useLocation } from "react-router";
+import NavButton from "@/components/custom/NavButton";
 
 function Layout() {
   const location = useLocation();
@@ -11,6 +12,7 @@ function Layout() {
 
   return (
     <div className={`"flex flex-col ${theme === "dark" ? "dark" : ""}`}>
+      <NavButton />
       <Navbar />
       <main className="flex flex-col bg-secondary items-center">
         <div
