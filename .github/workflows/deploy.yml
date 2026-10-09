@@ -46,6 +46,6 @@ jobs:
           file: ./horizon-api/Dockerfile
           platforms: linux/arm64
           push: true
-          tags: ${{ env.BACKEND_IMAGE }}:${{ github.ref_name == 'main' && 'prod' || github.ref_name }}
+          tags: ${{ env.BACKEND_IMAGE }}:${{ github.ref_name == 'master' && 'prod' || github.ref_name }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
