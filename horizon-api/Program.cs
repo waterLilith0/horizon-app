@@ -1,8 +1,8 @@
-using horizon_app.Infrastructure;
-using horizonapi.Infrastructure;
+using horizon_api.Infrastructure;
 using MySqlConnector;
+using Serilog;
 
-namespace horizon_app
+namespace horizon_api
 {
     public class Program
     {
@@ -10,16 +10,23 @@ namespace horizon_app
         {
             Serilog.Debugging.SelfLog.Enable(Console.Error);
             var builder = WebApplication.CreateBuilder(args);
+            builder.Services.AddSerilog((services, loggerConfiguration) => loggerConfiguration
+                .ReadFrom.Configuration(builder.Configuration));
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+            SeriLogger logger = new();
+            logger.LogDebug("Connected to Serilogger");
 
             // Add services to the container.
             builder.Services.AddAuthorization();
             builder.Services.AddMvc();
-            builder.Environment.ApplicationName = "horizonapi";
+            builder.Environment.ApplicationName = "horizon_api";
             builder.Services.AddSingleton<SeriLogger>();
             builder.Services.AddSingleton<SqlQueryStore>();
             builder.Services.AddMySqlDataSource(connectionString!);
             builder.Services.AddTransient<MySqlAccess>();
+            builder.Host.UseSerilog();
+
+            logger.LogDebug("DI configured");
 
             var app = builder.Build();
 

@@ -5,10 +5,12 @@ on:
     branches: [dev, staging, master]
 
 env:
-  IMAGE_NAME: ${{ secrets.DOCKER_USERNAME }}/horizonapp
+  FRONTEND_IMAGE: ${{ secrets.DOCKER_USERNAME }}/horizonapp-frontend
+  BACKEND_IMAGE: ${{ secrets.DOCKER_USERNAME }}/horizonapp-backend
 
 jobs:
-  build-and-push:
+  # --- BUILD FRONTEND (Vite React) ---
+  build-frontend:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -26,23 +28,43 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # Determine environment tag based on target branch
-      - name: Set Environment Tag
-        id: vars
-        run: |
-          if [ "${{ github.ref_name }}" = "master" ]; then
-            echo "tag=prod" >> $GITHUB_OUTPUT
-          else
-            echo "tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
-          fi
-
-      # Build multi-architecture image (supports both 32-bit and 64-bit Pi OS versions)
-      - name: Build and Push Docker Image
+      - name: Build and Push Frontend
         uses: docker/build-push-action@v5
         with:
           context: .
-          platforms: linux/arm/v7,linux/arm64
+          file: ./horizon-ui/Dockerfile
+          platforms: linux/arm64
           push: true
-          tags: ${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.tag }}
+          tags: ${{ env.FRONTEND_IMAGE }}:${{ github.ref_name == 'main' && 'prod' || github.ref_name }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # --- BUILD BACKEND (C# .NET) ---
+  build-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and Push Backend
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./horizon-api/Dockerfile
+          platforms: linux/arm64
+          push: true
+          tags: ${{ env.BACKEND_IMAGE }}:${{ github.ref_name == 'main' && 'prod' || github.ref_name }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

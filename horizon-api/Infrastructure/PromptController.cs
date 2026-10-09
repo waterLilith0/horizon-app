@@ -1,10 +1,9 @@
-﻿using horizonapi.Infrastructure;
-using horizonapi.Shared;
+﻿using horizon_api.Shared;
 using Microsoft.AspNetCore.Mvc;
 using System.Data;
 using System.Data.Common;
 
-namespace horizon_app.Infrastructure
+namespace horizon_api.Infrastructure
 {
     [ApiController]
     [Route("[controller]")]

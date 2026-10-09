@@ -1,17 +1,21 @@
-﻿using horizon_app.Infrastructure;
-
-namespace horizonapi.Infrastructure
+﻿namespace horizon_api.Infrastructure
 {
     public sealed class SqlQueryStore
     {
-        private readonly Dictionary<string, string> _queries = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, string> _queries = new(StringComparer.OrdinalIgnoreCase);
         private readonly SeriLogger _logger;
+        private readonly IConfiguration _configuration;
 
-        public SqlQueryStore(IWebHostEnvironment _env, SeriLogger logger)
+        public SqlQueryStore(IWebHostEnvironment _env, SeriLogger logger, IConfiguration configuration)
         {
             _logger = logger;
+            _configuration = configuration;
 
-            var queryDirs = new List<string>(Directory.GetDirectories(Path.Combine(_env.ContentRootPath, "Infrastructure", "Queries")));
+            var folderPath = _configuration["SqlSettings:QueriesFolderPath"] ?? "none";
+            logger.LogInformation($"Loading SQL queries from folder: {folderPath}");
+            logger.LogInformation($"Content root path: {_env.ContentRootPath}");
+            logger.LogInformation($"Full path to queries folder: {Path.Combine(_env.ContentRootPath, folderPath)}");
+            var queryDirs = new List<string>(Directory.GetDirectories(Path.Combine(_env.ContentRootPath, folderPath!)));
 
             foreach (var queryDir in queryDirs)
             {
