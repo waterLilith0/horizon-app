@@ -26,7 +26,7 @@ function Navbar() {
   }, [initializeTheme]);
 
   return (
-    <div>
+    <>
       <nav className="h-screen w-1/3 flex flex-col fixed items-center z-50 dark:text-sidebar-foreground bg-sidebar dark:bg-sidebar shrink-0 text-sidebar-foreground lg:sticky lg:top-0 lg:w-full lg:h-12 lg:flex-row">
         <ul className="flex w-full h-full flex-col items-center list-none m-0 p-0 lg:flex-row">
           {navLinks.map((item) => {
@@ -78,7 +78,7 @@ function Navbar() {
           </li>
         </ul>
       </nav>
-    </div>
+    </>
   );
 }
 
