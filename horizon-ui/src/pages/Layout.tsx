@@ -18,7 +18,7 @@ function Layout() {
         setMobileMenu={() => setMobileMenuEnabled(!mobileMenuEnabled)}
       />
       <Navbar mobileMenuEnabled={mobileMenuEnabled} />
-      <main className="flex flex-col bg-secondary items-center">
+      <main className="flex flex-col bg-secondary items-center grow">
         <div
           className={`flex flex-col items-center bg-primary w-[80%] p-2 ${isIframePage ? "overflow-none h-full" : "overflow-hidden"}`}
         >
