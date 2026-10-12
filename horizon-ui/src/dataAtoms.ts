@@ -9,6 +9,54 @@ export const links = atom([
   { link: "/testing", name: "Testing Environment" },
 ]);
 
+export const footerRows = atom([
+  {
+    row: 1,
+    links: [
+      {
+        type: "intern",
+        url: "/",
+        text: "Home",
+      },
+      {
+        type: "intern",
+        url: "/about",
+        text: "About Me",
+      },
+    ],
+  },
+  {
+    row: 2,
+    links: [
+      {
+        type: "intern",
+        url: "/impressum",
+        text: "Impressum",
+      },
+      {
+        type: "intern",
+        url: "/sitemap",
+        text: "Sitemap",
+      },
+    ],
+  },
+  {
+    row: 3,
+    links: [
+      {
+        type: "intern",
+        url: "/contact",
+        text: "Contact Me",
+      },
+      {
+        type: "intern",
+        url: "/api",
+        text: "API Dashboard",
+      },
+    ],
+  },
+]);
+
 export const socials = atom([
   { link: "https://github.com/waterlilith0", name: "GitHub", icon: faGithub },
   {
