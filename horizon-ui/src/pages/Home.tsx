@@ -49,7 +49,16 @@ function Home() {
               <CardTitle>{card.title}</CardTitle>
             </CardHeader>
             <CardContent>{card.content}</CardContent>
-            {card.footer && <CardFooter>{card.footer}</CardFooter>}
+            {card.footer && (
+              <CardFooter>
+                {
+                  <>
+                    <p>{card.footer}</p>
+                    <a href={card.link}>{card.link}</a>
+                  </>
+                }
+              </CardFooter>
+            )}
           </Card>
         ))}
       </MasonryGrid>
