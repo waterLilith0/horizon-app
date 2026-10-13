@@ -9,6 +9,8 @@ import About from "./pages/About.tsx";
 import YTEmbed from "./pages/YTEmbed.tsx";
 import Gallery from "./pages/Gallery.tsx";
 import Testing from "./pages/Testing.tsx";
+import PrivacyPolicy from "./pages/Legal/PrivacyPolicy.tsx";
+import Impressum from "./pages/Legal/Impressum.tsx";
 
 const router = createBrowserRouter([
   {
@@ -18,9 +20,11 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <Home /> },
       { path: "home", element: <Home /> },
-      { path: "about", element: <About /> },
+      { path: "about-contact", element: <About /> },
       { path: "gallery", element: <Gallery /> },
       { path: "yt-embed", element: <YTEmbed /> },
+      { path: "privacy", element: <PrivacyPolicy /> },
+      { path: "impressum", element: <Impressum /> },
       { path: "*", element: <NotFound /> },
       { path: "testing", element: <Testing /> },
     ],

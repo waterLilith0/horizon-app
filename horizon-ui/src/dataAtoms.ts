@@ -1,4 +1,8 @@
-import { faBluesky, faGithub } from "@fortawesome/free-brands-svg-icons";
+import {
+  faBluesky,
+  faGithub,
+  faLinkedin,
+} from "@fortawesome/free-brands-svg-icons";
 import { atom } from "jotai";
 
 export const links = atom([
@@ -6,7 +10,6 @@ export const links = atom([
   { link: "/about", name: "About" },
   { link: "/gallery", name: "Gallery" },
   { link: "/yt-embed", name: "YouTube Embed" },
-  { link: "/testing", name: "Testing Environment" },
 ]);
 
 export const footerRows = atom([
@@ -20,8 +23,8 @@ export const footerRows = atom([
       },
       {
         type: "intern",
-        url: "/about",
-        text: "About Me",
+        url: "/about-contact",
+        text: "About Me & Contact",
       },
     ],
   },
@@ -45,8 +48,8 @@ export const footerRows = atom([
     links: [
       {
         type: "intern",
-        url: "/contact",
-        text: "Contact Me",
+        url: "/privacy",
+        text: "Privacy Policy",
       },
       {
         type: "intern",
@@ -63,6 +66,11 @@ export const socials = atom([
     link: "https://bsky.app/profile/waterlilith.space",
     name: "Bluesky",
     icon: faBluesky,
+  },
+  {
+    link: "https://www.linkedin.com/in/miriam-fix-0b96b12aa/",
+    name: "LinkedIn",
+    icon: faLinkedin,
   },
 ]);
 
