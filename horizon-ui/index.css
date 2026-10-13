@@ -120,8 +120,8 @@
   --sidebar-ring: oklch(0.552 0.016 285.938);
 }
 
-@utility bg-funnyimage {
-  background-image: url("https://i.redd.it/t4ofjkpnbv7h1.jpeg");
+@utility bg-image {
+  background-image: url("https://pub-b6429b14f529453ba6124fb797bc3df6.r2.dev/bg.jpg");
   background-size: contain;
   background-position: center;
 }
@@ -133,7 +133,7 @@
 
   body {
     @apply bg-background text-foreground;
-    @apply bg-funnyimage dark:bg-funnyimage;
+    @apply bg-image dark:bg-image;
   }
 
   html {

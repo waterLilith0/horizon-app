@@ -1,4 +1,10 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Item, ItemMedia } from "@/components/ui/item";
 
 function About() {
@@ -48,6 +54,12 @@ function About() {
               collaborate!
             </p>
           </CardContent>
+          <CardFooter>
+            <p>Mail: </p>
+            <a href="mailto:contact@waterlilith.space">
+              contact@waterlilith.space
+            </a>
+          </CardFooter>
         </Card>
       </Item>
     </div>
