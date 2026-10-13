@@ -133,7 +133,7 @@
 
   body {
     @apply bg-background text-foreground;
-    @apply bg-image dark:bg-funnyimage;
+    @apply bg-image dark:bg-image;
   }
 
   html {
