@@ -7,7 +7,7 @@ import { atom } from "jotai";
 
 export const links = atom([
   { link: "/home", name: "Home" },
-  { link: "/about", name: "About" },
+  { link: "/about-contact", name: "About" },
   { link: "/gallery", name: "Gallery" },
   { link: "/yt-embed", name: "YouTube Embed" },
 ]);

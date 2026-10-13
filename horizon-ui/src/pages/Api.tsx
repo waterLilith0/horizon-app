@@ -1,10 +1,12 @@
 // TODO: Add API documentation and information here
 function Api() {
   return (
-    <div>
+    <>
+      <title>API Dashboard</title>
+
       <h1>API Page</h1>
       <p>WIP</p>
-    </div>
+    </>
   );
 }
 
