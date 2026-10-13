@@ -1,6 +1,7 @@
 export default function Impressum() {
   return (
     <>
+      <title>Impressum</title>
       <h1 className="adsimple-323241313">Impressum</h1>
       <p className="adsimple-323241313">
         Informationen über den Diensteanbieter.

@@ -3,6 +3,7 @@ import { Link } from "react-router";
 export default function PrivacyPolicy() {
   return (
     <>
+      <title>Privacy Policy</title>
       <h1 className="adsimple-313241308">Datenschutzerklärung</h1>
       <h2 id="einleitung-ueberblick" className="adsimple-313241308">
         Einleitung und Überblick

@@ -15,19 +15,7 @@ function Home() {
 
   return (
     <>
-      <meta charSet="UTF-8" />
       <title>Home</title>
-      <meta
-        name="keywords"
-        content="gallery, pictures, photography, waterLilith, art, personal, programming, vrchat, vrc"
-      />
-      <meta
-        name="description"
-        content="Just my own personal website, built with React and Tailwind CSS, including a portfolio of all my best pictures."
-      />
-      <meta name="author" content="waterLilith" />
-      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
       <h1 className="text-4xl">Main Page</h1>
       <p>
         This is my own little website/tinkering space. I'm gonna continue
