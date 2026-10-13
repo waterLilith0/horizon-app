@@ -4,11 +4,14 @@ import { faGithub, faReact } from "@fortawesome/free-brands-svg-icons";
 
 function Testing() {
   return (
-    <div>
-      <FontAwesomeIcon icon={faUser} />
-      <FontAwesomeIcon icon={faGithub} />
-      <FontAwesomeIcon icon={faReact} />
-    </div>
+    <>
+      <title>Testing</title>
+      <div>
+        <FontAwesomeIcon icon={faUser} />
+        <FontAwesomeIcon icon={faGithub} />
+        <FontAwesomeIcon icon={faReact} />
+      </div>
+    </>
   );
 }
 
