@@ -33,6 +33,8 @@ jobs:
         with:
           context: .
           file: ./horizon-ui/Dockerfile
+          secrets: |
+            faro_api_key=${{ secrets.FARO_API_KEY }}
           platforms: linux/arm64
           push: true
           tags: ${{ env.FRONTEND_IMAGE }}:${{ github.ref_name == 'master' && 'prod' || github.ref_name }}
