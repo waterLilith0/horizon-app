@@ -11,14 +11,11 @@ namespace horizon_api.Infrastructure
     /// <completionlist cref="SeriLogger"/>
     public class SeriLogger()
     {
-        // TODO: Add OpenTelemetry sink for distributed tracing and telemetry collection in the future.
         private readonly Serilog.ILogger _logger = new LoggerConfiguration()
             .MinimumLevel.Verbose()
-            .WriteTo.Console()
+            .WriteTo.Console(outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level}] {Message:lj}{Exception}{NewLine}")
             .WriteTo.File("./logs/log-.log", rollingInterval: RollingInterval.Day)
-            //.WriteTo.OpenTelemetry(
-            //  endpoint: "http://localhost:4317",
-            //  protocol: Serilog.Sinks.OpenTelemetry.OtlpProtocol.HttpProtobuf)
+            
             .CreateLogger();
 
         private static string NullCheck(string? input) => input ?? string.Empty;
