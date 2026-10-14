@@ -17,6 +17,8 @@
     "@fortawesome/free-brands-svg-icons": "^7.2.0",
     "@fortawesome/free-solid-svg-icons": "^7.2.0",
     "@fortawesome/react-fontawesome": "^3.3.1",
+    "@grafana/faro-react": "^2.12.1",
+    "@grafana/faro-web-tracing": "^2.12.1",
     "@remixicon/react": "^4.9.0",
     "@tailwindcss/vite": "^4.3.1",
     "class-variance-authority": "^0.7.1",
@@ -35,6 +37,7 @@
   "devDependencies": {
     "@babel/core": "^7.29.0",
     "@eslint/js": "^10.0.1",
+    "@grafana/faro-rollup-plugin": "^0.13.1",
     "@rolldown/plugin-babel": "^0.2.3",
     "@types/babel__core": "^7.20.5",
     "@types/node": "^24.13.2",
@@ -47,7 +50,6 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.6.0",
-    "shadcn": "^4.21.4",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",
     "vite": "^8.0.12"
