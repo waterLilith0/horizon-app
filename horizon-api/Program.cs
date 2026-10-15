@@ -51,7 +51,8 @@ namespace horizon_api
                 builder.Services.AddMvc();
                 builder.Services.AddSingleton<SqlQueryStore>();
                 builder.Services.AddMySqlDataSource(connectionString!);
-                builder.Services.AddTransient<MySqlAccess>();
+                builder.Services.AddEndpointsApiExplorer();
+                builder.Services.AddSwaggerGen();
 
                 Log.Debug("DI configured");
 
@@ -66,6 +67,11 @@ namespace horizon_api
                     app.UseHttpsRedirection();
                     app.UseHsts();
                     app.UseAuthorization();
+                }
+                if (builder.Environment.IsDevelopment())
+                {
+                    app.UseSwagger();
+                    app.UseSwaggerUI();
                 }
                 app.MapControllers();
 
