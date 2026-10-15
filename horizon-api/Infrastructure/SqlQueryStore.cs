@@ -1,13 +1,16 @@
-﻿namespace horizon_api.Infrastructure
+﻿using System.Collections.Frozen;
+
+namespace horizon_api.Infrastructure
 {
     public sealed class SqlQueryStore
     {
-        private readonly Dictionary<string, string> _queries = new(StringComparer.OrdinalIgnoreCase);
+        private FrozenDictionary<string, string> _queries;
         private readonly SeriLogger _logger;
         private readonly IConfiguration _configuration;
 
         public SqlQueryStore(IWebHostEnvironment _env, SeriLogger logger, IConfiguration configuration)
         {
+            Dictionary<string, string> temp = new(StringComparer.OrdinalIgnoreCase);
             _logger = logger;
             _configuration = configuration;
 
@@ -21,9 +24,10 @@
             {
                 foreach (var file in Directory.GetFiles(queryDir, "*.sql"))
                 {
-                    _queries[Path.GetFileNameWithoutExtension(file)] = File.ReadAllText(file);
+                    temp[Path.GetFileNameWithoutExtension(file)] = File.ReadAllText(file);
                 }
             }
+            _queries = temp.ToFrozenDictionary();
         }
 
         public string Get(string key)

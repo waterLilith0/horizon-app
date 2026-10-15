@@ -1,7 +1,6 @@
 ﻿using MySqlConnector;
 using System.Data;
 using System.Data.Common;
-using System.Diagnostics;
 using System.Text.RegularExpressions;
 
 namespace horizon_api.Infrastructure
@@ -12,35 +11,12 @@ namespace horizon_api.Infrastructure
     /// events and errors during database operations.
     /// </summary>
     /// <completionlist cref="MySqlAccess"/>
-    public partial class MySqlAccess(SeriLogger logger, MySqlDataSource dataSource) : IDisposable
+    public partial class MySqlAccess(SeriLogger logger)
     {
-        /// <summary>
-        /// ConnectionString is a property that holds the connection string used to connect to the MySQL database.
-        /// </summary>
-        /// <param name="connectionString">The connection string for the MySQL database.</param>
         private readonly SeriLogger _logger = logger;
-        private readonly MySqlConnection _connection = new(dataSource.ConnectionString);
-
-        private async Task OpenConnection()
-        {
-            if (_connection != null && _connection.State == System.Data.ConnectionState.Closed)
-            {
-                try
-                {
-                    await _connection.OpenAsync();
-                    _logger.LogInformation("MySql asynchonously connection opened.");
-                }
-                catch (Exception e)
-                {
-                    _logger.LogError("Error occurred while opening MySql connection: ", e.Message);
-                    throw;
-                }
-            }
-        }
 
         private string CheckSqlFormat(string? sql)
         {
-
             var regex = SqlRegexMatch();
 
             if (string.IsNullOrWhiteSpace(sql))
@@ -58,36 +34,20 @@ namespace horizon_api.Infrastructure
             return sql;
         }
 
-        private async Task CloseConnection()
-        {
-            if (_connection != null && _connection.State == System.Data.ConnectionState.Open)
-            {
-                try
-                {
-                    await _connection.CloseAsync();
-                    _logger.LogInformation("MySql connection closed.");
-                }
-                catch (Exception e)
-                {
-                    _logger.LogError("Error occurred while closing MySql connection: ", e.Message);
-                    throw;
-                }
-            }
-        }
-
         /// <summary>
         /// CreateCommand method that creates and returns a MySqlCommand object with the specified query and the current MySQL connection. 
         /// It includes error handling to log wrong SQL formats and other exceptions that may occur during command creation.
         /// </summary>
         /// <param name="query">The SQL query to execute.</param>
         /// <returns>A MySqlCommand object.</returns>
-        public MySqlCommand CreateCommand(string? query)
+        public async Task<MySqlCommand> CreateCommand(string? query, MySqlConnection connection)
         {
             query = CheckSqlFormat(query);
             try
             {
-                var command = new MySqlCommand(query, _connection);
-                _logger.LogInformation("MySql command created with query: " + query);
+                await using var command = connection.CreateCommand();
+                command.CommandText = query;
+                _logger.LogInformation("MySql command created.");
                 return command;
             }
             catch (Exception e)
@@ -105,27 +65,20 @@ namespace horizon_api.Infrastructure
         /// <returns>A DbDataReader containing the results of the query.</returns>
         public async Task<DbDataReader> ExecuteQueryAsync(MySqlCommand command)
         {
-            var requestTimer = Stopwatch.StartNew();
-            await OpenConnection();
             try
             {
                 var reader = await command.ExecuteReaderAsync(CommandBehavior.CloseConnection);
-                requestTimer.Stop();
-                _logger.LogInformation($"MySql query executed successfully in {requestTimer.ElapsedMilliseconds} ms.");
+                _logger.LogInformation($"MySql query executed successfully.");
                 return reader;
             }
             catch (MySqlException e)
             {
-                requestTimer.Stop();
-                _logger.LogError($"Error occurred while executing MySql query after {requestTimer.ElapsedMilliseconds} ms: ", e.Message);
-                await CloseConnection();
+                _logger.LogError($"Error occurred while executing MySql query: {e.ErrorCode}", e.Message);
                 throw;
             }
             catch (Exception e)
             {
-                requestTimer.Stop();
-                _logger.LogError($"General error occurred while executing MySql query after {requestTimer.ElapsedMilliseconds} ms: ", e.Message);
-                await CloseConnection();
+                _logger.LogError($"General error occurred while executing MySql query: ", e.Message);
                 throw;
             }
         }
@@ -137,35 +90,22 @@ namespace horizon_api.Infrastructure
         /// <returns></returns>
         public async Task<int> ExecuteNonQueryAsync(MySqlCommand command)
         {
-            var requestTimer = Stopwatch.StartNew();
-            await OpenConnection();
             try
             {
                 var affectedRows = await command.ExecuteNonQueryAsync();
-                requestTimer.Stop();
-                _logger.LogInformation($"MySql non-query executed successfully in {requestTimer.ElapsedMilliseconds} ms. Rows affected: {affectedRows}");
+                _logger.LogInformation($"MySql non-query executed successfully. Rows affected: {affectedRows}");
                 return affectedRows;
             }
             catch (MySqlException e)
             {
-                requestTimer.Stop();
-                _logger.LogError($"Error occurred while executing MySql non-query after {requestTimer.ElapsedMilliseconds} ms: ", e.Message);
-                await CloseConnection();
+                _logger.LogError($"Error occurred while executing MySql non-query: {e.ErrorCode}", e.Message);
                 throw;
             }
             catch (Exception e)
             {
-                requestTimer.Stop();
-                _logger.LogError($"General error occurred while executing MySql non-query after {requestTimer.ElapsedMilliseconds} ms: ", e.Message);
-                await CloseConnection();
+                _logger.LogError($"General error occurred while executing MySql non-query: ", e.Message);
                 throw;
             }
-        }
-
-        public async void Dispose()
-        {
-            GC.SuppressFinalize(this);
-            await CloseConnection();
         }
 
         [GeneratedRegex(@"^\s*(SELECT|INSERT|UPDATE|DELETE|CREATE|DROP|ALTER)\b", RegexOptions.IgnoreCase, "en-US")]
