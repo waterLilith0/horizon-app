@@ -22,19 +22,20 @@ namespace horizon_api.Controllers
             return Ok("CollectionController is running.");
         }
 
+        public record CollectionCreateDto(string CollectionName);
         // Create a single collection
         [HttpPost("create")]
-        public async Task<ActionResult<Collection>> Create([FromBody] Collection collection, CancellationToken cancellationToken)
+        public async Task<ActionResult<Collection>> Create([FromBody] CollectionCreateDto creationDto, CancellationToken cancellationToken)
         {
-            _logger.LogDebug("Create action called in CollectionController with name: {collectionName}", collection.Name);
+            _logger.LogDebug("Create action called in CollectionController with name: {collectionName}", creationDto.CollectionName);
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
             var sql = _sqlQueryStore.Get("PostInsertCollection");
 
-            var command = new CommandDefinition(sql, new { name = collection.Name }, cancellationToken: cancellationToken);
+            var command = new CommandDefinition(sql, new { name = creationDto.CollectionName }, cancellationToken: cancellationToken);
             var collectionId = await connection.QuerySingleOrDefaultAsync<int?>(command);
             if (collectionId == null)
             {
-                _logger.LogError("Database returned no result when creating collection with name: {collectionName}", collection.Name);
+                _logger.LogError("Database returned no result when creating collection with name: {collectionName}", creationDto.CollectionName);
                 return Problem(
                         title: "Database Error",
                         detail: "The insert statement executed, but no ID was returned.",
@@ -43,17 +44,15 @@ namespace horizon_api.Controllers
             }
             else if (collectionId <= 0)
             {
-                _logger.LogWarning("Failed to create a new collection with name: {collectionName}", collection.Name);
+                _logger.LogWarning("Failed to create a new collection with name: {collectionName}", creationDto);
                 return Problem(
                         title: "Creation Failed",
                         detail: $"The database failed to generate a valid ID for the new collection.",
                         statusCode: StatusCodes.Status500InternalServerError
                     );
             }
-
-            collection.CollectionId = collectionId.Value;
-            _logger.LogInformation("Successfully created a new collection with name: {collectionName}", collection.Name);
-            return CreatedAtAction(nameof(GetCollectionById), new { collectionId }, collection);
+            _logger.LogInformation("Successfully created a new collection with name: {collectionName}", creationDto);
+            return CreatedAtAction(nameof(GetCollectionById), new { collectionId }, creationDto.CollectionName);
         }
 
         // Get a single collection

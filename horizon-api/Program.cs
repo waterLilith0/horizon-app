@@ -16,11 +16,11 @@ namespace horizon_api
                 .Enrich.WithSpan()
                 .WriteTo.Console(outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level}] {Message:lj}{Exception}{NewLine}")
                 .WriteTo.File("./logs/log-.log", rollingInterval: RollingInterval.Day)
-                .WriteTo.OpenTelemetry(options =>
-                {
-                    options.Endpoint = Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT") ?? "http://localhost:4317";
-                    options.Protocol = Serilog.Sinks.OpenTelemetry.OtlpProtocol.Grpc;
-                })
+                //.WriteTo.OpenTelemetry(options =>
+                //{
+                //    options.Endpoint = Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT") ?? "http://localhost:4317";
+                //    options.Protocol = Serilog.Sinks.OpenTelemetry.OtlpProtocol.Grpc;
+                //})
                 .CreateLogger();
 
             Serilog.Debugging.SelfLog.Enable(Console.Error);
@@ -30,7 +30,7 @@ namespace horizon_api
                 Log.Information("Starting API");
                 var builder = WebApplication.CreateBuilder(args);
                 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-                builder.Environment.ApplicationName = "horizon_api";
+                builder.Environment.ApplicationName = "horizon-api";
 
                 builder.Host.UseSerilog();
                 builder.Services.AddOpenTelemetry()
