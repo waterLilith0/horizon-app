@@ -1,6 +1,8 @@
-﻿using horizon_api.Infrastructure;
+﻿using Dapper;
+using horizon_api.Infrastructure;
 using horizon_api.Shared;
 using Microsoft.AspNetCore.Mvc;
+using MySqlConnector;
 using Serilog;
 using System.Data;
 using System.Data.Common;
@@ -9,206 +11,160 @@ namespace horizon_api.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class PromptController(MySqlAccess mySqlAccess, SqlQueryStore sqlQueryStore, ILogger<PromptController> logger) : Controller
+    public class PromptController(SqlQueryStore sqlQueryStore, MySqlDataSource dataSource, ILogger<PromptController> logger) : Controller
     {
-        private readonly MySqlAccess _mySqlAccess = mySqlAccess;
         private readonly SqlQueryStore _sqlQueryStore = sqlQueryStore;
         private readonly ILogger<PromptController> _logger = logger;
 
-        private async Task<List<int>> GetAllPromptIds(int? collectionId)
-        {
-            List<int> allPromptIds = [];
-            _logger.LogInformation("GetAllPromptIds method called in PromptController.");
-            var command = _mySqlAccess.CreateCommand(_sqlQueryStore.Get("GetAllIds"));
-            command.Parameters.AddWithValue("@collectionId", collectionId);
-            using var reader = await _mySqlAccess.ExecuteQueryAsync(command);
-            for (int i = 0; await reader.ReadAsync(); i++)
-            {
-                CollectionIdCheck(reader);
-                allPromptIds.Add(reader.GetInt32("promptId"));
-            }
-            return allPromptIds;
-        }
-
-        private static int? CollectionIdCheck(DbDataReader reader)
-        {
-            return reader.IsDBNull(reader.GetOrdinal("collectionId"))
-                            ? null
-                            : reader.GetInt32("collectionId");
-        }
-
-        // GET: PromptController/checkstatus
+        // Check if the allPrompts controller is running
         [HttpGet("checkstatus")]
         public async Task<IActionResult> GetCheck()
         {
-            try
-            {
-                _logger.LogInformation("Successfully got to the PromptController.");
-                return Ok("PromptController is running.");
-            }
-            catch (Exception e)
-            {
-                _logger.LogError("An error occurred while checking the PromptController.", e.Message);
-                throw;
-            }
+            _logger.LogDebug("Successfully got to the PromptController.");
+            return Ok("PromptController is running.");
         }
 
-        // GET: PromptController/create/?PromptId=5&promptText="Example"
-        [HttpPost("create")]
-        public async Task<IActionResult> PostCreate([FromQuery] int collectionId, [FromQuery] string promptText)
+        public record CreatePromptDto(string PromptText, string Type, int? CollectionId);
+        public record CreatePromptResponse(Prompt Prompt, int? CollectionId);
+
+        // Create a new prompt; optionally insert it into a collection immediately
+        [HttpPost]
+        public async Task<ActionResult<CreatePromptResponse>> PostCreate([FromBody] CreatePromptDto promptDto, CancellationToken cancellationToken)
         {
-            _logger.LogInformation("Create action called in PromptController with PromptId: {PromptId}, PromptText: {promptText}", collectionId.ToString(), promptText);
-            var command = _mySqlAccess.CreateCommand(_sqlQueryStore.Get("PostInsert"));
-            command.Parameters.AddWithValue("@collectionId", collectionId);
-            command.Parameters.AddWithValue("@promptText", promptText.Trim('"'));
-            var affectedRows = await _mySqlAccess.ExecuteNonQueryAsync(command);
-            if (affectedRows > 0)
+            _logger.LogDebug("Create action called in PromptController with: {@PromptDto}", promptDto);
+
+            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+            var sql = _sqlQueryStore.Get("PostInsert");
+
+            var command = new CommandDefinition(sql, promptDto, cancellationToken: cancellationToken);
+
+            var createdPrompt = await connection.QuerySingleOrDefaultAsync<Prompt>(command);
+            if (createdPrompt == null)
             {
-                _logger.LogInformation("Successfully created a new prompt with PromptId: {PromptId}, PromptText: {promptText}", collectionId.ToString(), promptText);
-                return Ok("Prompt created successfully.");
+                _logger.LogError("Database returned no result when creating prompt with text: {PromptText}", promptDto.PromptText);
+                return Problem(
+                    title: "Database Error",
+                    detail: "The insert statement executed, but no prompt record was returned.",
+                    statusCode: StatusCodes.Status500InternalServerError
+                );
             }
-            else
-            {
-                _logger.LogError("Failed to create a new prompt with PromptId: {PromptId}, PromptText: {promptText}", collectionId.ToString(), promptText);
-                return StatusCode(500, "Failed to create prompt.");
-            }
+            var response = new CreatePromptResponse(createdPrompt, promptDto.CollectionId);
+
+            _logger.LogInformation("Successfully created a new prompt with ID {PromptId}", createdPrompt.PromptId);
+            return CreatedAtAction(nameof(GetPrompt), new { promptId = createdPrompt.PromptId }, response);
         }
 
-        // GET: PromptController/prompt/5
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetPrompt(int id)
+        // Get a specific allPrompts
+        [HttpGet("{promptId:int}")]
+        public async Task<ActionResult<Prompt>> GetPrompt([FromRoute] int promptId, CancellationToken cancellationToken)
         {
-            _logger.LogInformation("Called for a specific prompt: " + id);
-            var command = _mySqlAccess.CreateCommand(_sqlQueryStore.Get("GetById"));
-            command.Parameters.AddWithValue("@promptId", id);
-            command.Parameters.AddWithValue("@collectionId", DBNull.Value);
-            using (var reader = await _mySqlAccess.ExecuteQueryAsync(command))
+            _logger.LogDebug("GetPromptById method called in PromptController for allPrompts {prompt}", promptId);
+            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+            var sql = _sqlQueryStore.Get("GetById");
+            var command = new CommandDefinition(sql, new { promptId }, cancellationToken: cancellationToken);
+            var prompt = await connection.QuerySingleOrDefaultAsync<Prompt>(command);
+
+            if (prompt == null)
             {
-                if (await reader.ReadAsync())
-                {
-                    var temp = CollectionIdCheck(reader);
-                    return Ok(new Prompt
-                    {
-                        PromptId = reader.GetInt32("promptId"),
-                        PromptText = reader.GetString("promptText"),
-                        CollectionId = temp
-                    });
-                }
+                _logger.LogWarning("No allPrompts found with ID {prompt}", promptId);
+                return Problem(
+                        title: "ID not found",
+                        detail: $"Prompt with ID {promptId} not found.",
+                        statusCode: StatusCodes.Status404NotFound
+                    );
             }
-            return NotFound("Could not find Prompt with ID: " + id);
+            _logger.LogInformation("Successfully retrieved allPrompts with ID {prompt}", promptId);
+            return Ok(prompt);
         }
 
-        // GET: PromptController/allprompts or PromptController/allprompts?PromptId=5
-        [HttpGet("allprompts")]
-        public async Task<IActionResult> GetAllPrompts([FromQuery] int? collectionId)
+        // Get all prompts, optionally filtered by amount
+        [HttpGet]
+        public async Task<ActionResult<Prompt[]>> GetAllPrompts([FromQuery] int? resultAmount, CancellationToken cancellationToken)
         {
-            List<Prompt> allPrompts = [];
-            _logger.LogInformation("GetAllPrompts action called in PromptController.");
-            var command = _mySqlAccess.CreateCommand(_sqlQueryStore.Get("GetAll"));
-            command.Parameters.AddWithValue("@collectionId", collectionId.HasValue ? collectionId.Value : DBNull.Value);
-            using (var reader = await _mySqlAccess.ExecuteQueryAsync(command))
-            {
-                for (int i = 0; await reader.ReadAsync(); i++)
-                {
-                    var temp = CollectionIdCheck(reader);
-                    allPrompts.Add(new Prompt
-                    {
-                        PromptId = reader.GetInt32("promptId"),
-                        PromptText = reader.GetString("promptText"),
-                        CollectionId = temp
-                    });
-                }
-            }
+            _logger.LogDebug("GetAllPrompts action called in PromptController.");
+            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+            var sql = _sqlQueryStore.Get("GetAll");
+            var command = new CommandDefinition(sql, new { resultAmount },cancellationToken: cancellationToken);
+            var allPrompts = await connection.QueryAsync<Prompt>(command);
+
+            _logger.LogInformation("Successfully retrieved all Prompts");
             return Ok(allPrompts);
         }
 
-        // GET: PromptController/random or PromptController/random?PromptId=5
+        // Get a random rowsAffected; optionally from a specific collection
         [HttpGet("random")]
-        public async Task<IActionResult> GetRandomPrompt([FromQuery] int? collectionId)
+        public async Task<ActionResult<Prompt>> GetRandomPrompt([FromQuery] int? collectionId, CancellationToken cancellationToken)
         {
-            Random randomizer = new();
-            var allPromptIds = await GetAllPromptIds(collectionId);
-            int randomId;
-            do
-            {
-                randomId = randomizer.Next(1, allPromptIds.Where(t => t > 0).Max() + 1);
-            }
-            while (!allPromptIds.Any(t => (t == randomId)));
+            _logger.LogDebug("GetRandomPrompt action called in PromptController");
+            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
 
-            var command = _mySqlAccess.CreateCommand(_sqlQueryStore.Get("GetById"));
-            command.Parameters.AddWithValue("@promptId", randomId);
-            command.Parameters.AddWithValue("@collectionId", collectionId.HasValue ? collectionId.Value : DBNull.Value);
-            using (var reader = await _mySqlAccess.ExecuteQueryAsync(command))
+            var sql = _sqlQueryStore.Get("GetRandomPrompt");
+            var command = new CommandDefinition(sql, new { collectionId }, cancellationToken: cancellationToken);
+
+            var prompt = await connection.QuerySingleOrDefaultAsync<Prompt>(command);
+
+            if (prompt == null)
             {
-                while (await reader.ReadAsync())
-                {
-                    var temp = CollectionIdCheck(reader);
-                    return Ok(new Prompt
-                    {
-                        PromptId = reader.GetInt32("promptId"),
-                        PromptText = reader.GetString("promptText"),
-                        CollectionId = temp
-                    });
-                }
+                _logger.LogWarning("No prompts available for random selection (CollectionId: {CollectionId})", collectionId);
+                return Problem(
+                    title: "Not Found",
+                    detail: "No prompts found to pick randomly from.",
+                    statusCode: StatusCodes.Status404NotFound
+                );
             }
-            _logger.LogInformation("Randomly got prompt: " + randomId, collectionId != null ? $"for collection {collectionId.Value}" : "");
-            return NotFound("Could not find Prompt with ID: " + randomId);
+
+            _logger.LogInformation("Successfully retrieved random rowsAffected with ID {PromptId}", prompt.PromptId);
+            return Ok(prompt);
         }
 
-        // GET: PromptController/edit/5
-        [HttpPost("edit/{id}")]
-        public async Task<IActionResult> PostEdit(int id, [FromQuery] string promptText, [FromQuery] int collectionId)
+        public record UpdatePromptDto(string PromptText, string Type);
+
+        // Update/edit old prompt
+        [HttpPut("{promptId:int}")]
+        public async Task<IActionResult> PostEdit([FromRoute]int promptId, [FromBody] UpdatePromptDto promptDto, CancellationToken cancellationToken)
         {
-            _logger.LogInformation("Edit action called for prompt: " + id);
-            Prompt oldPrompt = new();
-            var oldCommand = _mySqlAccess.CreateCommand(_sqlQueryStore.Get("GetById"));
-            oldCommand.Parameters.AddWithValue("@promptId", id);
-            oldCommand.Parameters.AddWithValue("@collectionId", DBNull.Value);
-            using (var reader = await _mySqlAccess.ExecuteQueryAsync(oldCommand))
+            _logger.LogDebug("Edit action called for Prompt {prompt}", promptId);
+            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+
+            var sql = _sqlQueryStore.Get("PostUpdateById");
+            var command = new CommandDefinition(sql, new { promptId, promptDto.PromptText, promptDto.Type }, cancellationToken: cancellationToken);
+            var updatedPrompt = await connection.QuerySingleOrDefaultAsync<Prompt>(command);
+
+            if (updatedPrompt == null)
             {
-                if (await reader.ReadAsync())
-                {
-                    var temp = CollectionIdCheck(reader);
-                    oldPrompt = new Prompt
-                    {
-                        PromptId = reader.GetInt32("promptId"),
-                        PromptText = reader.GetString("promptText"),
-                        CollectionId = temp
-                    };
-                    _logger.LogInformation("Successfully retrieved existing prompt with ID: " + id + " for editing. Current PromptText: " + oldPrompt.PromptText + ", Current PromptId: " + (oldPrompt.CollectionId.HasValue ? oldPrompt.CollectionId.Value.ToString() : "null"));
-                }
-                else
-                {
-                    _logger.LogError("Failed to retrieve existing prompt with ID: " + id + " for editing.");
-                    return NotFound("Could not find Prompt with ID: " + id);
-                }
+                _logger.LogWarning("Couldn't find old rowsAffected with id {oldId} to update", promptId);
+                return Problem(
+                    title: "Not Found",
+                    detail: $"Couldn't find rowsAffected with id {promptId}",
+                    statusCode: StatusCodes.Status404NotFound
+                );
             }
-            var command = _mySqlAccess.CreateCommand(_sqlQueryStore.Get("PostUpdateById"));
-            command.Parameters.AddWithValue("@promptId", id);
-            command.Parameters.AddWithValue("@collectionId", collectionId != 0 ? collectionId : oldPrompt.CollectionId);
-            command.Parameters.AddWithValue("@promptText", promptText != null ? promptText.Trim('"') : oldPrompt.PromptText);
-            var affectedRows = await _mySqlAccess.ExecuteNonQueryAsync(command);
-            return Ok(affectedRows.ToString() + " Rows affected");
+            _logger.LogInformation("Succesfully edited item with id {prompt}", promptId);
+            return Ok(updatedPrompt);
         }
 
-        // GET: PromptController/delete/5
-        [HttpDelete("delete/{id}")]
-        public async Task<IActionResult> Delete(int id)
+        // Deletes a specific prompt
+        [HttpDelete("{promptId:int}")]
+        public async Task<IActionResult> Delete(int promptId, CancellationToken cancellationToken)
         {
-            _logger.LogInformation("Delete action called for prompt: " + id);
-            var command = _mySqlAccess.CreateCommand(_sqlQueryStore.Get("DeleteById"));
-            command.Parameters.AddWithValue("@promptId", id);
-            var affectedRows = await _mySqlAccess.ExecuteNonQueryAsync(command);
-            if (affectedRows > 0)
+            _logger.LogDebug("Delete action called for Prompt {prompt}", promptId);
+            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+
+            var sql = _sqlQueryStore.Get("DeleteById");
+            var command = new CommandDefinition(sql, new { promptId }, cancellationToken: cancellationToken);
+            var rowsAffected = await connection.ExecuteAsync(command);
+
+            if (rowsAffected == 0)
             {
-                _logger.LogInformation("Successfully deleted prompt with ID: " + id);
-                return Ok("Prompt deleted successfully.");
+                _logger.LogWarning("Failed to delete prompt with ID: {prompt}", promptId);
+                return Problem(
+                    title: "Prompt not found",
+                    detail: $"Failed to find any prompt with ID {promptId}.",
+                    statusCode: StatusCodes.Status404NotFound
+                );
             }
-            else
-            {
-                _logger.LogError("Failed to delete prompt with ID: " + id);
-                return StatusCode(500, "Failed to delete prompt.");
-            }
+            _logger.LogInformation("Succesfully deleted prompt with id {prompt}", promptId);
+            return NoContent();
         }
     }
 }
