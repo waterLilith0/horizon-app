@@ -6,7 +6,6 @@ namespace horizon_api_tests
 {
     public class MySqlAccessTest
     {
-        private readonly SeriLogger serilogger = new();
         private readonly MySqlDataSource dataSource = new("server=localhost;user=root;password=password;database=test");
 
         [Fact]
