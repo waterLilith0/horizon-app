@@ -4,6 +4,7 @@
     {
         public int PromptId { get; set; }
         public required string PromptText { get; set; }
-        public int? CollectionId { get; set; } = null;
+        public required string Type { get; set; }
+        public DateTime CreationDate { get; set; }
     }
 }

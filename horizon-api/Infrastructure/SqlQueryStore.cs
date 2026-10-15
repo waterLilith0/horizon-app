@@ -16,9 +16,9 @@ namespace horizon_api.Infrastructure
             _logger = logger;
 
             var folderPath = _configuration["SqlSettings:QueriesFolderPath"] ?? "none";
-            _logger.LogInformation($"Loading SQL queries from folder: {folderPath}");
-            _logger.LogInformation($"Content root path: {_env.ContentRootPath}");
-            _logger.LogInformation($"Full path to queries folder: {Path.Combine(_env.ContentRootPath, folderPath)}");
+            _logger.LogInformation("Loading SQL queries from folder {folderPath}", folderPath);
+            _logger.LogInformation("Content root path: {envContentRootPath}", _env.ContentRootPath);
+            _logger.LogInformation("Full path to queries folder: {fullPathQueriesFolder}", Path.Combine(_env.ContentRootPath, folderPath));
             var queryDirs = new List<string>(Directory.GetDirectories(Path.Combine(_env.ContentRootPath, folderPath!)));
 
             foreach (var queryDir in queryDirs)
@@ -38,20 +38,20 @@ namespace horizon_api.Infrastructure
                 _queries.TryGetValue(key, out var query);
                 if (query == null)
                 {
-                    _logger.LogError($"Query '{key}' not found");
+                    _logger.LogError("Query '{key}' not found", key);
                     throw new ArgumentException("Query not found", nameof(key));
                 }
-                _logger.LogInformation($"Successfully retrieved query '{key}'");
+                _logger.LogInformation("Successfully retrieved query {key}", key);
                 return query;
             }
             catch (ArgumentException e)
             {
-                _logger.LogError($"Query '{key}' not found: {e.Message}");
+                _logger.LogError("Query {key} not found: {e.Message}", key, e.Message);
                 throw;
             }
             catch (Exception e)
             {
-                _logger.LogError($"Error retrieving query '{key}': {e.Message}");
+                _logger.LogError("Error retrieving query '{key}': {e.Message}", key, e.Message);
                 throw;
             }
         }
