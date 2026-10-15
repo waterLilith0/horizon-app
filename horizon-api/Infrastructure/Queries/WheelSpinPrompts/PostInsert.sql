@@ -1,5 +1,16 @@
-﻿INSERT INTO horizon.WheelSpinPrompts
-(promptText, collectionId)
-VALUES(@promptText, @collectionId);
+﻿INSERT INTO WheelSpinPrompts (promptText, type)
+VALUES (@PromptText, @Type);
 
-SELECT LAST_INSERT_ID();
+SET @newPromptId = LAST_INSERT_ID();
+
+INSERT INTO PromptToCollection (collectionId, promptId)
+SELECT @CollectionId, @newPromptId
+WHERE @CollectionId IS NOT NULL;
+
+SELECT
+    promptId AS PromptId,
+    promptText AS PromptText,
+    type AS Type,
+    creationDate AS CreationDate
+FROM WheelSpinPrompts
+WHERE promptId = @newPromptId;

@@ -1,7 +1,10 @@
-﻿UPDATE horizon.PromptCollections
-	SET name=@name
-	WHERE collectionId=@collectionId;
+﻿UPDATE PromptCollections
+SET name = @name
+WHERE collectionId = @collectionId;
 
-SELECT * 
-FROM horizon.PromptCollections
+SELECT
+    collectionId AS CollectionId,
+    name AS Name,
+    creationDate AS CreationDate
+FROM PromptCollections
 WHERE collectionId = @collectionId;
