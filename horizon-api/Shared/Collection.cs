@@ -2,7 +2,7 @@
 {
     public class Collection
     {
-        public int Id { get; set; }
+        public int CollectionId { get; set; }
         public required string Name { get; set; }
     }
 }

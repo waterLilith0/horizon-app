@@ -2,8 +2,8 @@
 {
     public class Prompt
     {
-        public int Id { get; set; }
+        public int PromptId { get; set; }
+        public required string PromptText { get; set; }
         public int? CollectionId { get; set; } = null;
-        public required string Text { get; set; }
     }
 }

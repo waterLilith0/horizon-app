@@ -372,7 +372,7 @@ namespace horizon_api_integration_tests
             var (linesChanged, _) = await AddEntriesToPromptsDatabase();
             var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
 
-            var updatedPromptText = "Updated Prompt Text";
+            var updatedPromptText = "Updated Prompt PromptText";
             var sqlQuery = sqlQueryStore.Get("PostUpdateById");
             var command = connection.CreateCommand(sqlQuery);
             command.Parameters.AddWithValue("@promptId", 1);

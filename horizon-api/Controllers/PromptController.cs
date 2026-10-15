@@ -53,23 +53,23 @@ namespace horizon_api.Controllers
             }
         }
 
-        // GET: PromptController/create/?Id=5&promptText="Example"
+        // GET: PromptController/create/?PromptId=5&promptText="Example"
         [HttpPost("create")]
         public async Task<IActionResult> PostCreate([FromQuery] int collectionId, [FromQuery] string promptText)
         {
-            _logger.LogInformation("Create action called in PromptController with Id: {Id}, Text: {promptText}", collectionId.ToString(), promptText);
+            _logger.LogInformation("Create action called in PromptController with PromptId: {PromptId}, PromptText: {promptText}", collectionId.ToString(), promptText);
             var command = _mySqlAccess.CreateCommand(_sqlQueryStore.Get("PostInsert"));
             command.Parameters.AddWithValue("@collectionId", collectionId);
             command.Parameters.AddWithValue("@promptText", promptText.Trim('"'));
             var affectedRows = await _mySqlAccess.ExecuteNonQueryAsync(command);
             if (affectedRows > 0)
             {
-                _logger.LogInformation("Successfully created a new prompt with Id: {Id}, Text: {promptText}", collectionId.ToString(), promptText);
+                _logger.LogInformation("Successfully created a new prompt with PromptId: {PromptId}, PromptText: {promptText}", collectionId.ToString(), promptText);
                 return Ok("Prompt created successfully.");
             }
             else
             {
-                _logger.LogError("Failed to create a new prompt with Id: {Id}, Text: {promptText}", collectionId.ToString(), promptText);
+                _logger.LogError("Failed to create a new prompt with PromptId: {PromptId}, PromptText: {promptText}", collectionId.ToString(), promptText);
                 return StatusCode(500, "Failed to create prompt.");
             }
         }
@@ -89,8 +89,8 @@ namespace horizon_api.Controllers
                     var temp = CollectionIdCheck(reader);
                     return Ok(new Prompt
                     {
-                        Id = reader.GetInt32("promptId"),
-                        Text = reader.GetString("promptText"),
+                        PromptId = reader.GetInt32("promptId"),
+                        PromptText = reader.GetString("promptText"),
                         CollectionId = temp
                     });
                 }
@@ -98,7 +98,7 @@ namespace horizon_api.Controllers
             return NotFound("Could not find Prompt with ID: " + id);
         }
 
-        // GET: PromptController/allprompts or PromptController/allprompts?Id=5
+        // GET: PromptController/allprompts or PromptController/allprompts?PromptId=5
         [HttpGet("allprompts")]
         public async Task<IActionResult> GetAllPrompts([FromQuery] int? collectionId)
         {
@@ -113,8 +113,8 @@ namespace horizon_api.Controllers
                     var temp = CollectionIdCheck(reader);
                     allPrompts.Add(new Prompt
                     {
-                        Id = reader.GetInt32("promptId"),
-                        Text = reader.GetString("promptText"),
+                        PromptId = reader.GetInt32("promptId"),
+                        PromptText = reader.GetString("promptText"),
                         CollectionId = temp
                     });
                 }
@@ -122,7 +122,7 @@ namespace horizon_api.Controllers
             return Ok(allPrompts);
         }
 
-        // GET: PromptController/random or PromptController/random?Id=5
+        // GET: PromptController/random or PromptController/random?PromptId=5
         [HttpGet("random")]
         public async Task<IActionResult> GetRandomPrompt([FromQuery] int? collectionId)
         {
@@ -145,8 +145,8 @@ namespace horizon_api.Controllers
                     var temp = CollectionIdCheck(reader);
                     return Ok(new Prompt
                     {
-                        Id = reader.GetInt32("promptId"),
-                        Text = reader.GetString("promptText"),
+                        PromptId = reader.GetInt32("promptId"),
+                        PromptText = reader.GetString("promptText"),
                         CollectionId = temp
                     });
                 }
@@ -171,11 +171,11 @@ namespace horizon_api.Controllers
                     var temp = CollectionIdCheck(reader);
                     oldPrompt = new Prompt
                     {
-                        Id = reader.GetInt32("promptId"),
-                        Text = reader.GetString("promptText"),
+                        PromptId = reader.GetInt32("promptId"),
+                        PromptText = reader.GetString("promptText"),
                         CollectionId = temp
                     };
-                    _logger.LogInformation("Successfully retrieved existing prompt with ID: " + id + " for editing. Current Text: " + oldPrompt.Text + ", Current Id: " + (oldPrompt.CollectionId.HasValue ? oldPrompt.CollectionId.Value.ToString() : "null"));
+                    _logger.LogInformation("Successfully retrieved existing prompt with ID: " + id + " for editing. Current PromptText: " + oldPrompt.PromptText + ", Current PromptId: " + (oldPrompt.CollectionId.HasValue ? oldPrompt.CollectionId.Value.ToString() : "null"));
                 }
                 else
                 {
@@ -186,7 +186,7 @@ namespace horizon_api.Controllers
             var command = _mySqlAccess.CreateCommand(_sqlQueryStore.Get("PostUpdateById"));
             command.Parameters.AddWithValue("@promptId", id);
             command.Parameters.AddWithValue("@collectionId", collectionId != 0 ? collectionId : oldPrompt.CollectionId);
-            command.Parameters.AddWithValue("@promptText", promptText != null ? promptText.Trim('"') : oldPrompt.Text);
+            command.Parameters.AddWithValue("@promptText", promptText != null ? promptText.Trim('"') : oldPrompt.PromptText);
             var affectedRows = await _mySqlAccess.ExecuteNonQueryAsync(command);
             return Ok(affectedRows.ToString() + " Rows affected");
         }

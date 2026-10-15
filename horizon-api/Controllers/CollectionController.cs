@@ -1,158 +1,144 @@
-﻿using horizon_api.Infrastructure;
+﻿using Dapper;
+using horizon_api.Infrastructure;
 using horizon_api.Shared;
 using Microsoft.AspNetCore.Mvc;
 using MySqlConnector;
-using Serilog;
-using System.Data.Common;
+using System.Net;
 
 namespace horizon_api.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class CollectionController(MySqlAccess mySqlAccess, SqlQueryStore sqlQueryStore, MySqlDataSource dataSource, ILogger<CollectionController> logger) : Controller
+    public class CollectionController(SqlQueryStore sqlQueryStore, MySqlDataSource dataSource, ILogger<CollectionController> logger) : Controller
     {
-        private readonly MySqlAccess _mySqlAccess = mySqlAccess;
         private readonly SqlQueryStore _sqlQueryStore = sqlQueryStore;
         private readonly ILogger<CollectionController> _logger = logger;
 
-        private static int CollectionIdCheck(DbDataReader reader)
-        {
-            return reader.IsDBNull(0) ? 0 : reader.GetInt32(0);
-        }
-
         // GET: CollectionController/checkstatus
         [HttpGet("checkstatus")]
-        public async Task<IActionResult> GetCheck()
+        public async Task<ActionResult<HttpStatusCode>> GetCheck()
         {
-            try
-            {
-                _logger.LogInformation("Successfully got to the CollectionController.");
-                return Ok("CollectionController is running.");
-            }
-            catch (Exception e)
-            {
-                _logger.LogError("An error occurred while checking the CollectionController.", e.Message);
-                throw;
-            }
+            _logger.LogInformation("Successfully got to the CollectionController.");
+            return Ok("CollectionController is running.");
         }
 
-        // GET: CollectionController/create/?collectionName=Example
+        // Create a single collection
         [HttpPost("create")]
-        public async Task<IActionResult> Create([FromBody] Collection collection)
+        public async Task<ActionResult<Collection>> Create([FromBody] Collection collection, CancellationToken cancellationToken)
         {
-            _logger.LogInformation("Create action called in CollectionController with name:", collection.Name);
-            await using var connection = await dataSource.OpenConnectionAsync();
-            await using var command = await _mySqlAccess.CreateCommand(_sqlQueryStore.Get("PostInsertCollection"), connection);
-            
-            var id = command.LastInsertedId;
-            command.Parameters.AddWithValue("@name", collection.Name);
+            _logger.LogDebug("Create action called in CollectionController with name: {collectionName}", collection.Name);
+            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+            var sql = _sqlQueryStore.Get("PostInsertCollection");
 
-            var createdCollection = new Collection { Id = (int)id, Name = collection.Name };
+            var command = new CommandDefinition(sql, new { name = collection.Name }, cancellationToken: cancellationToken);
+            var collectionId = await connection.QuerySingleOrDefaultAsync<int?>(command);
+            if (collectionId == null)
+            {
+                _logger.LogError("Database returned no result when creating collection with name: {collectionName}", collection.Name);
+                return Problem(
+                        title: "Database Error",
+                        detail: "The insert statement executed, but no ID was returned.",
+                        statusCode: StatusCodes.Status500InternalServerError
+                    );
+            }
+            else if (collectionId <= 0)
+            {
+                _logger.LogWarning("Failed to create a new collection with name: {collectionName}", collection.Name);
+                return Problem(
+                        title: "Creation Failed",
+                        detail: $"The database failed to generate a valid ID for the new collection.",
+                        statusCode: StatusCodes.Status500InternalServerError
+                    );
+            }
 
-            var value = await _mySqlAccess.ExecuteNonQueryAsync(command);
-            if (value != 0)
-            {
-                _logger.LogInformation("Successfully created a new collection with name:", collection.Name, "Lines affected: ", $"{value}");
-                return CreatedAtAction(nameof(GetCollectionById), new { id = id }, collection);
-            }
-            else
-            {
-                _logger.LogError("Failed to create a new collection with name: ", collection.Name);
-                return BadRequest();
-            }
+            collection.CollectionId = collectionId.Value;
+            _logger.LogInformation("Successfully created a new collection with name: {collectionName}", collection.Name);
+            return CreatedAtAction(nameof(GetCollectionById), new { collectionId }, collection);
         }
 
-        // TODO: edit old version of this
         // GET: CollectionController/5
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetCollectionById(int id)
+        [HttpGet("{collectionId:int}")]
+        public async Task<ActionResult<Collection>> GetCollectionById([FromRoute]int collectionId, CancellationToken cancellationToken)
         {
-            _logger.LogInformation("GetCollectionById method called in CollectionController for collection ID: " + id);
-            await using var connection = await dataSource.OpenConnectionAsync();
-            await using var command = await _mySqlAccess.CreateCommand(_sqlQueryStore.Get("GetCollectionById"), connection);
+            _logger.LogDebug("GetCollectionById method called in CollectionController for collection {collectionId}", collectionId);
+            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+            var sql = _sqlQueryStore.Get("GetCollectionById");
+            var command = new CommandDefinition(sql, new { collectionId }, cancellationToken: cancellationToken);
+            var collection = await connection.QuerySingleOrDefaultAsync<Collection>(command);
 
-            command.Parameters.AddWithValue("@collectionId", id);
-            
-            using var reader = await _mySqlAccess.ExecuteQueryAsync(command);
-            if (reader.Read())
+            if (collection == null)
             {
-                var collection = new Collection
-                {
-                    Id = CollectionIdCheck(reader),
-                    Name = reader.IsDBNull(1) ? string.Empty : reader.GetString(1)
-                };
-                _logger.LogInformation("Successfully retrieved collection with ID: ", id.ToString());
-                return Ok(collection);
+                _logger.LogWarning("No collection found with ID {collectionId}", collectionId);
+                return Problem(
+                        title: "ID not found",
+                        detail: $"Collection with ID {collectionId} not found.",
+                        statusCode: StatusCodes.Status404NotFound
+                    );
             }
-            else
-            {
-                _logger.LogWarning("No collection found with ID: ", id.ToString());
-                return NotFound($"Collection with ID {id} not found.");
-            }
+            _logger.LogInformation("Successfully retrieved collection with ID {collectionId}", collectionId);
+            return Ok(collection);
         }
 
-        // GET: CollectionController/allcollections
-        [HttpGet("allcollections")]
-        public async Task<IActionResult> GetAllCollections()
+        // Get all collections as an array
+        [HttpGet]
+        public async Task<ActionResult<Collection[]>> GetAllCollections(CancellationToken cancellationToken)
         {
-            List<Collection> allCollections = [];
-            _logger.LogInformation("GetAllCollections method called in CollectionController.");
+            _logger.LogDebug("GetAllCollections method called in CollectionController.");
+            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+            var sql = _sqlQueryStore.Get("GetAllCollections");
+            var command = new CommandDefinition(sql, cancellationToken: cancellationToken);
+            var allCollections = await connection.QueryAsync<Collection>(command);
 
-            var command = _mySqlAccess.CreateCommand(_sqlQueryStore.Get("GetAllCollections"));
-            using var reader = await _mySqlAccess.ExecuteQueryAsync(command);
-
-            while (reader.Read())
-            {
-                allCollections.Add(new Collection
-                {
-                    Id = CollectionIdCheck(reader),
-                    Name = reader.IsDBNull(1) ? string.Empty : reader.GetString(1)
-                });
-            }
-
-            _logger.LogInformation($"Successfully retrieved all collections. Total collections: {allCollections.Count}");
+            _logger.LogInformation("Successfully retrieved all collections. Total collections: {allCollectionsLength}", allCollections.Count());
             return Ok(allCollections);
         }
 
-        // GET: CollectionController/edit/5?newname="New Name"
-        [HttpPost("edit/{id}")]
-        public async Task<IActionResult> Edit(int id, [FromBody] string newName)
+        public record UpdateCollectionDto(string Name);
+
+        // Update call for a specific collection
+        [HttpPut("{collectionId:int}")]
+        public async Task<IActionResult> Edit([FromRoute]int collectionId, [FromBody] UpdateCollectionDto dto, CancellationToken cancellationToken)
         {
-            _logger.LogInformation("Edit action called for collection: " + id);
-            var command = _mySqlAccess.CreateCommand(_sqlQueryStore.Get("PostUpdateCollectionById"));
-            command.Parameters.AddWithValue("@collectionId", id);
-            command.Parameters.AddWithValue("@name", newName);
-            var reader = await _mySqlAccess.ExecuteNonQueryAsync(command);
-            if (reader > 0)
+            _logger.LogDebug("Edit action called for collection: {collectionId}", collectionId);
+            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+            var sql = _sqlQueryStore.Get("PostUpdateCollectionById");
+            var command = new CommandDefinition(sql, new { collectionId, name = dto.Name }, cancellationToken: cancellationToken);
+            var updatedCollection = await connection.QuerySingleOrDefaultAsync<Collection>(command);
+
+            if (updatedCollection == null)
             {
-                _logger.LogInformation("Successfully edited collection with ID: ", id.ToString(), "Lines affected: ", $"{reader}");
-                return Ok("Collection edited successfully.");
+                _logger.LogWarning("Failed to edit collection with ID: {collectionId}", collectionId);
+                return Problem(
+                        title: "Database Error",
+                        detail: $"Collection with ID {collectionId} was not found or could not be updated.",
+                        statusCode: StatusCodes.Status404NotFound
+                    );
             }
-            else
-            {
-                _logger.LogError("Failed to edit collection with ID: ", id.ToString());
-                return StatusCode(500, "Failed to edit collection.");
-            }
+            _logger.LogInformation("Successfully edited collection with ID: {collectionId}", collectionId);
+            return Ok(updatedCollection);
         }
 
-        // GET: CollectionController/delete/5
-        [HttpDelete("delete/{id}")]
-        public async Task<IActionResult> Delete(int id)
+        // Delete a specific collection
+        [HttpDelete("{collectionId:int}")]
+        public async Task<ActionResult<HttpStatusCode>> Delete([FromRoute] int collectionId, CancellationToken cancellationToken)
         {
-            _logger.LogInformation("Delete action called for collection: " + id);
-            var command = _mySqlAccess.CreateCommand(_sqlQueryStore.Get("DeleteCollectionById"));
-            command.Parameters.AddWithValue("@collectionId", id);
-            var reader = await _mySqlAccess.ExecuteNonQueryAsync(command);
-            if (reader > 0)
+            _logger.LogDebug("Delete action called for collection: {collectionId}", collectionId);
+            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+            var sql = _sqlQueryStore.Get("DeleteCollectionById");
+            var command = new CommandDefinition(sql, new { collectionId }, cancellationToken: cancellationToken);
+            var rowsAffected = await connection.ExecuteAsync(command);
+
+            if (rowsAffected == 0)
             {
-                _logger.LogInformation("Successfully deleted collection with ID: ", id.ToString(), "Lines affected: ", $"{reader}");
-                return Ok("Collection deleted successfully.");
+                _logger.LogWarning("Failed to delete collection with ID: {collectionId}", collectionId);
+                return Problem(
+                    title: "Collection not found",
+                    detail: $"Failed to find any collection with ID {collectionId}.",
+                    statusCode: StatusCodes.Status404NotFound
+                );
             }
-            else
-            {
-                _logger.LogError("Failed to delete collection with ID: ", id.ToString());
-                return StatusCode(500, "Failed to delete collection.");
-            }
+            _logger.LogInformation("Successfully deleted collection with ID: {collectionId}", collectionId);
+            return NoContent();
         }
     }
 }
