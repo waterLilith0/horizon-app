@@ -56,7 +56,7 @@ namespace horizon_api.Controllers
             return CreatedAtAction(nameof(GetCollectionById), new { collectionId }, collection);
         }
 
-        // GET: CollectionController/5
+        // Get a single collection
         [HttpGet("{collectionId:int}")]
         public async Task<ActionResult<Collection>> GetCollectionById([FromRoute]int collectionId, CancellationToken cancellationToken)
         {

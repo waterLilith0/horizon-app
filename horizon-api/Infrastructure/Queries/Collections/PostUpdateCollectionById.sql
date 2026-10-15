@@ -3,5 +3,5 @@
 	WHERE collectionId=@collectionId;
 
 SELECT * 
-FROM collections 
+FROM horizon.PromptCollections
 WHERE collectionId = @collectionId;
