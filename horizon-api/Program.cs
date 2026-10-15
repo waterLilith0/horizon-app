@@ -1,8 +1,10 @@
 using Grafana.OpenTelemetry;
 using horizon_api.Infrastructure;
+using Microsoft.AspNetCore.HttpOverrides;
 using MySqlConnector;
 using Serilog;
 using Serilog.Enrichers.Span;
+using System.Threading.RateLimiting;
 
 namespace horizon_api
 {
@@ -39,12 +41,48 @@ namespace horizon_api
                         o.ServiceName = "horizon-api";
                     });
 
+                builder.Services.Configure<ForwardedHeadersOptions>(options =>
+                {
+                    options.ForwardedHeaders =
+                        ForwardedHeaders.XForwardedFor |
+                        ForwardedHeaders.XForwardedProto |
+                        ForwardedHeaders.XForwardedHost;
+
+                    // If the app is only reachable through the tunnel/proxy,
+                    // clear trust restrictions so forwarded headers are applied.
+                    options.KnownNetworks.Clear();
+                    options.KnownProxies.Clear();
+                });
+
                 builder.Services.AddProblemDetails(options =>
                 {
                     options.CustomizeProblemDetails = context =>
                     {
                         context.ProblemDetails.Extensions["traceId"] = context.HttpContext.TraceIdentifier;
                     };
+                });
+
+                builder.Services.AddRateLimiter(options =>
+                {
+                    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+                    options.OnRejected = async (context, token) =>
+                    {
+                        context.HttpContext.Response.Headers.RetryAfter = "60";
+                        await context.HttpContext.Response.WriteAsync("Too many requests.", token);
+                    };
+                    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
+                        RateLimitPartition.GetFixedWindowLimiter(
+                            partitionKey: httpContext.Request.Headers["CF-Connecting-IP"].FirstOrDefault()
+                            ?? httpContext.Connection.RemoteIpAddress?.ToString()
+                            ?? "unknown",
+                            factory: _ => new FixedWindowRateLimiterOptions
+                            {
+                                PermitLimit = 100,
+                                Window = TimeSpan.FromMinutes(1),
+                                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                                QueueLimit = 0,
+                                AutoReplenishment = true
+                            }));
                 });
 
                 builder.Services.AddAuthorization();
@@ -58,6 +96,7 @@ namespace horizon_api
 
                 var app = builder.Build();
 
+                app.UseForwardedHeaders();
                 app.UseExceptionHandler();
                 app.UseStatusCodePages();
 
@@ -66,13 +105,11 @@ namespace horizon_api
                 {
                     app.UseHttpsRedirection();
                     app.UseHsts();
-                    app.UseAuthorization();
                 }
-                if (builder.Environment.IsDevelopment())
-                {
-                    app.UseSwagger();
-                    app.UseSwaggerUI();
-                }
+                app.UseSwagger();
+                app.UseSwaggerUI();
+                app.UseAuthorization();
+                app.UseRateLimiter();
                 app.MapControllers();
 
                 app.Run();
