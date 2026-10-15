@@ -1,23 +1,24 @@
-﻿using System.Collections.Frozen;
+﻿using Serilog;
+using System.Collections.Frozen;
 
 namespace horizon_api.Infrastructure
 {
     public sealed class SqlQueryStore
     {
-        private FrozenDictionary<string, string> _queries;
-        private readonly SeriLogger _logger;
+        private readonly FrozenDictionary<string, string> _queries;
         private readonly IConfiguration _configuration;
+        private readonly ILogger<SqlQueryStore> _logger;
 
-        public SqlQueryStore(IWebHostEnvironment _env, SeriLogger logger, IConfiguration configuration)
+        public SqlQueryStore(IWebHostEnvironment _env, IConfiguration configuration, ILogger<SqlQueryStore> logger)
         {
             Dictionary<string, string> temp = new(StringComparer.OrdinalIgnoreCase);
-            _logger = logger;
             _configuration = configuration;
+            _logger = logger;
 
             var folderPath = _configuration["SqlSettings:QueriesFolderPath"] ?? "none";
-            logger.LogInformation($"Loading SQL queries from folder: {folderPath}");
-            logger.LogInformation($"Content root path: {_env.ContentRootPath}");
-            logger.LogInformation($"Full path to queries folder: {Path.Combine(_env.ContentRootPath, folderPath)}");
+            _logger.LogInformation($"Loading SQL queries from folder: {folderPath}");
+            _logger.LogInformation($"Content root path: {_env.ContentRootPath}");
+            _logger.LogInformation($"Full path to queries folder: {Path.Combine(_env.ContentRootPath, folderPath)}");
             var queryDirs = new List<string>(Directory.GetDirectories(Path.Combine(_env.ContentRootPath, folderPath!)));
 
             foreach (var queryDir in queryDirs)

@@ -9,10 +9,11 @@ namespace horizon_api.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class CollectionController(MySqlAccess mySqlAccess, SqlQueryStore sqlQueryStore, MySqlDataSource dataSource) : Controller
+    public class CollectionController(MySqlAccess mySqlAccess, SqlQueryStore sqlQueryStore, MySqlDataSource dataSource, ILogger<CollectionController> logger) : Controller
     {
         private readonly MySqlAccess _mySqlAccess = mySqlAccess;
         private readonly SqlQueryStore _sqlQueryStore = sqlQueryStore;
+        private readonly ILogger<CollectionController> _logger = logger;
 
         private static int CollectionIdCheck(DbDataReader reader)
         {
@@ -25,12 +26,12 @@ namespace horizon_api.Controllers
         {
             try
             {
-                Log.Information("Successfully got to the CollectionController.");
+                _logger.LogInformation("Successfully got to the CollectionController.");
                 return Ok("CollectionController is running.");
             }
             catch (Exception e)
             {
-                Log.Error("An error occurred while checking the CollectionController.", e.Message);
+                _logger.LogError("An error occurred while checking the CollectionController.", e.Message);
                 throw;
             }
         }
@@ -39,7 +40,7 @@ namespace horizon_api.Controllers
         [HttpPost("create")]
         public async Task<IActionResult> Create([FromBody] Collection collection)
         {
-            Log.Information("Create action called in CollectionController with name:", collection.Name);
+            _logger.LogInformation("Create action called in CollectionController with name:", collection.Name);
             await using var connection = await dataSource.OpenConnectionAsync();
             await using var command = await _mySqlAccess.CreateCommand(_sqlQueryStore.Get("PostInsertCollection"), connection);
             
@@ -51,12 +52,12 @@ namespace horizon_api.Controllers
             var value = await _mySqlAccess.ExecuteNonQueryAsync(command);
             if (value != 0)
             {
-                Log.Information("Successfully created a new collection with name:", collection.Name, "Lines affected: ", $"{value}");
+                _logger.LogInformation("Successfully created a new collection with name:", collection.Name, "Lines affected: ", $"{value}");
                 return CreatedAtAction(nameof(GetCollectionById), new { id = id }, collection);
             }
             else
             {
-                Log.Error("Failed to create a new collection with name: ", collection.Name);
+                _logger.LogError("Failed to create a new collection with name: ", collection.Name);
                 return BadRequest();
             }
         }
@@ -66,7 +67,7 @@ namespace horizon_api.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetCollectionById(int id)
         {
-            Log.Information("GetCollectionById method called in CollectionController for collection ID: " + id);
+            _logger.LogInformation("GetCollectionById method called in CollectionController for collection ID: " + id);
             await using var connection = await dataSource.OpenConnectionAsync();
             await using var command = await _mySqlAccess.CreateCommand(_sqlQueryStore.Get("GetCollectionById"), connection);
 
@@ -80,12 +81,12 @@ namespace horizon_api.Controllers
                     Id = CollectionIdCheck(reader),
                     Name = reader.IsDBNull(1) ? string.Empty : reader.GetString(1)
                 };
-                Log.Information("Successfully retrieved collection with ID: ", id.ToString());
+                _logger.LogInformation("Successfully retrieved collection with ID: ", id.ToString());
                 return Ok(collection);
             }
             else
             {
-                Log.Warning("No collection found with ID: ", id.ToString());
+                _logger.LogWarning("No collection found with ID: ", id.ToString());
                 return NotFound($"Collection with ID {id} not found.");
             }
         }
@@ -95,7 +96,7 @@ namespace horizon_api.Controllers
         public async Task<IActionResult> GetAllCollections()
         {
             List<Collection> allCollections = [];
-            Log.Information("GetAllCollections method called in CollectionController.");
+            _logger.LogInformation("GetAllCollections method called in CollectionController.");
 
             var command = _mySqlAccess.CreateCommand(_sqlQueryStore.Get("GetAllCollections"));
             using var reader = await _mySqlAccess.ExecuteQueryAsync(command);
@@ -109,7 +110,7 @@ namespace horizon_api.Controllers
                 });
             }
 
-            Log.Information($"Successfully retrieved all collections. Total collections: {allCollections.Count}");
+            _logger.LogInformation($"Successfully retrieved all collections. Total collections: {allCollections.Count}");
             return Ok(allCollections);
         }
 
@@ -117,19 +118,19 @@ namespace horizon_api.Controllers
         [HttpPost("edit/{id}")]
         public async Task<IActionResult> Edit(int id, [FromBody] string newName)
         {
-            Log.Information("Edit action called for collection: " + id);
+            _logger.LogInformation("Edit action called for collection: " + id);
             var command = _mySqlAccess.CreateCommand(_sqlQueryStore.Get("PostUpdateCollectionById"));
             command.Parameters.AddWithValue("@collectionId", id);
             command.Parameters.AddWithValue("@name", newName);
             var reader = await _mySqlAccess.ExecuteNonQueryAsync(command);
             if (reader > 0)
             {
-                Log.Information("Successfully edited collection with ID: ", id.ToString(), "Lines affected: ", $"{reader}");
+                _logger.LogInformation("Successfully edited collection with ID: ", id.ToString(), "Lines affected: ", $"{reader}");
                 return Ok("Collection edited successfully.");
             }
             else
             {
-                Log.Error("Failed to edit collection with ID: ", id.ToString());
+                _logger.LogError("Failed to edit collection with ID: ", id.ToString());
                 return StatusCode(500, "Failed to edit collection.");
             }
         }
@@ -138,18 +139,18 @@ namespace horizon_api.Controllers
         [HttpDelete("delete/{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            Log.Information("Delete action called for collection: " + id);
+            _logger.LogInformation("Delete action called for collection: " + id);
             var command = _mySqlAccess.CreateCommand(_sqlQueryStore.Get("DeleteCollectionById"));
             command.Parameters.AddWithValue("@collectionId", id);
             var reader = await _mySqlAccess.ExecuteNonQueryAsync(command);
             if (reader > 0)
             {
-                Log.Information("Successfully deleted collection with ID: ", id.ToString(), "Lines affected: ", $"{reader}");
+                _logger.LogInformation("Successfully deleted collection with ID: ", id.ToString(), "Lines affected: ", $"{reader}");
                 return Ok("Collection deleted successfully.");
             }
             else
             {
-                Log.Error("Failed to delete collection with ID: ", id.ToString());
+                _logger.LogError("Failed to delete collection with ID: ", id.ToString());
                 return StatusCode(500, "Failed to delete collection.");
             }
         }

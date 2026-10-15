@@ -11,9 +11,9 @@ namespace horizon_api.Infrastructure
     /// events and errors during database operations.
     /// </summary>
     /// <completionlist cref="MySqlAccess"/>
-    public partial class MySqlAccess(SeriLogger logger)
+    public partial class MySqlAccess(ILogger<MySqlAccess> logger)
     {
-        private readonly SeriLogger _logger = logger;
+        private readonly ILogger<MySqlAccess> _logger = logger;
 
         private string CheckSqlFormat(string? sql)
         {
