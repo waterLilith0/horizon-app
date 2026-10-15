@@ -1,7 +1,4 @@
 <Solution>
   <Project Path="horizon-api-integration-tests/horizon-api-integration-tests.csproj" Id="8b6161d8-c73c-4c25-a8a3-efb2af1ae7a9" />
-  <Project Path="horizon-api-tests/horizon-api-tests.csproj" Id="8cc3e102-a4eb-4a50-9f71-d61dec2ea313">
-    <BuildDependency Project="horizon-api/horizon-api.csproj" />
-  </Project>
   <Project Path="horizon-api/horizon-api.csproj" />
 </Solution>

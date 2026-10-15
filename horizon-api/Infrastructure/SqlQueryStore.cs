@@ -1,29 +1,34 @@
-﻿namespace horizon_api.Infrastructure
+﻿using Serilog;
+using System.Collections.Frozen;
+
+namespace horizon_api.Infrastructure
 {
     public sealed class SqlQueryStore
     {
-        private readonly Dictionary<string, string> _queries = new(StringComparer.OrdinalIgnoreCase);
-        private readonly SeriLogger _logger;
+        private readonly FrozenDictionary<string, string> _queries;
         private readonly IConfiguration _configuration;
+        private readonly ILogger<SqlQueryStore> _logger;
 
-        public SqlQueryStore(IWebHostEnvironment _env, SeriLogger logger, IConfiguration configuration)
+        public SqlQueryStore(IWebHostEnvironment _env, IConfiguration configuration, ILogger<SqlQueryStore> logger)
         {
-            _logger = logger;
+            Dictionary<string, string> temp = new(StringComparer.OrdinalIgnoreCase);
             _configuration = configuration;
+            _logger = logger;
 
             var folderPath = _configuration["SqlSettings:QueriesFolderPath"] ?? "none";
-            logger.LogInformation($"Loading SQL queries from folder: {folderPath}");
-            logger.LogInformation($"Content root path: {_env.ContentRootPath}");
-            logger.LogInformation($"Full path to queries folder: {Path.Combine(_env.ContentRootPath, folderPath)}");
+            _logger.LogInformation("Loading SQL queries from folder {folderPath}", folderPath);
+            _logger.LogInformation("Content root path: {envContentRootPath}", _env.ContentRootPath);
+            _logger.LogInformation("Full path to queries folder: {fullPathQueriesFolder}", Path.Combine(_env.ContentRootPath, folderPath));
             var queryDirs = new List<string>(Directory.GetDirectories(Path.Combine(_env.ContentRootPath, folderPath!)));
 
             foreach (var queryDir in queryDirs)
             {
                 foreach (var file in Directory.GetFiles(queryDir, "*.sql"))
                 {
-                    _queries[Path.GetFileNameWithoutExtension(file)] = File.ReadAllText(file);
+                    temp[Path.GetFileNameWithoutExtension(file)] = File.ReadAllText(file);
                 }
             }
+            _queries = temp.ToFrozenDictionary();
         }
 
         public string Get(string key)
@@ -33,20 +38,20 @@
                 _queries.TryGetValue(key, out var query);
                 if (query == null)
                 {
-                    _logger.LogError($"Query '{key}' not found");
+                    _logger.LogError("Query '{key}' not found", key);
                     throw new ArgumentException("Query not found", nameof(key));
                 }
-                _logger.LogInformation($"Successfully retrieved query '{key}'");
+                _logger.LogInformation("Successfully retrieved query {key}", key);
                 return query;
             }
             catch (ArgumentException e)
             {
-                _logger.LogError($"Query '{key}' not found: {e.Message}");
+                _logger.LogError("Query {key} not found: {e.Message}", key, e.Message);
                 throw;
             }
             catch (Exception e)
             {
-                _logger.LogError($"Error retrieving query '{key}': {e.Message}");
+                _logger.LogError("Error retrieving query '{key}': {e.Message}", key, e.Message);
                 throw;
             }
         }

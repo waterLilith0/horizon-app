@@ -3,6 +3,7 @@
     public class Collection
     {
         public int CollectionId { get; set; }
-        public string CollectionName { get; set; } = string.Empty;
+        public required string Name { get; set; }
+        public DateTime CreationDate { get; set; }
     }
 }

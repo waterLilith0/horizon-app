@@ -1,4 +1,7 @@
-﻿SELECT *
+﻿SELECT
+    promptId AS PromptId,
+    promptText AS PromptText,
+    type AS Type,
+    creationDate AS CreationDate
 FROM WheelSpinPrompts
-WHERE (@promptId IS NULL OR promptId = @promptId)
-AND (@collectionId IS NULL OR collectionId = @collectionId);
+WHERE promptId = @promptId;

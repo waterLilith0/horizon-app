@@ -1,2 +1,2 @@
-﻿DELETE FROM horizon.PromptCollections
-WHERE collectionId=@collectionId;
+﻿DELETE FROM PromptCollections
+WHERE collectionId = @collectionId;
