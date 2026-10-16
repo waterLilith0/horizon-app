@@ -8,7 +8,7 @@ using System.Net;
 namespace horizon_api.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("api/[controller]")]
     public class CollectionController(SqlQueryStore sqlQueryStore, MySqlDataSource dataSource, ILogger<CollectionController> logger) : Controller
     {
         private readonly SqlQueryStore _sqlQueryStore = sqlQueryStore;

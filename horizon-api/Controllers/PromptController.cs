@@ -10,7 +10,7 @@ using System.Data.Common;
 namespace horizon_api.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("api/[controller]")]
     public class PromptController(SqlQueryStore sqlQueryStore, MySqlDataSource dataSource, ILogger<PromptController> logger) : Controller
     {
         private readonly SqlQueryStore _sqlQueryStore = sqlQueryStore;
