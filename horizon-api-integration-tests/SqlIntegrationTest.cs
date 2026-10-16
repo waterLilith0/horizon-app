@@ -1,12 +1,12 @@
-﻿using FluentAssertions;
-using horizon_api;
+﻿using Dapper;
+using FluentAssertions;
 using horizon_api.Infrastructure;
+using horizon_api.Shared;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Logging;
 using MySqlConnector;
-using NSubstitute;
 using Testcontainers.MySql;
 
 namespace horizon_api_integration_tests
@@ -22,124 +22,149 @@ namespace horizon_api_integration_tests
 
         public MySqlDataSource DataSource { get; private set; } = null!;
 
-        public async Task InitializeAsync()
+        public async ValueTask InitializeAsync()
         {
             await Container.StartAsync();
-            DataSource = new MySqlDataSource(Container.GetConnectionString());
+            var connectionStringBuilder = new MySqlConnectionStringBuilder(Container.GetConnectionString())
+            {
+                AllowUserVariables = true
+            };
+            DataSource = new MySqlDataSource(connectionStringBuilder.ConnectionString);
         }
 
-        public async Task DisposeAsync()
+        public async ValueTask DisposeAsync()
         {
             await Container.DisposeAsync();
         }
     }
 
-    public class SqlIntegrationTest : IAsyncLifetime, IClassFixture<WebApplicationFactory<Program>>, IClassFixture<MySqlDatabaseFixture>
+    public class SqlIntegrationTest : IClassFixture<MySqlDatabaseFixture>, IAsyncLifetime
     {
         private readonly MySqlDatabaseFixture _dbFixture;
-        private readonly WebApplicationFactory<Program> _factory;
+        private readonly string _realApiPath;
+        private readonly IConfiguration _configuration;
+        private readonly IWebHostEnvironment _webHostEnvironment;
+        private readonly ILogger<SqlQueryStore> _sqlQueryStoreLogger;
         private MySqlDataSource MySqlDataSource => _dbFixture.DataSource;
 
-        public SqlIntegrationTest(WebApplicationFactory<Program> factory, MySqlDatabaseFixture dbFixture)
+        public SqlIntegrationTest(MySqlDatabaseFixture dbFixture)
         {
             _dbFixture = dbFixture;
-            var realApiPath = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "horizon-api");
-
-            _factory = factory.WithWebHostBuilder(builder =>
-            {
-                builder.UseContentRoot(realApiPath);
-            });
+            _realApiPath = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "horizon-api");
+            _configuration = new ConfigurationBuilder()
+                .SetBasePath(_realApiPath)
+                .AddJsonFile("appsettings.json", optional: false)
+                .AddJsonFile("appsettings.Development.json", optional: true)
+                .Build();
+            _webHostEnvironment = new TestWebHostEnvironment(_realApiPath);
+            _sqlQueryStoreLogger = LoggerFactory.Create(_ => { }).CreateLogger<SqlQueryStore>();
         }
 
-        public async Task InitializeAsync()
+        private async Task<(MySqlConnection connection, SqlQueryStore sqlQueryStore)> InitializeConnectionAndQueryStore()
+        {
+            var connection = await MySqlDataSource.OpenConnectionAsync(TestContext.Current.CancellationToken);
+            var sqlQueryStore = new SqlQueryStore(_webHostEnvironment, _configuration, _sqlQueryStoreLogger);
+            return (connection, sqlQueryStore);
+        }
+
+        private sealed class TestWebHostEnvironment(string contentRootPath) : IWebHostEnvironment
+        {
+            public string ApplicationName { get; set; } = "horizon_api";
+            public IFileProvider WebRootFileProvider { get; set; } = new NullFileProvider();
+            public string WebRootPath { get; set; } = string.Empty;
+            public string EnvironmentName { get; set; } = "Development";
+            public string ContentRootPath { get; set; } = contentRootPath;
+            public IFileProvider ContentRootFileProvider { get; set; } = new PhysicalFileProvider(contentRootPath);
+        }
+
+        public async ValueTask InitializeAsync()
         {
             await InitializeDatabaseSchemaAsync();
-
-            using var connection = await MySqlDataSource.OpenConnectionAsync();
-            using var command = new MySqlCommand(@"
-                SET FOREIGN_KEY_CHECKS = 0;
-                TRUNCATE TABLE WheelSpinPrompts;
-                TRUNCATE TABLE PromptCollections;
-                SET FOREIGN_KEY_CHECKS = 1;", connection);
-
-            await command.ExecuteNonQueryAsync();
         }
 
-        public Task DisposeAsync() => Task.CompletedTask;
+        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 
-        private async Task<int> InitializeDatabaseSchemaAsync()
+        private async Task InitializeDatabaseSchemaAsync()
         {
-            using var connection = await MySqlDataSource.OpenConnectionAsync();
+            await using var connection = await MySqlDataSource.OpenConnectionAsync(TestContext.Current.CancellationToken);
             var schemaSql = @"
-                CREATE TABLE IF NOT EXISTS PromptCollections (
-                collectionId INT AUTO_INCREMENT PRIMARY KEY,
-                name VARCHAR(255) NOT NULL
+                SET FOREIGN_KEY_CHECKS = 0;
+                DROP TABLE IF EXISTS PromptToCollection;
+                DROP TABLE IF EXISTS WheelSpinPrompts;
+                DROP TABLE IF EXISTS PromptCollections;
+                SET FOREIGN_KEY_CHECKS = 1;
+
+                CREATE TABLE PromptCollections (
+                    collectionId INT AUTO_INCREMENT PRIMARY KEY,
+                    name VARCHAR(255) NOT NULL,
+                    creationDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
                 );
 
-                CREATE TABLE IF NOT EXISTS WheelSpinPrompts (
-                promptId INT AUTO_INCREMENT PRIMARY KEY,
-                promptText VARCHAR(255) NOT NULL,
-                collectionId INT,
-                FOREIGN KEY (collectionId) REFERENCES PromptCollections(collectionId)
+                CREATE TABLE WheelSpinPrompts (
+                    promptId INT AUTO_INCREMENT PRIMARY KEY,
+                    promptText VARCHAR(255) NOT NULL,
+                    type VARCHAR(255) NOT NULL,
+                    creationDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+                );
+
+                CREATE TABLE PromptToCollection (
+                    entryId INT AUTO_INCREMENT PRIMARY KEY,
+                    collectionId INT NOT NULL,
+                    promptId INT NOT NULL,
+                    FOREIGN KEY (collectionId) REFERENCES PromptCollections(collectionId),
+                    FOREIGN KEY (promptId) REFERENCES WheelSpinPrompts(promptId)
                 );";
 
-            using var command = new MySqlCommand(schemaSql, connection);
-            var changedRows = await command.ExecuteNonQueryAsync();
-            return changedRows;
+            await using var command = new MySqlCommand(schemaSql, connection);
+            await command.ExecuteNonQueryAsync(TestContext.Current.CancellationToken);
         }
 
-        private async Task<(int, string)> AddEntriesToCollectionDatabase()
+        private async Task<(int collectionId, string collectionName)> AddEntriesToCollectionDatabase()
         {
             var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
 
-            var collectionName = "Mega Jackpot Spin";
+            const string collectionName = "Mega Jackpot Spin";
             var sqlQuery = sqlQueryStore.Get("PostInsertCollection");
-            var command = connection.CreateCommand(sqlQuery);
-            command.Parameters.AddWithValue("@name", collectionName);
-            var changedRows = await connection.ExecuteNonQueryAsync(command);
+            var command = new CommandDefinition(sqlQuery, new { name = collectionName }, cancellationToken: TestContext.Current.CancellationToken);
+            var collectionId = await connection.QuerySingleAsync<int>(command);
 
-            return (changedRows, collectionName);
+            return (collectionId, collectionName);
         }
 
-        private async Task<(int, string)> AddEntriesToPromptsDatabase()
+        private async Task<(Prompt prompt, int collectionId)> AddEntriesToPromptsDatabase(int? collectionId = null, string promptName = "Mega Jackpot Spin", string promptType = "Wheel Spin", bool createCollectionWhenMissing = true)
         {
-            await AddEntriesToCollectionDatabase();
+            var promptCollectionId = collectionId;
+            if (!promptCollectionId.HasValue && createCollectionWhenMissing)
+            {
+                var insertedCollection = await AddEntriesToCollectionDatabase();
+                promptCollectionId = insertedCollection.collectionId;
+            }
+
             var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
 
-            var promptName = "Mega Jackpot Spin";
             var sqlQuery = sqlQueryStore.Get("PostInsert");
-            var command = connection.CreateCommand(sqlQuery);
-            command.Parameters.AddWithValue("@promptText", promptName);
-            command.Parameters.AddWithValue("@collectionId", 1);
-            var changedRows = await connection.ExecuteNonQueryAsync(command);
+            var command = new CommandDefinition(
+                sqlQuery,
+                new { PromptText = promptName, Type = promptType, CollectionId = promptCollectionId },
+                cancellationToken: TestContext.Current.CancellationToken);
 
-            return (changedRows, promptName);
-        }
-
-        private async Task<(MySqlAccess, SqlQueryStore)> InitializeConnectionAndQueryStore()
-        {
-            using var scope = _factory.Services.CreateScope();
-            var realIWebHostEnvironment = scope.ServiceProvider.GetRequiredService<IWebHostEnvironment>();
-            var realIConfiguration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
-            var subSeriLogger = Substitute.For<SeriLogger>();
-            var connection = new MySqlAccess(subSeriLogger, MySqlDataSource);
-            var sqlQueryStore = new SqlQueryStore(realIWebHostEnvironment, subSeriLogger, realIConfiguration);
-            return (connection, sqlQueryStore);
+            var prompt = await connection.QuerySingleAsync<Prompt>(command);
+            return (prompt, promptCollectionId ?? 0);
         }
 
         [Fact]
         public async Task PostInsertCollection_ShouldInsertCollectionIntoDatabase()
         {
+            var insertedCollection = await AddEntriesToCollectionDatabase();
             var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
 
-            var insertedCollection = await AddEntriesToCollectionDatabase();
-            var getPromptsCommand = connection.CreateCommand(sqlQueryStore.Get("GetAllCollections"));
-            using var reader = await connection.ExecuteQueryAsync(getPromptsCommand);
+            var sqlQuery = sqlQueryStore.Get("GetAllCollections");
+            var command = new CommandDefinition(sqlQuery, cancellationToken: TestContext.Current.CancellationToken);
+            var collections = await connection.QueryAsync<Collection>(command);
 
-            for (int i = 0; reader.Read(); i++)
-            {
-                reader.GetString(1).Should().Be(insertedCollection.Item2);
-            }
+            collections.Should().ContainSingle(collection =>
+                collection.CollectionId == insertedCollection.collectionId &&
+                collection.Name == insertedCollection.collectionName);
         }
 
         [Fact]
@@ -149,12 +174,14 @@ namespace horizon_api_integration_tests
             var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
 
             var sqlQuery = sqlQueryStore.Get("GetCollectionById");
-            var command = connection.CreateCommand(sqlQuery);
-            command.Parameters.AddWithValue("@collectionId", 1);
-            using var reader = await connection.ExecuteQueryAsync(command);
+            var command = new CommandDefinition(
+                sqlQuery,
+                new { collectionId = insertedCollection.collectionId },
+                cancellationToken: TestContext.Current.CancellationToken);
+            var collection = await connection.QuerySingleOrDefaultAsync<Collection>(command);
 
-            reader.Read();
-            reader.GetString(1).Should().Be(insertedCollection.Item2);
+            collection.Should().NotBeNull();
+            collection!.Name.Should().Be(insertedCollection.collectionName);
         }
 
         [Fact]
@@ -163,24 +190,26 @@ namespace horizon_api_integration_tests
             var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
 
             var sqlQuery = sqlQueryStore.Get("GetCollectionById");
-            var command = connection.CreateCommand(sqlQuery);
-            command.Parameters.AddWithValue("@collectionId", 1);
-            using var reader = await connection.ExecuteQueryAsync(command);
+            var command = new CommandDefinition(
+                sqlQuery,
+                new { collectionId = 9999 },
+                cancellationToken: TestContext.Current.CancellationToken);
+            var collection = await connection.QuerySingleOrDefaultAsync<Collection>(command);
 
-            reader.HasRows.Should().BeFalse();
+            collection.Should().BeNull();
         }
 
         [Fact]
         public async Task GetAllCollections_ShouldReadFromRealDatabase()
         {
+            await AddEntriesToCollectionDatabase();
             var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
 
             var sqlQuery = sqlQueryStore.Get("GetAllCollections");
-            var command = connection.CreateCommand(sqlQuery);
-            command.Parameters.AddWithValue("@promptText", "InitializeConnectionAndQueryStore Prompt");
-            var results = await connection.ExecuteQueryAsync(command);
+            var command = new CommandDefinition(sqlQuery, cancellationToken: TestContext.Current.CancellationToken);
+            var results = await connection.QueryAsync<Collection>(command);
 
-            results.Should().BeOfType<MySqlDataReader>();
+            results.Should().NotBeEmpty();
         }
 
         [Fact]
@@ -190,7 +219,7 @@ namespace horizon_api_integration_tests
 
             var actualQuery = sqlQueryStore.Get("GetAllCollections");
 
-            actualQuery.Should().MatchEquivalentOf("SELECT *\r\nFROM horizon.PromptCollections;");
+            actualQuery.Should().MatchEquivalentOf("SELECT\r\n    collectionId AS CollectionId,\r\n    name AS Name,\r\n    creationDate AS CreationDate\r\nFROM PromptCollections;");
         }
 
         [Fact]
@@ -199,10 +228,10 @@ namespace horizon_api_integration_tests
             var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
 
             var sqlQuery = sqlQueryStore.Get("GetAllCollections");
-            var command = connection.CreateCommand(sqlQuery);
-            using var reader = await connection.ExecuteQueryAsync(command);
+            var command = new CommandDefinition(sqlQuery, cancellationToken: TestContext.Current.CancellationToken);
+            var collections = await connection.QueryAsync<Collection>(command);
 
-            reader.HasRows.Should().BeFalse();
+            collections.Should().BeEmpty();
         }
 
         [Fact]
@@ -212,10 +241,10 @@ namespace horizon_api_integration_tests
             var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
 
             var sqlQuery = sqlQueryStore.Get("GetAllCollections");
-            var command = connection.CreateCommand(sqlQuery);
-            using var reader = await connection.ExecuteQueryAsync(command);
+            var command = new CommandDefinition(sqlQuery, cancellationToken: TestContext.Current.CancellationToken);
+            var collections = await connection.QueryAsync<Collection>(command);
 
-            reader.HasRows.Should().BeTrue();
+            collections.Should().NotBeEmpty();
         }
 
         [Fact]
@@ -226,19 +255,14 @@ namespace horizon_api_integration_tests
 
             var updatedCollectionName = "Updated Collection Name";
             var sqlQuery = sqlQueryStore.Get("PostUpdateCollectionById");
-            var command = connection.CreateCommand(sqlQuery);
-            command.Parameters.AddWithValue("@collectionId", 1);
-            command.Parameters.AddWithValue("@name", updatedCollectionName);
-            var changedRows = await connection.ExecuteNonQueryAsync(command);
+            var command = new CommandDefinition(
+                sqlQuery,
+                new { collectionId = insertedCollection.collectionId, name = updatedCollectionName },
+                cancellationToken: TestContext.Current.CancellationToken);
+            var updatedCollection = await connection.QuerySingleOrDefaultAsync<Collection>(command);
 
-            changedRows.Should().Be(insertedCollection.Item1);
-
-            var getByIdCommand = connection.CreateCommand(sqlQueryStore.Get("GetCollectionById"));
-            getByIdCommand.Parameters.AddWithValue("@collectionId", 1);
-            using var reader = await connection.ExecuteQueryAsync(getByIdCommand);
-
-            reader.Read();
-            reader.GetString(1).Should().Be(updatedCollectionName);
+            updatedCollection.Should().NotBeNull();
+            updatedCollection!.Name.Should().Be(updatedCollectionName);
         }
 
         [Fact]
@@ -248,11 +272,21 @@ namespace horizon_api_integration_tests
             var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
 
             var sqlQuery = sqlQueryStore.Get("DeleteCollectionById");
-            var command = connection.CreateCommand(sqlQuery);
-            command.Parameters.AddWithValue("@collectionId", 1);
-            var deletedRows = await connection.ExecuteNonQueryAsync(command);
+            var deleteCommand = new CommandDefinition(
+                sqlQuery,
+                new { collectionId = insertedCollection.collectionId },
+                cancellationToken: TestContext.Current.CancellationToken);
+            var deletedRows = await connection.ExecuteAsync(deleteCommand);
 
-            deletedRows.Should().Be(insertedCollection.Item1);
+            deletedRows.Should().Be(1);
+
+            var getByIdCommand = new CommandDefinition(
+                sqlQueryStore.Get("GetCollectionById"),
+                new { collectionId = insertedCollection.collectionId },
+                cancellationToken: TestContext.Current.CancellationToken);
+            var collection = await connection.QuerySingleOrDefaultAsync<Collection>(getByIdCommand);
+
+            collection.Should().BeNull();
         }
 
         [Fact]
@@ -261,9 +295,11 @@ namespace horizon_api_integration_tests
             var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
 
             var sqlQuery = sqlQueryStore.Get("DeleteCollectionById");
-            var command = connection.CreateCommand(sqlQuery);
-            command.Parameters.AddWithValue("@collectionId", 1);
-            var deletedRows = await connection.ExecuteNonQueryAsync(command);
+            var command = new CommandDefinition(
+                sqlQuery,
+                new { collectionId = 9999 },
+                cancellationToken: TestContext.Current.CancellationToken);
+            var deletedRows = await connection.ExecuteAsync(command);
 
             deletedRows.Should().Be(0);
         }
@@ -275,25 +311,36 @@ namespace horizon_api_integration_tests
         [Fact]
         public async Task PostInsert_ShouldInsertPromptsIntoDatabase()
         {
-            var insertedPrompt = await AddEntriesToPromptsDatabase();
-            insertedPrompt.Item1.Should().Be(insertedPrompt.Item1);
+            var (insertedPrompt, _) = await AddEntriesToPromptsDatabase();
+            var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
+
+            var sqlQuery = sqlQueryStore.Get("GetById");
+            var command = new CommandDefinition(
+                sqlQuery,
+                new { promptId = insertedPrompt.PromptId },
+                cancellationToken: TestContext.Current.CancellationToken);
+            var prompt = await connection.QuerySingleOrDefaultAsync<Prompt>(command);
+
+            prompt.Should().NotBeNull();
+            prompt!.PromptText.Should().Be(insertedPrompt.PromptText);
+            prompt.Type.Should().Be(insertedPrompt.Type);
         }
 
         [Fact]
         public async Task GetById_ShouldReturnSpecificPrompt_WherePromptExists()
         {
-            var (_, insertedPrompt) = await AddEntriesToPromptsDatabase();
-
+            var (insertedPrompt, _) = await AddEntriesToPromptsDatabase();
             var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
 
             var sqlQuery = sqlQueryStore.Get("GetById");
-            var command = connection.CreateCommand(sqlQuery);
-            command.Parameters.AddWithValue("@promptId", 1);
-            command.Parameters.AddWithValue("@collectionId", DBNull.Value);
-            using var reader = await connection.ExecuteQueryAsync(command);
+            var command = new CommandDefinition(
+                sqlQuery,
+                new { promptId = insertedPrompt.PromptId },
+                cancellationToken: TestContext.Current.CancellationToken);
+            var prompt = await connection.QuerySingleOrDefaultAsync<Prompt>(command);
 
-            reader.Read();
-            reader.GetString(1).Should().Be(insertedPrompt);
+            prompt.Should().NotBeNull();
+            prompt!.PromptText.Should().Be(insertedPrompt.PromptText);
         }
 
         [Fact]
@@ -302,47 +349,49 @@ namespace horizon_api_integration_tests
             var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
 
             var sqlQuery = sqlQueryStore.Get("GetById");
-            var command = connection.CreateCommand(sqlQuery);
-            command.Parameters.AddWithValue("@promptId", 1);
-            command.Parameters.AddWithValue("@collectionId", DBNull.Value);
-            using var reader = await connection.ExecuteQueryAsync(command);
+            var command = new CommandDefinition(
+                sqlQuery,
+                new { promptId = 9999 },
+                cancellationToken: TestContext.Current.CancellationToken);
+            var prompt = await connection.QuerySingleOrDefaultAsync<Prompt>(command);
 
-            reader.Read();
-            reader.HasRows.Should().BeFalse();
+            prompt.Should().BeNull();
         }
 
         [Fact]
         public async Task GetAll_ShouldReturnPrompts_WhenPromptsExistSpecificCollection()
         {
             var amount = 5;
+            var (collectionId, _) = await AddEntriesToCollectionDatabase();
             for (int i = 0; i < amount; i++)
             {
-                await AddEntriesToPromptsDatabase();
+                await AddEntriesToPromptsDatabase(collectionId, $"Prompt {i}", "Wheel Spin");
             }
+
             var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
+            var sqlQuery = sqlQueryStore.Get("GetAllFromCollection");
+            var command = new CommandDefinition(
+                sqlQuery,
+                new { collectionId },
+                cancellationToken: TestContext.Current.CancellationToken);
+            var prompts = await connection.QueryAsync<Prompt>(command);
 
-            var sqlQuery = sqlQueryStore.Get("GetAll");
-            var command = connection.CreateCommand(sqlQuery);
-            command.Parameters.AddWithValue("@collectionId", 1);
-            using var reader = await connection.ExecuteQueryAsync(command);
-
-            int rows = 0;
-            while (reader.Read())
-            {
-                rows++;
-            }
-            rows.Should().Be(amount);
+            prompts.Should().HaveCount(amount);
         }
 
         [Fact]
         public async Task GetAll_ShouldReturnNoPrompts_WhenNoPromptsExistSpecificCollection()
         {
+            var (collectionId, _) = await AddEntriesToCollectionDatabase();
             var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
-            var sqlQuery = sqlQueryStore.Get("GetAll");
-            var command = connection.CreateCommand(sqlQuery);
-            command.Parameters.AddWithValue("@collectionId", 1);
-            using var reader = await connection.ExecuteQueryAsync(command);
-            reader.HasRows.Should().BeFalse();
+            var sqlQuery = sqlQueryStore.Get("GetAllFromCollection");
+            var command = new CommandDefinition(
+                sqlQuery,
+                new { collectionId },
+                cancellationToken: TestContext.Current.CancellationToken);
+            var prompts = await connection.QueryAsync<Prompt>(command);
+
+            prompts.Should().BeEmpty();
         }
 
         [Fact]
@@ -351,58 +400,62 @@ namespace horizon_api_integration_tests
             var amount = 5;
             for (int i = 0; i < amount; i++)
             {
-                await AddEntriesToPromptsDatabase();
+                await AddEntriesToPromptsDatabase(promptName: $"Prompt {i}", promptType: "Wheel Spin");
             }
+
             var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
             var sqlQuery = sqlQueryStore.Get("GetAll");
-            var command = connection.CreateCommand(sqlQuery);
-            command.Parameters.AddWithValue("@collectionId", DBNull.Value);
-            using var reader = await connection.ExecuteQueryAsync(command);
-            int rows = 0;
-            while (reader.Read())
-            {
-                rows++;
-            }
-            rows.Should().Be(amount);
+            var command = new CommandDefinition(
+                sqlQuery,
+                new { resultAmount = amount },
+                cancellationToken: TestContext.Current.CancellationToken);
+            var prompts = await connection.QueryAsync<Prompt>(command);
+
+            prompts.Should().HaveCount(amount);
         }
 
         [Fact]
         public async Task PostUpdateById_ShouldUpdateSpecificPrompt()
         {
-            var (linesChanged, _) = await AddEntriesToPromptsDatabase();
+            var (insertedPrompt, _) = await AddEntriesToPromptsDatabase();
             var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
 
-            var updatedPromptText = "Updated Prompt Text";
+            var updatedPromptText = "Updated Prompt PromptText";
+            var updatedPromptType = "Updated Prompt Type";
             var sqlQuery = sqlQueryStore.Get("PostUpdateById");
-            var command = connection.CreateCommand(sqlQuery);
-            command.Parameters.AddWithValue("@promptId", 1);
-            command.Parameters.AddWithValue("@collectionId", DBNull.Value);
-            command.Parameters.AddWithValue("@promptText", updatedPromptText);
-            var changedRows = await connection.ExecuteNonQueryAsync(command);
+            var command = new CommandDefinition(
+                sqlQuery,
+                new { promptId = insertedPrompt.PromptId, PromptText = updatedPromptText, Type = updatedPromptType },
+                cancellationToken: TestContext.Current.CancellationToken);
+            var updatedPrompt = await connection.QuerySingleOrDefaultAsync<Prompt>(command);
 
-            changedRows.Should().Be(linesChanged);
-
-            var getByIdCommand = connection.CreateCommand(sqlQueryStore.Get("GetById"));
-            getByIdCommand.Parameters.AddWithValue("@promptId", 1);
-            getByIdCommand.Parameters.AddWithValue("@collectionId", DBNull.Value);
-            using var reader = await connection.ExecuteQueryAsync(getByIdCommand);
-
-            reader.Read();
-            reader.GetString(1).Should().Be(updatedPromptText);
+            updatedPrompt.Should().NotBeNull();
+            updatedPrompt!.PromptText.Should().Be(updatedPromptText);
+            updatedPrompt.Type.Should().Be(updatedPromptType);
         }
 
         [Fact]
         public async Task DeleteById_ShouldDeletePromptById()
         {
-            var (linesChanged, _) = await AddEntriesToPromptsDatabase();
+            var (insertedPrompt, _) = await AddEntriesToPromptsDatabase(createCollectionWhenMissing: false);
             var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
 
             var sqlQuery = sqlQueryStore.Get("DeleteById");
-            var command = connection.CreateCommand(sqlQuery);
-            command.Parameters.AddWithValue("@promptId", 1);
-            var deletedRows = await connection.ExecuteNonQueryAsync(command);
+            var deleteCommand = new CommandDefinition(
+                sqlQuery,
+                new { promptId = insertedPrompt.PromptId },
+                cancellationToken: TestContext.Current.CancellationToken);
+            var deletedRows = await connection.ExecuteAsync(deleteCommand);
 
-            deletedRows.Should().Be(linesChanged);
+            deletedRows.Should().Be(1);
+
+            var getByIdCommand = new CommandDefinition(
+                sqlQueryStore.Get("GetById"),
+                new { promptId = insertedPrompt.PromptId },
+                cancellationToken: TestContext.Current.CancellationToken);
+            var prompt = await connection.QuerySingleOrDefaultAsync<Prompt>(getByIdCommand);
+
+            prompt.Should().BeNull();
         }
 
     }

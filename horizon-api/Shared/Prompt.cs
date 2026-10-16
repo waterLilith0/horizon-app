@@ -3,7 +3,8 @@
     public class Prompt
     {
         public int PromptId { get; set; }
-        public string PromptText { get; set; } = string.Empty;
-        public int? CollectionId { get; set; } = null;
+        public required string PromptText { get; set; }
+        public required string Type { get; set; }
+        public DateTime CreationDate { get; set; }
     }
 }
