@@ -2,7 +2,7 @@ import { Link } from "react-router";
 
 export default function PrivacyPolicy() {
   return (
-    <>
+    <div className="legal">
       <title>Privacy Policy</title>
       <h1 className="adsimple-313241308">Datenschutzerklärung</h1>
       <h2 id="einleitung-ueberblick" className="adsimple-313241308">
@@ -1422,6 +1422,6 @@ export default function PrivacyPolicy() {
         </a>{" "}
         erstellt mit dem Datenschutz Generator für Deutschland von AdSimple
       </p>
-    </>
+    </div>
   );
 }

@@ -1,6 +1,6 @@
 export default function Impressum() {
   return (
-    <>
+    <div className="legal">
       <title>Impressum</title>
       <h1 className="adsimple-323241313">Impressum</h1>
       <p className="adsimple-323241313">
@@ -55,6 +55,6 @@ export default function Impressum() {
         </a>{" "}
         von AdSimple
       </p>
-    </>
+    </div>
   );
 }

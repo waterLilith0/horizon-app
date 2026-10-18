@@ -1,4 +1,4 @@
-import { ResponsiveImage } from "@/components/custom/ResponsiveImage";
+import { ResponsiveImage } from "@/components/custom/BaseComponents/ResponsiveImage";
 import {
   Card,
   CardContent,
@@ -6,7 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import MasonryGrid from "@/components/custom/MasonryGrid";
+import MasonryGrid from "@/components/custom/BaseComponents/MasonryGrid";
 import { useAtomValue } from "jotai";
 import { cardsAtom } from "@/dataAtoms";
 

@@ -125,35 +125,17 @@
   background-position: center;
 }
 
+@layer components {
+  .legal :where(p, h1, h2, h3, h4, h5, h6) {
+    @apply m-1;
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
-
   body {
-    @apply bg-background text-foreground;
-    @apply bg-image dark:bg-image;
-  }
-
-  html {
-    @apply font-mono;
-  }
-
-  a {
-    @apply no-underline;
-  }
-
-  p,
-  a,
-  span,
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    @apply m-1;
-    @apply text-foreground;
-    @apply dark:text-foreground;
+    @apply bg-background text-foreground font-mono bg-image;
   }
 }

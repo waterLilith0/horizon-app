@@ -10,6 +10,7 @@ export const links = atom([
   { link: "/about-contact", name: "About" },
   { link: "/gallery", name: "Gallery" },
   { link: "/yt-embed", name: "YouTube Embed" },
+  { link: "/dashboard", name: "API Dashboard" },
 ]);
 
 export const footerRows = atom([
