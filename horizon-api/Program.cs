@@ -10,7 +10,7 @@ namespace horizon_api
 {
     public class Program
     {
-        public static void Main(string[] args)
+        internal static void Main(string[] args)
         {
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Verbose()
@@ -47,10 +47,7 @@ namespace horizon_api
                         ForwardedHeaders.XForwardedFor |
                         ForwardedHeaders.XForwardedProto |
                         ForwardedHeaders.XForwardedHost;
-
-                    // If the app is only reachable through the tunnel/proxy,
-                    // clear trust restrictions so forwarded headers are applied.
-                    options.KnownNetworks.Clear();
+                    options.KnownIPNetworks.Clear();
                     options.KnownProxies.Clear();
                 });
 
