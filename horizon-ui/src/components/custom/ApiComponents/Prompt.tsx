@@ -1,57 +1,29 @@
-import { Field, FieldGroup } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+"use client";
 
-export default function PromptDialog() {
-  return (
-    <>
-      <Dialog>
-        <form>
-          <DialogTrigger asChild>
-            <Button variant="outline">Open Dialog</Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-sm">
-            <DialogHeader>
-              <DialogTitle>Edit profile</DialogTitle>
-              <DialogDescription>
-                Make changes to your profile here. Click save when you&apos;re
-                done.
-              </DialogDescription>
-            </DialogHeader>
-            <FieldGroup>
-              <Field>
-                <Label htmlFor="name-1">Name</Label>
-                <Input id="name-1" name="name" defaultValue="Pedro Duarte" />
-              </Field>
-              <Field>
-                <Label htmlFor="username-1">Username</Label>
-                <Input
-                  id="username-1"
-                  name="username"
-                  defaultValue="@peduarte"
-                />
-              </Field>
-            </FieldGroup>
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button variant="outline">Cancel</Button>
-              </DialogClose>
-              <Button type="submit">Save changes</Button>
-            </DialogFooter>
-          </DialogContent>
-        </form>
-      </Dialog>
-    </>
-  );
-}
+import { createColumnHelper } from "@tanstack/react-table";
+
+import { type CollectionTableFeatures } from "./collection-table-features";
+
+// This type is used to define the shape of our data.
+// You can use a Zod schema here if you want.
+export type Prompt = {
+  promptId: number;
+  promptText: string;
+  type: "question" | "action" | "group-action";
+  creationDate: Date;
+};
+
+// Use `accessor` for data columns and `display` for columns without one.
+const columnHelper = createColumnHelper<CollectionTableFeatures, Prompt>();
+
+export const columns = columnHelper.columns([
+  columnHelper.accessor("type", {
+    header: "Type",
+  }),
+  columnHelper.accessor("creationDate", {
+    header: "Created",
+  }),
+  columnHelper.accessor("promptText", {
+    header: "Prompt",
+  }),
+]);
