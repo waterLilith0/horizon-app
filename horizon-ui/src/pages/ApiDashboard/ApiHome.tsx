@@ -1,20 +1,35 @@
 import Collection from "@/components/custom/ApiComponents/Collection";
-import { columns, type Prompt } from "@/components/custom/ApiComponents/Prompt";
+import {
+  columns,
+  type PromptValues,
+} from "@/components/custom/ApiComponents/Prompt";
+import { useOutletContext } from "react-router";
 
 export default function ApiHome() {
-  const mockData = [
+  const { selectedCollection } = useOutletContext<{
+    selectedCollection: number;
+  }>();
+  const mockData: PromptValues[] = [
     {
       promptId: 1,
       promptText: "Test",
       type: "question",
       creationDate: new Date("01-10-2026"),
-    } as Prompt,
+    },
+    {
+      promptId: 1,
+      promptText: "Test",
+      type: "question",
+      creationDate: new Date(),
+    },
   ];
 
   return (
     <>
+      <p>// Collectionname placeholder: {`${selectedCollection}`}</p>
+      <p>Table creation date, table tags, use ID as table id</p>
+      <p>Collection Rename and delete buttons</p>
       <Collection columns={columns} data={mockData} />
-      <p>ApiHome</p>
     </>
   );
 }

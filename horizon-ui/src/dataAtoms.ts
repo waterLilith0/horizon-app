@@ -54,7 +54,7 @@ export const footerRows = atom([
       },
       {
         type: "intern",
-        url: "/api",
+        url: "/dashboard",
         text: "API Dashboard",
       },
     ],

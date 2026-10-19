@@ -1,7 +1,6 @@
 "use client";
 
 import { useTable, type ColumnDef, type RowData } from "@tanstack/react-table";
-
 import {
   Table,
   TableBody,
@@ -10,11 +9,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
 import {
   features,
   type CollectionTableFeatures,
 } from "./collection-table-features";
+import * as z from "zod";
+
+export const CollectionSchema = z.object({
+  collectionId: z.int(),
+  name: z.string(),
+  creationDate: z.date(),
+});
+export type CollectionValues = z.infer<typeof CollectionSchema>;
 
 interface DataTableProps<TData extends RowData> {
   columns: ColumnDef<CollectionTableFeatures, TData>[];
@@ -32,7 +38,7 @@ export default function Collection<TData extends RowData>({
   });
 
   return (
-    <div className="overflow-hidden rounded-md border">
+    <div className="overflow-hidden rounded-md border w-full">
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
