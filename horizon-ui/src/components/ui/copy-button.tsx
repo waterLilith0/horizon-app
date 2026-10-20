@@ -1,18 +1,20 @@
-import { CheckIcon, CopyIcon } from "lucide-react"
-import { AnimatePresence, motion } from "motion/react"
-import * as React from "react"
+import { CheckIcon, CopyIcon } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
+import * as React from "react";
+import { Button } from "@/components/ui/button";
 
-import { Button } from "~/components/ui/button"
-
-export interface CopyButtonProps extends React.ComponentProps<typeof Button> {
-  content?: string
+export type CopyButtonProps = Omit<
+  React.ComponentProps<typeof Button>,
+  "onCopy"
+> & {
+  content?: string;
   /** ms to keep the checkmark visible after a successful copy. */
-  delay?: number
+  delay?: number;
   /** Called before the clipboard write. Return false to cancel. */
-  onCopy?: (content: string) => undefined | boolean
-  isCopied?: boolean
-  onCopyChange?: (isCopied: boolean) => void
-}
+  onCopy?: (content: string) => undefined | boolean;
+  isCopied?: boolean;
+  onCopyChange?: (isCopied: boolean) => void;
+};
 
 export function CopyButton({
   content,
@@ -24,38 +26,43 @@ export function CopyButton({
   size = "icon",
   ...props
 }: CopyButtonProps) {
-  const [localIsCopied, setLocalIsCopied] = React.useState(isCopied ?? false)
-  const Icon = localIsCopied ? CheckIcon : CopyIcon
+  const [localIsCopied, setLocalIsCopied] = React.useState(isCopied ?? false);
+  const Icon = localIsCopied ? CheckIcon : CopyIcon;
 
   React.useEffect(() => {
-    setLocalIsCopied(isCopied ?? false)
-  }, [isCopied])
+    setLocalIsCopied(isCopied ?? false);
+  }, [isCopied]);
 
   const setCopied = React.useCallback(
     (next: boolean) => {
-      setLocalIsCopied(next)
-      onCopyChange?.(next)
+      setLocalIsCopied(next);
+      onCopyChange?.(next);
     },
     [onCopyChange],
-  )
+  );
 
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    onClick?.(e)
-    if (localIsCopied || !content) return
-    if (onCopy?.(content) === false) return
+    onClick?.(e);
+    if (localIsCopied || !content) return;
+    if (onCopy?.(content) === false) return;
     navigator.clipboard
       .writeText(content)
       .then(() => {
-        setCopied(true)
-        setTimeout(() => setCopied(false), delay)
+        setCopied(true);
+        setTimeout(() => setCopied(false), delay);
       })
-      .catch(error => {
-        console.error("Error copying content", error)
-      })
-  }
+      .catch((error) => {
+        console.error("Error copying content", error);
+      });
+  };
 
   return (
-    <Button data-slot="copy-button" onClick={handleClick} size={size} {...props}>
+    <Button
+      data-slot="copy-button"
+      onClick={handleClick}
+      size={size}
+      {...props}
+    >
       <AnimatePresence mode="wait">
         <motion.span
           key={localIsCopied ? "check" : "copy"}
@@ -69,7 +76,7 @@ export function CopyButton({
         </motion.span>
       </AnimatePresence>
     </Button>
-  )
+  );
 }
 
-export default CopyButton
+export default CopyButton;
