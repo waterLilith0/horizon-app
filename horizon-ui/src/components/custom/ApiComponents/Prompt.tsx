@@ -9,11 +9,20 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrash } from "@fortawesome/free-solid-svg-icons";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+export const PROMPT_TYPES = ["question", "action", "group-action"] as const;
 
 export const PromptSchema = z.object({
   promptId: z.int(),
   promptText: z.string(),
-  type: z.enum(["question", "action"]),
+  type: z.enum(PROMPT_TYPES),
   creationDate: z.date(),
 });
 
@@ -25,11 +34,27 @@ const columnHelper = createColumnHelper<
   PromptValues
 >();
 
+function deleteTrigger(id: number) {
+  console.log(id);
+}
+
+function updateText(id: number, newValue: string) {
+  console.log(id);
+  console.log(newValue);
+}
+
+function updateType(id: number, newValue: (typeof PROMPT_TYPES)[number]) {
+  console.log(id);
+  console.log(newValue);
+}
+
 export const columns = columnHelper.columns([
   columnHelper.display({
     header: "Prompt",
     cell: ({ row }) => {
-      const value = row.original.promptText;
+      let value = row.original.promptText;
+      const id = row.original.promptId;
+      const [newValue, setNewValue] = useState("");
 
       const [isEditing, setIsEditing] = useState(false);
       const inputRef = useRef<HTMLInputElement>(null);
@@ -41,46 +66,68 @@ export const columns = columnHelper.columns([
       }, [isEditing]);
 
       return (
-        <Field onClick={() => setIsEditing(true)} className="w-1/2">
-          {isEditing ? (
-            <Field orientation="horizontal">
-              <Input id="promptText" placeholder={value} required />
-            </Field>
-          ) : (
-            <>
-              <FieldLabel htmlFor="promptText">{value}</FieldLabel>
-            </>
-          )}
-        </Field>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (newValue != value) {
+              updateText(id, newValue);
+              value = newValue;
+            }
+            setIsEditing(false);
+          }}
+        >
+          <Field onClick={() => setIsEditing(true)} className="w-1/2">
+            {isEditing ? (
+              <Input
+                id="promptText"
+                placeholder={value}
+                onKeyUp={(e) => setNewValue(e.currentTarget.value)}
+              />
+            ) : (
+              <>
+                <FieldLabel htmlFor="promptText">{value}</FieldLabel>
+              </>
+            )}
+          </Field>
+        </form>
       );
     },
   }),
   columnHelper.display({
     header: "Type",
     cell: ({ row }) => {
-      const value = row.original.type;
-
-      const [isEditing, setIsEditing] = useState(false);
-      const inputRef = useRef<HTMLInputElement>(null);
-
-      useEffect(() => {
-        if (isEditing) {
-          inputRef.current?.focus();
-        }
-      }, [isEditing]);
+      const [value, setValue] = useState(row.original.type);
+      const id = row.original.promptId;
+      const [newValue, _] = useState(row.original.type);
 
       return (
-        <Field onClick={() => setIsEditing(true)}>
-          {isEditing ? (
-            <Field orientation="horizontal">
-              <Input id="promptText" placeholder={value} required />
-            </Field>
-          ) : (
-            <>
-              <FieldLabel htmlFor="promptText">{value}</FieldLabel>
-            </>
-          )}
-        </Field>
+        <form>
+          <Field>
+            <DropdownMenu>
+              <DropdownMenuTrigger>{value}</DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuGroup>
+                  {PROMPT_TYPES.map((type) => {
+                    return (
+                      <DropdownMenuItem
+                        key={type}
+                        onSelect={() => {
+                          if (newValue != value) {
+                            return;
+                          }
+                          updateType(id, newValue);
+                          setValue(newValue);
+                        }}
+                      >
+                        {type}
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </Field>
+        </form>
       );
     },
   }),
@@ -102,9 +149,14 @@ export const columns = columnHelper.columns([
   columnHelper.display({
     header: "Action",
     cell: ({ row }) => {
-      const value = row.original.promptId;
+      const id = row.original.promptId;
       return (
-        <Button>
+        <Button
+          onClick={(e) => {
+            e.stopPropagation();
+            deleteTrigger(id);
+          }}
+        >
           <FontAwesomeIcon
             icon={faTrash}
             className="text-accent-foreground dark:text-secondary"

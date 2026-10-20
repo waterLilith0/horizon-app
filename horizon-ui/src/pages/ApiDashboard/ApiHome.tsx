@@ -11,9 +11,9 @@ export default function ApiHome() {
   }>();
   const mockData: PromptValues[] = [
     {
-      promptId: 1,
+      promptId: 0,
       promptText: "Test",
-      type: "question",
+      type: "action",
       creationDate: new Date("01-10-2026"),
     },
     {

@@ -1,15 +1,22 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
-  Field,
-  FieldDescription,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-  FieldLegend,
-  FieldSet,
-} from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import LoginForm from "./LoginForm";
+import RegisterForm from "./RegisterForm";
+
+type Mode = "login" | "register" | "registered";
+
+const TITLES: Record<Mode, string> = {
+  login: "Log in",
+  register: "Create an account",
+  registered: "Check your inbox",
+};
 
 export default function LoginRegisterDialog({
   open,
@@ -18,53 +25,53 @@ export default function LoginRegisterDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const [mode, setMode] = useState<Mode>("login");
+  const [registeredEmail, setRegisteredEmail] = useState("");
+
+  function handleOpenChange(next: boolean) {
+    if (!next) setMode("login");
+    onOpenChange(next);
+  }
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent>
-        <FieldSet>
-          <FieldLegend>Login / Register</FieldLegend>
-          <FieldGroup>
-            <Field>
-              <FieldLabel htmlFor="username">Username</FieldLabel>
-              <Input
-                id="username"
-                type="username"
-                autoComplete="on"
-                placeholder="coolCat"
-              />
-              <FieldDescription>Please enter a username</FieldDescription>
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="password">Username</FieldLabel>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                autoComplete="password"
-                aria-invalid
-              />
-              <FieldError>Please enter password</FieldError>
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="email">Email</FieldLabel>
-              <Input
-                id="email"
-                type="email"
-                placeholder="this@gmail.com"
-                autoComplete="email"
-                aria-invalid
-              />
-            </Field>
-          </FieldGroup>
-          <Button>Log In</Button>
-          <Button>Register</Button>
-          <a
-            href=""
-            className="underline hover:bg-accent self-center w-fit p-2"
-          >
-            forgot password
-          </a>
-        </FieldSet>
+        <DialogHeader>
+          <DialogTitle>{TITLES[mode]}</DialogTitle>
+          {mode === "registered" && (
+            <DialogDescription>
+              We sent a confirmation link to {registeredEmail}. Open it to
+              finish signing up.
+            </DialogDescription>
+          )}
+        </DialogHeader>
+
+        {mode === "login" && (
+          <>
+            <LoginForm onLoggedIn={() => handleOpenChange(false)} />
+            <Button variant="link" onClick={() => setMode("register")}>
+              No account yet? Register
+            </Button>
+          </>
+        )}
+
+        {mode === "register" && (
+          <>
+            <RegisterForm
+              onRegistered={(email) => {
+                setRegisteredEmail(email);
+                setMode("registered");
+              }}
+            />
+            <Button variant="link" onClick={() => setMode("login")}>
+              Already have an account? Log in
+            </Button>
+          </>
+        )}
+
+        {mode === "registered" && (
+          <Button onClick={() => handleOpenChange(false)}>Done</Button>
+        )}
       </DialogContent>
     </Dialog>
   );
