@@ -1,13 +1,14 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>horizon_api</RootNamespace>
     <UserSecretsId>a4019360-26d1-4be3-b93d-9548ad1a13e7</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <StartupObject></StartupObject>
+	  <NoWarn>$(NoWarn);CA1873</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -15,7 +16,7 @@
     <PackageReference Include="Grafana.OpenTelemetry" Version="1.13.0" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.23.0" />
     <PackageReference Include="MySqlConnector" Version="2.6.2" />
-    <PackageReference Include="OpenTelemetry" Version="1.20.0-rc.1" />
+    <PackageReference Include="OpenTelemetry" Version="1.20.0" />
     <PackageReference Include="Serilog" Version="4.4.1-dev-02447" />
     <PackageReference Include="Serilog.AspNetCore" Version="10.0.1-dev-02312" />
     <PackageReference Include="Serilog.Enrichers.Span" Version="3.1.0" />
