@@ -11,7 +11,11 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import { registerSchema, usernameSchema } from "@/validationSchema";
+import {
+  registerSchema,
+  usernameSchema,
+} from "@/dashboard/features/auth/validationSchema";
+import { isUsernameAvailable, register } from "@/dashboard/features/auth/auth";
 
 const STRENGTH_LABELS = ["Very weak", "Weak", "Okay", "Strong", "Very strong"];
 

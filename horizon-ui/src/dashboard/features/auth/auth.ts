@@ -1,4 +1,7 @@
-import type { LoginData, RegisterData } from "@/validationSchema";
+import type {
+  LoginData,
+  RegisterData,
+} from "@/dashboard/features/auth/validationSchema";
 
 export type FieldErrors = Partial<
   Record<keyof RegisterData, { message: string }>
@@ -53,4 +56,17 @@ export async function login(data: LoginData): Promise<{ ok: boolean }> {
   if (res.ok) return { ok: true };
   if (res.status === 401) return { ok: false };
   throw new Error(`Login failed: ${res.status}`);
+}
+
+export type User = { username: string; email: string };
+
+export async function getCurrentUser(): Promise<User | null> {
+  const res = await fetch("/api/auth/me");
+  if (res.status === 401) return null;
+  if (!res.ok) throw new Error(`Loading user failed: ${res.status}`);
+  return res.json();
+}
+
+export async function logout() {
+  await fetch("/api/auth/logout", { method: "POST" });
 }

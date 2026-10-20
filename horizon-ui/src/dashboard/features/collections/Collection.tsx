@@ -1,5 +1,3 @@
-"use client";
-
 import { useTable, type ColumnDef, type RowData } from "@tanstack/react-table";
 import {
   Table,
@@ -27,6 +25,8 @@ interface DataTableProps<TData extends RowData> {
   data: TData[];
 }
 
+const FLEXIBLE_COLUMN = "Prompt";
+
 export default function Collection<TData extends RowData>({
   columns,
   data,
@@ -45,7 +45,14 @@ export default function Collection<TData extends RowData>({
             <TableRow key={headerGroup.id}>
               {headerGroup.headers.map((header) => {
                 return (
-                  <TableHead key={header.id}>
+                  <TableHead
+                    key={header.id}
+                    className={
+                      header.id === FLEXIBLE_COLUMN
+                        ? "w-full"
+                        : "w-px whitespace-nowrap"
+                    }
+                  >
                     {header.isPlaceholder ? null : (
                       <table.FlexRender header={header} />
                     )}
@@ -63,7 +70,14 @@ export default function Collection<TData extends RowData>({
                 data-state={row.getIsSelected() && "selected"}
               >
                 {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>
+                  <TableCell
+                    key={cell.id}
+                    className={
+                      cell.column.id === FLEXIBLE_COLUMN
+                        ? "w-full"
+                        : "w-px whitespace-nowrap"
+                    }
+                  >
                     <table.FlexRender cell={cell} />
                   </TableCell>
                 ))}

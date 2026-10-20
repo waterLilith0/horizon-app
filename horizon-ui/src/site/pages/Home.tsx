@@ -1,4 +1,4 @@
-import { ResponsiveImage } from "@/components/custom/BaseComponents/ResponsiveImage";
+import { ResponsiveImage } from "@/site/components/ResponsiveImage";
 import {
   Card,
   CardContent,
@@ -6,13 +6,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import MasonryGrid from "@/components/custom/BaseComponents/MasonryGrid";
-import { useAtomValue } from "jotai";
-import { cardsAtom } from "@/dataAtoms";
+import MasonryGrid from "@/site/components/MasonryGrid";
+import { cards } from "@/site/content";
 
 function Home() {
-  const cards = useAtomValue(cardsAtom);
-
   return (
     <>
       <title>Home</title>

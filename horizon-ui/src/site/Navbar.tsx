@@ -1,16 +1,15 @@
 import { memo, useCallback, useEffect } from "react";
 import { useAtom } from "jotai";
-import { themeAtom } from "../../../configAtoms";
+
 import { Switch } from "@/components/ui/switch";
 import { NavLink } from "react-router";
-import { links, socials } from "@/dataAtoms";
+import { links, socials } from "@/site/content";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBars, faXmark } from "@fortawesome/free-solid-svg-icons";
+import { themeAtom } from "@/shared/theme/configAtoms";
 
 function Navbar({ open, onToggle }: { open: boolean; onToggle: () => void }) {
   const [theme, setTheme] = useAtom(themeAtom);
-  const [navLinks] = useAtom(links);
-  const [socialLinks] = useAtom(socials);
 
   const initializeTheme = useCallback(() => {
     const savedTheme = localStorage.getItem("theme");
@@ -54,7 +53,7 @@ function Navbar({ open, onToggle }: { open: boolean; onToggle: () => void }) {
           id="nav-links"
           className={`fixed inset-y-0 left-0 z-50 flex h-dvh w-64 max-w-[80vw] flex-col items-stretch overflow-y-auto bg-sidebar m-0 p-0 list-none shadow-xl transition-[transform,visibility] duration-200 ${open ? "translate-x-0" : "-translate-x-full invisible"} lg:visible lg:static lg:h-12 lg:w-full lg:max-w-none lg:translate-x-0 lg:flex-row lg:items-center lg:overflow-visible lg:shadow-none`}
         >
-          {navLinks.map((item) => {
+          {links.map((item) => {
             const linkKey = item.link;
             return (
               <li
@@ -70,7 +69,7 @@ function Navbar({ open, onToggle }: { open: boolean; onToggle: () => void }) {
               </li>
             );
           })}
-          {socialLinks.map((item) => {
+          {socials.map((item) => {
             const linkKey = item.link;
             return (
               <li

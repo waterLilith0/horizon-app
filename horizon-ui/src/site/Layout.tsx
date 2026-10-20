@@ -1,9 +1,10 @@
-import { themeAtom } from "@/configAtoms";
-import Footer from "@/components/custom/BaseComponents/Footer";
-import Navbar from "@/components/custom/BaseComponents/Navbar";
+import { themeAtom } from "@/shared/theme/configAtoms";
+
 import { useAtom } from "jotai";
 import { Outlet, useLocation } from "react-router";
 import { useEffect, useState } from "react";
+import Navbar from "./Navbar";
+import Footer from "@/shared/Footer";
 
 function Layout() {
   const location = useLocation();

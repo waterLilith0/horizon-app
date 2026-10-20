@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from "react";
 import { useAtomValue } from "jotai";
-import { themeAtom } from "@/configAtoms";
+import { themeAtom } from "@/shared/theme/configAtoms";
 
 const query = "(prefers-color-scheme: dark)";
 

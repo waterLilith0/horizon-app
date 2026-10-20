@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
-import { changePasswordSchema } from "@/validationSchema";
+import { changePasswordSchema } from "@/dashboard/features/auth/validationSchema";
 import { useForm } from "@tanstack/react-form";
 
 export default function AccountDialog({

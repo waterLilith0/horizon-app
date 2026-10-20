@@ -8,13 +8,18 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { loginSchema } from "@/validationSchema";
+import { loginSchema } from "@/dashboard/features/auth/validationSchema";
+import { login } from "@/dashboard/features/auth/auth";
+import { useQueryClient } from "@tanstack/react-query";
+import { currentUserQueryKey } from "@/dashboard/features/auth/use-current-user";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function LoginForm({ onLoggedIn }: { onLoggedIn: () => void }) {
   const [showPassword, setShowPassword] = useState(false);
+  const queryClient = useQueryClient();
 
   const form = useForm({
-    defaultValues: { identifier: "", password: "" },
+    defaultValues: { identifier: "", password: "", rememberMe: false },
     validators: {
       onSubmit: loginSchema,
       onSubmitAsync: async ({ value }) => {
@@ -28,7 +33,10 @@ export default function LoginForm({ onLoggedIn }: { onLoggedIn: () => void }) {
             };
       },
     },
-    onSubmit: () => onLoggedIn(),
+    onSubmit: async () => {
+      await queryClient.invalidateQueries({ queryKey: currentUserQueryKey });
+      onLoggedIn();
+    },
   });
 
   return (
@@ -96,6 +104,21 @@ export default function LoginForm({ onLoggedIn }: { onLoggedIn: () => void }) {
               </Field>
             );
           }}
+        </form.Field>
+
+        <form.Field name="rememberMe">
+          {(field) => (
+            <Field orientation="horizontal">
+              <Checkbox
+                id={field.name}
+                checked={field.state.value}
+                onCheckedChange={(checked) =>
+                  field.handleChange(checked === true)
+                }
+              />
+              <FieldLabel htmlFor={field.name}>Remember me</FieldLabel>
+            </Field>
+          )}
         </form.Field>
 
         <form.Subscribe selector={(s) => s.isSubmitting}>

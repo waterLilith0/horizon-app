@@ -3,14 +3,14 @@ import { createRoot } from "react-dom/client";
 import packageJson from "../package.json";
 import "../index.css";
 import { createBrowserRouter, RouterProvider } from "react-router";
-import Layout from "./pages/MainPage/Layout.tsx";
-import Home from "./pages/MainPage/Home.tsx";
-import NotFound from "./pages/ErrorPages/NotFound.tsx";
-import About from "./pages/MainPage/About.tsx";
-import YTEmbed from "./pages/MainPage/YTEmbed.tsx";
-import Gallery from "./pages/MainPage/Gallery.tsx";
-import PrivacyPolicy from "./pages/Legal/PrivacyPolicy.tsx";
-import Impressum from "./pages/Legal/Impressum.tsx";
+import Layout from "./site/Layout.tsx";
+import Home from "./site/pages/Home.tsx";
+import NotFound from "./shared/NotFound.tsx";
+import About from "./site/pages/About.tsx";
+import YTEmbed from "./site/pages/YTEmbed.tsx";
+import Gallery from "./site/pages/Gallery.tsx";
+import PrivacyPolicy from "./shared/legal/PrivacyPolicy.tsx";
+import Impressum from "./shared/legal/Impressum.tsx";
 import {
   getWebInstrumentations,
   initializeFaro,
@@ -20,10 +20,7 @@ import {
 import { matchRoutes } from "react-router";
 import { TracingInstrumentation } from "@grafana/faro-web-tracing";
 import { withFaroRouterInstrumentation } from "@grafana/faro-react";
-import VRChatShowcase from "./pages/MainPage/VRChatShowcase.tsx";
-import ApiLayout from "./pages/ApiDashboard/ApiLayout.tsx";
-import ApiHome from "./pages/ApiDashboard/ApiHome.tsx";
-import Account from "./pages/ApiDashboard/Account.tsx";
+import VRChatShowcase from "./site/pages/VRChatShowcase.tsx";
 
 const faroEnabled = import.meta.env.PROD;
 
@@ -72,21 +69,36 @@ const _browserRouter = createBrowserRouter([
   },
   {
     path: "/dashboard",
-    element: <ApiLayout />,
+    lazy: async () => ({
+      Component: (await import("@/dashboard/DashboardLayout")).default,
+    }),
     errorElement: <NotFound />,
     children: [
-      { index: true, element: <ApiHome /> },
-      { path: "account", element: <Account /> },
+      {
+        index: true,
+        lazy: async () => ({
+          Component: (await import("@/dashboard/pages/Dashboard.tsx")).default,
+        }),
+      },
     ],
   },
 ]);
+
+async function enableMocking() {
+  if (!import.meta.env.DEV || import.meta.env.VITE_USE_MOCKS === "false")
+    return;
+  const { worker } = await import("./dashboard/mocks/browser.ts");
+  await worker.start({ onUnhandledFrame: "bypass" });
+}
 
 const router = faroEnabled
   ? withFaroRouterInstrumentation(_browserRouter)
   : _browserRouter;
 
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <RouterProvider router={router} />
-  </StrictMode>,
-);
+enableMocking().then(() => {
+  createRoot(document.getElementById("root")!).render(
+    <StrictMode>
+      <RouterProvider router={router} />
+    </StrictMode>,
+  );
+});

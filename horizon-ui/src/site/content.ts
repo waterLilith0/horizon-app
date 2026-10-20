@@ -3,65 +3,16 @@ import {
   faGithub,
   faLinkedin,
 } from "@fortawesome/free-brands-svg-icons";
-import { atom } from "jotai";
 
-export const links = atom([
+export const links = [
   { link: "/home", name: "Home" },
   { link: "/about-contact", name: "About" },
   { link: "/gallery", name: "Gallery" },
   { link: "/yt-embed", name: "YouTube Embed" },
   { link: "/dashboard", name: "API Dashboard" },
-]);
+];
 
-export const footerRows = atom([
-  {
-    row: 1,
-    links: [
-      {
-        type: "intern",
-        url: "/",
-        text: "Home",
-      },
-      {
-        type: "intern",
-        url: "/about-contact",
-        text: "About Me & Contact",
-      },
-    ],
-  },
-  {
-    row: 2,
-    links: [
-      {
-        type: "intern",
-        url: "/impressum",
-        text: "Impressum",
-      },
-      {
-        type: "intern",
-        url: "/sitemap",
-        text: "Sitemap",
-      },
-    ],
-  },
-  {
-    row: 3,
-    links: [
-      {
-        type: "intern",
-        url: "/privacy",
-        text: "Privacy Policy",
-      },
-      {
-        type: "intern",
-        url: "/dashboard",
-        text: "API Dashboard",
-      },
-    ],
-  },
-]);
-
-export const socials = atom([
+export const socials = [
   { link: "https://github.com/waterlilith0", name: "GitHub", icon: faGithub },
   {
     link: "https://bsky.app/profile/waterlilith.space",
@@ -73,9 +24,9 @@ export const socials = atom([
     name: "LinkedIn",
     icon: faLinkedin,
   },
-]);
+];
 
-export const cardsAtom = atom([
+export const cards = [
   {
     image: "",
     title: "Steampunk",
@@ -131,4 +82,4 @@ export const cardsAtom = atom([
       " known works, such as the Silmarillion (that was a big pain to" +
       " sit through!).",
   },
-]);
+];
