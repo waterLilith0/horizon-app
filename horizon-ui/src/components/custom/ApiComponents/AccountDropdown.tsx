@@ -16,10 +16,11 @@ import { themeAtom } from "@/configAtoms";
 import { useAtom } from "jotai";
 import { useCallback, useEffect, useState } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
 import AccountDialog from "./AccountDialog";
 import LoginRegisterDialog from "./LoginRegisterDialog";
 
-export default function AccountDropdown() {
+export default function AccountDropdown({ className }: { className?: string }) {
   const [theme, setTheme] = useAtom(themeAtom);
   const [accountShown, setAccountShown] = useState(false);
   const [loginShown, setLoginShown] = useState(false);
@@ -52,7 +53,7 @@ export default function AccountDropdown() {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Avatar className="fixed right-2 top-2">
+          <Avatar className={cn("fixed right-2 top-2", className)}>
             {/* <AvatarImage src="" /> */}
             <AvatarFallback>YCH</AvatarFallback>
           </Avatar>

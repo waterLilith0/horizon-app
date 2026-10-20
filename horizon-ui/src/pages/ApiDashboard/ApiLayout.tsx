@@ -33,7 +33,7 @@ function ApiLayout() {
   const [selectedCollection, setSelectedCollection] = useState(0);
   return (
     <div className="flex flex-col">
-      <AccountDropdown className="w-20 fixed right-2 top-2 dark:bg-white dark:text-black bg-black text-white" />
+      <AccountDropdown className="fixed right-2 top-2 dark:bg-white dark:text-black bg-black text-white" />
       <SidebarProvider>
         <AllCollections
           selectedCollection={selectedCollection}

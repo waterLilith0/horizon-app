@@ -33,7 +33,9 @@ export function AllCollections({
     },
   ];
 
-  function deleteCollection(collectionId: number) {}
+  function deleteCollection(collectionId: number) {
+    console.log(collectionId);
+  }
 
   return (
     <Sidebar>
