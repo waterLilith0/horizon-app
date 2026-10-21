@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrash } from "@fortawesome/free-solid-svg-icons";
 import {
@@ -12,10 +11,10 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import type { CollectionValues } from "./collection.schema";
-import { type SyntheticEvent } from "react";
+import { useState } from "react";
 import { CollectionNameSchema } from "./collection.schema";
-import { DeleteDialog } from "./DeleteDialog";
 import CreateFooter from "./CreateFooter";
+import DeleteDialog from "./DeleteDialog";
 
 interface CollectionsSidebarProps {
   collections: CollectionValues[];
@@ -30,26 +29,17 @@ export function CollectionsSidebar({
   selectedId,
   onSelect,
   onDelete,
-  onCreate,
 }: CollectionsSidebarProps) {
   const [pendingDelete, setPendingDelete] = useState<CollectionValues | null>(
     null,
   );
-  const [newName, setNewName] = useState("");
-  const [createError, setCreateError] = useState("");
 
-  function handleCreate(event: SyntheticEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const result = CollectionNameSchema.safeParse(newName);
+  function handleCreate(name: string) {
+    const result = CollectionNameSchema.safeParse(name);
 
     if (!result.success) {
-      setCreateError(result.error.issues[0]?.message ?? "Invalid name");
       return;
     }
-
-    onCreate(result.data);
-    setNewName("");
-    setCreateError("");
   }
 
   function confirmDelete() {
@@ -87,18 +77,12 @@ export function CollectionsSidebar({
         </SidebarGroup>
       </SidebarContent>
 
-      <CreateFooter
-        handleCreate={handleCreate}
-        newName={newName}
-        setNewName={setNewName}
-        createError={createError}
-        setCreateError={setCreateError}
-      />
+      <CreateFooter onCreate={handleCreate} />
 
       <DeleteDialog
-        pendingDelete={pendingDelete}
-        setPendingDelete={setPendingDelete}
-        confirmDelete={confirmDelete}
+        collection={pendingDelete}
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDelete(null)}
       />
     </Sidebar>
   );

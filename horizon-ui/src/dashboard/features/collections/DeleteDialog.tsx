@@ -9,37 +9,37 @@ import {
 } from "@/components/ui/dialog";
 import type { CollectionValues } from "./collection.schema";
 
-type DeleteDialogProps = {
-  pendingDelete: CollectionValues | null;
-  setPendingDelete: (value: CollectionValues | null) => void;
-  confirmDelete: () => void;
+type DeleteProps = {
+  collection: CollectionValues | null;
+  onConfirm: () => void;
+  onCancel: () => void;
 };
 
-export function DeleteDialog({
-  pendingDelete,
-  setPendingDelete,
-  confirmDelete,
-}: DeleteDialogProps) {
+export default function DeleteDialog({
+  collection,
+  onConfirm,
+  onCancel,
+}: DeleteProps) {
   return (
     <Dialog
-      open={pendingDelete !== null}
+      open={collection !== null}
       onOpenChange={(open) => {
-        if (!open) setPendingDelete(null);
+        if (!open) onCancel();
       }}
     >
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Delete collection?</DialogTitle>
           <DialogDescription>
-            “{pendingDelete?.name}” and all of its prompts will be removed. This
+            “{collection?.name}” and all of its prompts will be removed. This
             can't be undone.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setPendingDelete(null)}>
+          <Button variant="outline" onClick={onCancel}>
             Cancel
           </Button>
-          <Button variant="destructive" onClick={confirmDelete}>
+          <Button variant="destructive" onClick={onConfirm}>
             Delete
           </Button>
         </DialogFooter>

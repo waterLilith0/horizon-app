@@ -8,31 +8,44 @@ import {
 import { useState } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import AccountDialog from "./AccountDialog";
-import { useCurrentUser } from "@/dashboard/features/auth/use-current-user";
+import {
+  currentUserQueryKey,
+  useCurrentUser,
+} from "@/dashboard/features/auth/use-current-user";
 import { logout } from "@/dashboard/features/auth/auth";
 import LoginRegisterDialog from "../auth/LoginRegisterDialog";
 import ThemeMenu from "@/shared/theme/ThemeMenu";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function AccountDropdown() {
   const [accountShown, setAccountShown] = useState(false);
   const [loginShown, setLoginShown] = useState(false);
   const { data: user, isPending } = useCurrentUser();
+  const queryClient = useQueryClient();
 
   async function handleLogout() {
     await logout();
-    window.location.replace("/dashboard");
+    queryClient.clear();
+    queryClient.setQueryData(currentUserQueryKey, null);
   }
 
   return (
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Avatar className={"fixed right-2 top-2"}>
-            <AvatarFallback>
-              {user ? user.username.slice(0, 2).toUpperCase() : "?"}
-            </AvatarFallback>
-          </Avatar>
+          <button
+            type="button"
+            aria-label="Account menu"
+            className="fixed right-2 top-2 z-10 rounded-full focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <Avatar>
+              <AvatarFallback>
+                {user ? user.username.slice(0, 2).toUpperCase() : "?"}
+              </AvatarFallback>
+            </Avatar>
+          </button>
         </DropdownMenuTrigger>
+
         <DropdownMenuContent>
           <DropdownMenuGroup>
             {user ? (

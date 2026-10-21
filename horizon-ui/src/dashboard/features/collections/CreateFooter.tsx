@@ -3,50 +3,52 @@ import { Input } from "@/components/ui/input";
 import { SidebarFooter } from "@/components/ui/sidebar";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import type { SyntheticEvent } from "react";
-
-type CreateFooterProps = {
-  handleCreate: (event: SyntheticEvent<HTMLFormElement>) => void;
-  newName: string;
-  setNewName: (e: string) => void;
-  createError: string;
-  setCreateError: (e: string) => void;
-};
+import { useState, type SyntheticEvent } from "react";
+import { CollectionNameSchema } from "./collection.schema";
 
 export default function CreateFooter({
-  handleCreate,
-  newName,
-  setNewName,
-  createError,
-  setCreateError,
-}: CreateFooterProps) {
+  onCreate,
+}: {
+  onCreate: (name: string) => void;
+}) {
+  const [name, setName] = useState("");
+  const [error, setError] = useState("");
+
+  function handleSubmit(e: SyntheticEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const result = CollectionNameSchema.safeParse(name);
+    if (!result.success)
+      return setError(result.error.issues[0]?.message ?? "Invalid name");
+    onCreate(result.data);
+    setName("");
+  }
   return (
     <SidebarFooter>
-      <form onSubmit={handleCreate} className="flex flex-col gap-1">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-1">
         <div className="flex gap-2">
           <Input
-            value={newName}
+            value={name}
             onChange={(event) => {
-              setNewName(event.currentTarget.value);
-              setCreateError("");
+              setName(event.currentTarget.value);
+              setError("");
             }}
             placeholder="New collection"
             aria-label="New collection name"
-            aria-invalid={Boolean(createError)}
-            aria-describedby={createError ? "new-collection-error" : undefined}
+            aria-invalid={Boolean(error)}
+            aria-describedby={error ? "new-collection-error" : undefined}
             maxLength={50}
           />
           <Button type="submit" aria-label="Create collection">
             <FontAwesomeIcon icon={faPlus} />
           </Button>
         </div>
-        {createError && (
+        {error && (
           <p
             id="new-collection-error"
             role="alert"
             className="text-destructive"
           >
-            {createError}
+            {error}
           </p>
         )}
       </form>
