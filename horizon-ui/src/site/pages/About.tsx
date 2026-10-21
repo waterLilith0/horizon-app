@@ -6,6 +6,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Item, ItemMedia } from "@/components/ui/item";
+import { Link } from "react-router";
 
 function About() {
   return (
@@ -31,16 +32,17 @@ function About() {
                 web applications. On this website I host a showcase of my work,
                 as well as a portfolio of favorite pictures I've taken. I also
                 have an API running over the same stack, check out the &gt;&gt;
-                <a
-                  href="/api"
+                <Link
+                  to="/api"
                   className="hover:bg-gray-200 dark:hover:bg-gray-600 text-secondary-foreground dark:text-secondary-foreground px-1 rounded-md"
                 >
                   API
-                </a>
+                </Link>
                 &lt;&lt; page for more information.
-                <br />
-                <br />I also work with VRChat Avatar development, for which I
-                make my own textures.
+              </p>
+              <p>
+                I also work with VRChat Avatar development, for which I make my
+                own textures.
               </p>
             </CardContent>
           </Card>

@@ -1,4 +1,4 @@
-import { useResolvedTheme } from "@/shared/theme/useResolvedTheme";
+import { useApplyTheme } from "@/shared/theme/useResolvedTheme";
 import { Outlet } from "react-router";
 import {
   SidebarProvider,
@@ -7,11 +7,12 @@ import {
 } from "@/components/ui/sidebar";
 
 import AccountDropdown from "@/dashboard/features/account/AccountDropdown";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Footer from "@/shared/Footer";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { CollectionValues } from "./features/collections/collection.schema";
 import { CollectionsSidebar } from "./features/collections/CollectionsSidebar";
+import { cn } from "cn";
 
 const initialCollections: CollectionValues[] = [
   { collectionId: 0, name: "Test", creationDate: new Date() },
@@ -22,9 +23,10 @@ function FloatingSidebarTrigger() {
   const { open } = useSidebar();
   return (
     <SidebarTrigger
-      className={`fixed left-2 z-10 dark:bg-white dark:text-black bg-black text-white transition-[left] duration-200 ease-linear ${
-        open ? "md:left-[calc(var(--sidebar-width)+0.5rem)]" : ""
-      }`}
+      className={cn(
+        "fixed left-2 z-10 dark:bg-white dark:text-black bg-black text-white transition-[left] duration-200 ease-linear",
+        open ? "md:left-[calc(var(--sidebar-width)+0.5rem)]" : "",
+      )}
       size={"lg"}
     />
   );
@@ -32,13 +34,7 @@ function FloatingSidebarTrigger() {
 const queryClient = new QueryClient();
 
 function DashboardLayout() {
-  const theme = useResolvedTheme();
-
-  useEffect(() => {
-    const root = document.documentElement;
-    root.classList.toggle("dark", theme === "dark");
-    return () => root.classList.remove("dark");
-  }, [theme]);
+  useApplyTheme();
 
   const [collections, setCollections] =
     useState<CollectionValues[]>(initialCollections);
@@ -67,7 +63,7 @@ function DashboardLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <div className="flex flex-col text-[20px]">
-        <AccountDropdown className="fixed right-2 top-2 dark:bg-white dark:text-black bg-black text-white" />
+        <AccountDropdown />
         <SidebarProvider>
           <CollectionsSidebar
             collections={collections}

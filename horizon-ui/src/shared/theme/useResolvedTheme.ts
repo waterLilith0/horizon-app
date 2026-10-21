@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { useAtomValue } from "jotai";
 import { themeAtom } from "@/shared/theme/configAtoms";
 
@@ -18,4 +18,11 @@ export function useResolvedTheme(): "light" | "dark" {
   const systemDark = useSyncExternalStore(subscribe, getSystemDark);
   if (theme === "system") return systemDark ? "dark" : "light";
   return theme === "dark" ? "dark" : "light";
+}
+
+export function useApplyTheme() {
+  const theme = useResolvedTheme();
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", theme === "dark");
+  }, [theme]);
 }

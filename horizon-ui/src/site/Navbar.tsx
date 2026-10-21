@@ -1,30 +1,11 @@
-import { useCallback, useEffect } from "react";
-import { useAtom } from "jotai";
-import { Switch } from "@/components/ui/switch";
 import { NavLink } from "react-router";
 import { links, socials } from "@/site/content";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBars, faXmark } from "@fortawesome/free-solid-svg-icons";
-import { themeAtom } from "@/shared/theme/configAtoms";
 import { cn } from "@/lib/utils";
+import ThemeMenu from "@/shared/theme/ThemeMenu";
 
 function Navbar({ open, onToggle }: { open: boolean; onToggle: () => void }) {
-  const [theme, setTheme] = useAtom(themeAtom);
-
-  const initializeTheme = useCallback(() => {
-    const savedTheme = localStorage.getItem("theme");
-    if (savedTheme === "light" || savedTheme === "dark") {
-      setTheme(savedTheme);
-      return;
-    }
-    localStorage.setItem("theme", "dark");
-    setTheme("dark");
-  }, [setTheme]);
-
-  useEffect(() => {
-    initializeTheme();
-  }, [initializeTheme]);
-
   return (
     <>
       <nav
@@ -78,18 +59,8 @@ function Navbar({ open, onToggle }: { open: boolean; onToggle: () => void }) {
               </li>
             );
           })}
-          <li className="flex items-center justify-center h-full w-full lg:last:ml-auto lg:last:pr-5 lg:justify-end">
-            <p className="lg:hidden">Dark Mode</p>
-            <Switch
-              checked={theme === "dark"}
-              size="default"
-              className={theme}
-              onCheckedChange={(checked) => {
-                const newTheme = checked ? "dark" : "light";
-                localStorage.setItem("theme", newTheme);
-                setTheme(newTheme);
-              }}
-            />
+          <li>
+            <ThemeMenu />
           </li>
         </ul>
       </nav>

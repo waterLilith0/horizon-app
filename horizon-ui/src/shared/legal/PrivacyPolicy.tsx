@@ -4,15 +4,12 @@ export default function PrivacyPolicy() {
   return (
     <div className="legal">
       <title>Privacy Policy</title>
-      <h1 className="adsimple-313241308">Datenschutzerklärung</h1>
-      <h2 id="einleitung-ueberblick" className="adsimple-313241308">
-        Einleitung und Überblick
-      </h2>
+      <h1>Datenschutzerklärung</h1>
+      <h2 id="einleitung-ueberblick">Einleitung und Überblick</h2>
       <p>
         Wir haben diese Datenschutzerklärung (Fassung 13.10.2026-313241308)
         verfasst, um Ihnen gemäß der Vorgaben der{" "}
         <a
-          className="adsimple-313241308"
           href="https://eur-lex.europa.eu/legal-content/DE/TXT/HTML/?uri=CELEX:32016R0679&amp;from=DE&amp;tid=313241308#d1e2269-1-1"
           target="_blank"
           rel="noopener"
@@ -25,28 +22,25 @@ export default function PrivacyPolicy() {
         zukünftig verarbeiten werden und welche rechtmäßigen Möglichkeiten Sie
         haben. Die verwendeten Begriffe sind geschlechtsneutral zu verstehen.
         <br />
-        <strong className="adsimple-313241308">Kurz gesagt:</strong> Wir
-        informieren Sie umfassend über Daten, die wir über Sie verarbeiten.
+        <strong>Kurz gesagt:</strong> Wir informieren Sie umfassend über Daten,
+        die wir über Sie verarbeiten.
       </p>
       <p>
         Datenschutzerklärungen klingen für gewöhnlich sehr technisch und
         verwenden juristische Fachbegriffe. Diese Datenschutzerklärung soll
         Ihnen hingegen die wichtigsten Dinge so einfach und transparent wie
         möglich beschreiben. Soweit es der Transparenz förderlich ist, werden
-        technische{" "}
-        <strong className="adsimple-313241308">
-          Begriffe leserfreundlich erklärt
-        </strong>
-        , Links zu weiterführenden Informationen geboten und{" "}
-        <strong className="adsimple-313241308">Grafiken</strong> zum Einsatz
-        gebracht. Wir informieren damit in klarer und einfacher Sprache, dass
-        wir im Rahmen unserer Geschäftstätigkeiten nur dann personenbezogene
-        Daten verarbeiten, wenn eine entsprechende gesetzliche Grundlage gegeben
-        ist. Das ist sicher nicht möglich, wenn man möglichst knappe, unklare
-        und juristisch-technische Erklärungen abgibt, so wie sie im Internet oft
-        Standard sind, wenn es um Datenschutz geht. Ich hoffe, Sie finden die
-        folgenden Erläuterungen interessant und informativ und vielleicht ist
-        die eine oder andere Information dabei, die Sie noch nicht kannten.
+        technische <strong>Begriffe leserfreundlich erklärt</strong>, Links zu
+        weiterführenden Informationen geboten und <strong>Grafiken</strong> zum
+        Einsatz gebracht. Wir informieren damit in klarer und einfacher Sprache,
+        dass wir im Rahmen unserer Geschäftstätigkeiten nur dann
+        personenbezogene Daten verarbeiten, wenn eine entsprechende gesetzliche
+        Grundlage gegeben ist. Das ist sicher nicht möglich, wenn man möglichst
+        knappe, unklare und juristisch-technische Erklärungen abgibt, so wie sie
+        im Internet oft Standard sind, wenn es um Datenschutz geht. Ich hoffe,
+        Sie finden die folgenden Erläuterungen interessant und informativ und
+        vielleicht ist die eine oder andere Information dabei, die Sie noch
+        nicht kannten.
         <br />
         Wenn trotzdem Fragen bleiben, möchten wir Sie bitten, sich an die unten
         bzw. im Impressum genannte verantwortliche Stelle zu wenden, den
@@ -54,9 +48,7 @@ export default function PrivacyPolicy() {
         Drittseiten anzusehen. Unsere Kontaktdaten finden Sie selbstverständlich
         auch im Impressum.
       </p>
-      <h2 id="anwendungsbereich" className="adsimple-313241308">
-        Anwendungsbereich
-      </h2>
+      <h2 id="anwendungsbereich">Anwendungsbereich</h2>
       <p>
         Diese Datenschutzerklärung gilt für alle von uns im Unternehmen
         verarbeiteten personenbezogenen Daten und für alle personenbezogenen
@@ -68,28 +60,19 @@ export default function PrivacyPolicy() {
         abrechnen können, sei es online oder offline. Der Anwendungsbereich
         dieser Datenschutzerklärung umfasst:
       </p>
-      <ul className="adsimple-313241308">
-        <li className="adsimple-313241308">
-          alle Onlineauftritte (Websites, Onlineshops), die wir betreiben
-        </li>
-        <li className="adsimple-313241308">
-          Social Media Auftritte und E-Mail-Kommunikation
-        </li>
-        <li className="adsimple-313241308">
-          mobile Apps für Smartphones und andere Geräte
-        </li>
+      <ul>
+        <li>alle Onlineauftritte (Websites, Onlineshops), die wir betreiben</li>
+        <li>Social Media Auftritte und E-Mail-Kommunikation</li>
+        <li>mobile Apps für Smartphones und andere Geräte</li>
       </ul>
       <p>
-        <strong className="adsimple-313241308">Kurz gesagt:</strong> Die
-        Datenschutzerklärung gilt für alle Bereiche, in denen personenbezogene
-        Daten im Unternehmen über die genannten Kanäle strukturiert verarbeitet
-        werden. Sollten wir außerhalb dieser Kanäle mit Ihnen in
-        Rechtsbeziehungen eintreten, werden wir Sie gegebenenfalls gesondert
-        informieren.
+        <strong>Kurz gesagt:</strong> Die Datenschutzerklärung gilt für alle
+        Bereiche, in denen personenbezogene Daten im Unternehmen über die
+        genannten Kanäle strukturiert verarbeitet werden. Sollten wir außerhalb
+        dieser Kanäle mit Ihnen in Rechtsbeziehungen eintreten, werden wir Sie
+        gegebenenfalls gesondert informieren.
       </p>
-      <h2 id="rechtsgrundlagen" className="adsimple-313241308">
-        Rechtsgrundlagen
-      </h2>
+      <h2 id="rechtsgrundlagen">Rechtsgrundlagen</h2>
       <p>
         In der folgenden Datenschutzerklärung geben wir Ihnen transparente
         Informationen zu den rechtlichen Grundsätzen und Vorschriften, also den
@@ -100,10 +83,7 @@ export default function PrivacyPolicy() {
         2016/679 DES EUROPÄISCHEN PARLAMENTS UND DES RATES vom 27. April 2016.
         Diese Datenschutz-Grundverordnung der EU können Sie selbstverständlich
         online auf EUR-Lex, dem Zugang zum EU-Recht, unter{" "}
-        <a
-          className="adsimple-313241308"
-          href="https://eur-lex.europa.eu/legal-content/DE/ALL/?uri=celex%3A32016R0679"
-        >
+        <a href="https://eur-lex.europa.eu/legal-content/DE/ALL/?uri=celex%3A32016R0679">
           https://eur-lex.europa.eu/legal-content/DE/ALL/?uri=celex%3A32016R0679
         </a>{" "}
         nachlesen.
@@ -113,36 +93,33 @@ export default function PrivacyPolicy() {
         Bedingungen zutrifft:
       </p>
       <ol>
-        <li className="adsimple-313241308">
-          <strong className="adsimple-313241308">Einwilligung</strong> (Artikel
-          6 Absatz 1 lit. a DSGVO): Sie haben uns Ihre Einwilligung gegeben,
-          Daten zu einem bestimmten Zweck zu verarbeiten. Ein Beispiel wäre die
-          Speicherung Ihrer eingegebenen Daten eines Kontaktformulars.
+        <li>
+          <strong>Einwilligung</strong> (Artikel 6 Absatz 1 lit. a DSGVO): Sie
+          haben uns Ihre Einwilligung gegeben, Daten zu einem bestimmten Zweck
+          zu verarbeiten. Ein Beispiel wäre die Speicherung Ihrer eingegebenen
+          Daten eines Kontaktformulars.
         </li>
-        <li className="adsimple-313241308">
-          <strong className="adsimple-313241308">Vertrag</strong> (Artikel 6
-          Absatz 1 lit. b DSGVO): Um einen Vertrag oder vorvertragliche
-          Verpflichtungen mit Ihnen zu erfüllen, verarbeiten wir Ihre Daten.
-          Wenn wir zum Beispiel einen Kaufvertrag mit Ihnen abschließen,
-          benötigen wir vorab personenbezogene Informationen.
+        <li>
+          <strong>Vertrag</strong> (Artikel 6 Absatz 1 lit. b DSGVO): Um einen
+          Vertrag oder vorvertragliche Verpflichtungen mit Ihnen zu erfüllen,
+          verarbeiten wir Ihre Daten. Wenn wir zum Beispiel einen Kaufvertrag
+          mit Ihnen abschließen, benötigen wir vorab personenbezogene
+          Informationen.
         </li>
-        <li className="adsimple-313241308">
-          <strong className="adsimple-313241308">
-            Rechtliche Verpflichtung
-          </strong>{" "}
-          (Artikel 6 Absatz 1 lit. c DSGVO): Wenn wir einer rechtlichen
-          Verpflichtung unterliegen, verarbeiten wir Ihre Daten. Zum Beispiel
-          sind wir gesetzlich verpflichtet Rechnungen für die Buchhaltung
-          aufzuheben. Diese enthalten in der Regel personenbezogene Daten.
+        <li>
+          <strong>Rechtliche Verpflichtung</strong> (Artikel 6 Absatz 1 lit. c
+          DSGVO): Wenn wir einer rechtlichen Verpflichtung unterliegen,
+          verarbeiten wir Ihre Daten. Zum Beispiel sind wir gesetzlich
+          verpflichtet Rechnungen für die Buchhaltung aufzuheben. Diese
+          enthalten in der Regel personenbezogene Daten.
         </li>
-        <li className="adsimple-313241308">
-          <strong className="adsimple-313241308">Berechtigte Interessen</strong>{" "}
-          (Artikel 6 Absatz 1 lit. f DSGVO): Im Falle berechtigter Interessen,
-          die Ihre Grundrechte nicht einschränken, behalten wir uns die
-          Verarbeitung personenbezogener Daten vor. Wir müssen zum Beispiel
-          gewisse Daten verarbeiten, um unsere Website sicher und wirtschaftlich
-          effizient betreiben zu können. Diese Verarbeitung ist somit ein
-          berechtigtes Interesse.
+        <li>
+          <strong>Berechtigte Interessen</strong> (Artikel 6 Absatz 1 lit. f
+          DSGVO): Im Falle berechtigter Interessen, die Ihre Grundrechte nicht
+          einschränken, behalten wir uns die Verarbeitung personenbezogener
+          Daten vor. Wir müssen zum Beispiel gewisse Daten verarbeiten, um
+          unsere Website sicher und wirtschaftlich effizient betreiben zu
+          können. Diese Verarbeitung ist somit ein berechtigtes Interesse.
         </li>
       </ol>
       <p>
@@ -153,28 +130,22 @@ export default function PrivacyPolicy() {
         der entsprechenden Stelle ausgewiesen.
       </p>
       <p>Zusätzlich zu der EU-Verordnung gelten auch noch nationale Gesetze:</p>
-      <ul className="adsimple-313241308">
-        <li className="adsimple-313241308">
-          In <strong className="adsimple-313241308">Österreich</strong> ist dies
-          das Bundesgesetz zum Schutz natürlicher Personen bei der Verarbeitung
-          personenbezogener Daten (
-          <strong className="adsimple-313241308">Datenschutzgesetz</strong>),
-          kurz <strong className="adsimple-313241308">DSG</strong>.
+      <ul>
+        <li>
+          In <strong>Österreich</strong> ist dies das Bundesgesetz zum Schutz
+          natürlicher Personen bei der Verarbeitung personenbezogener Daten (
+          <strong>Datenschutzgesetz</strong>), kurz <strong>DSG</strong>.
         </li>
-        <li className="adsimple-313241308">
-          In <strong className="adsimple-313241308">Deutschland</strong> gilt
-          das{" "}
-          <strong className="adsimple-313241308">
-            Bundesdatenschutzgesetz
-          </strong>
-          , kurz<strong className="adsimple-313241308"> BDSG</strong>.
+        <li>
+          In <strong>Deutschland</strong> gilt das{" "}
+          <strong>Bundesdatenschutzgesetz</strong>, kurz<strong> BDSG</strong>.
         </li>
       </ul>
       <p>
         Sofern weitere regionale oder nationale Gesetze zur Anwendung kommen,
         informieren wir Sie in den folgenden Abschnitten darüber.
       </p>
-      <h2 id="kontaktdaten-verantwortliche" className="adsimple-313241308">
+      <h2 id="kontaktdaten-verantwortliche">
         Kontaktdaten des Verantwortlichen
       </h2>
       <p>
@@ -183,7 +154,7 @@ export default function PrivacyPolicy() {
         des Verantwortlichen gemäß Artikel 4 Absatz 7
         EU-Datenschutz-Grundverordnung (DSGVO):
         <br />
-        <span className="adsimple-313241308 font-normal">
+        <span className="   font-normal">
           Miriam Lilith Fix
           <br />
           Reinbeckstr. 4-8, Apt. 222, 12459 Berlin, Deutschland
@@ -201,9 +172,7 @@ export default function PrivacyPolicy() {
         Impressum:{" "}
         <Link to="/impressum">https://waterlilith.space/impressum</Link>
       </p>
-      <h2 id="speicherdauer" className="adsimple-313241308">
-        Speicherdauer
-      </h2>
+      <h2 id="speicherdauer">Speicherdauer</h2>
       <p>
         Dass wir personenbezogene Daten nur so lange speichern, wie es für die
         Bereitstellung unserer Dienstleistungen und Produkte unbedingt notwendig
@@ -223,79 +192,73 @@ export default function PrivacyPolicy() {
         Über die konkrete Dauer der jeweiligen Datenverarbeitung informieren wir
         Sie weiter unten, sofern wir weitere Informationen dazu haben.
       </p>
-      <h2 id="rechte-dsgvo" className="adsimple-313241308">
-        Rechte laut Datenschutz-Grundverordnung
-      </h2>
+      <h2 id="rechte-dsgvo">Rechte laut Datenschutz-Grundverordnung</h2>
       <p>
         Gemäß Artikel 13, 14 DSGVO informieren wir Sie über die folgenden
         Rechte, die Ihnen zustehen, damit es zu einer fairen und transparenten
         Verarbeitung von Daten kommt:
       </p>
-      <ul className="adsimple-313241308">
-        <li className="adsimple-313241308">
+      <ul>
+        <li>
           Sie haben laut Artikel 15 DSGVO ein Auskunftsrecht darüber, ob wir
           Daten von Ihnen verarbeiten. Sollte das zutreffen, haben Sie Recht
           darauf eine Kopie der Daten zu erhalten und die folgenden
           Informationen zu erfahren:
-          <ul className="adsimple-313241308">
-            <li className="adsimple-313241308">
-              zu welchem Zweck wir die Verarbeitung durchführen;
-            </li>
-            <li className="adsimple-313241308">
+          <ul>
+            <li>zu welchem Zweck wir die Verarbeitung durchführen;</li>
+            <li>
               die Kategorien, also die Arten von Daten, die verarbeitet werden;
             </li>
-            <li className="adsimple-313241308">
+            <li>
               wer diese Daten erhält und wenn die Daten an Drittländer
               übermittelt werden, wie die Sicherheit garantiert werden kann;
             </li>
-            <li className="adsimple-313241308">
-              wie lange die Daten gespeichert werden;
-            </li>
-            <li className="adsimple-313241308">
+            <li>wie lange die Daten gespeichert werden;</li>
+            <li>
               das Bestehen des Rechts auf Berichtigung, Löschung oder
               Einschränkung der Verarbeitung und dem Widerspruchsrecht gegen die
               Verarbeitung;
             </li>
-            <li className="adsimple-313241308">
+            <li>
               dass Sie sich bei einer Aufsichtsbehörde beschweren können (Links
               zu diesen Behörden finden Sie weiter unten);
             </li>
-            <li className="adsimple-313241308">
+            <li>
               die Herkunft der Daten, wenn wir sie nicht bei Ihnen erhoben
               haben;
             </li>
-            <li className="adsimple-313241308">
+            <li>
               ob Profiling durchgeführt wird, ob also Daten automatisch
               ausgewertet werden, um zu einem persönlichen Profil von Ihnen zu
               gelangen.
             </li>
           </ul>
         </li>
-        <li className="adsimple-313241308">
+        <li>
           Sie haben laut Artikel 16 DSGVO ein Recht auf Berichtigung der Daten,
           was bedeutet, dass wir Daten richtig stellen müssen, falls Sie Fehler
           finden.
         </li>
-        <li className="adsimple-313241308">
+        <li>
           Sie haben laut Artikel 17 DSGVO das Recht auf Löschung („Recht auf
           Vergessenwerden“), was konkret bedeutet, dass Sie die Löschung Ihrer
           Daten verlangen dürfen.
         </li>
-        <li className="adsimple-313241308">
+        <li>
           Sie haben laut Artikel 18 DSGVO das Recht auf Einschränkung der
           Verarbeitung, was bedeutet, dass wir die Daten nur mehr speichern
           dürfen aber nicht weiter verwenden.
         </li>
-        <li className="adsimple-313241308">
+        <li>
           Sie haben laut Artikel 20 DSGVO das Recht auf Datenübertragbarkeit,
           was bedeutet, dass wir Ihnen auf Anfrage Ihre Daten in einem gängigen
           Format zur Verfügung stellen.
         </li>
-        <li className="adsimple-313241308">
+        <li>
           Sie haben laut Artikel 21 DSGVO ein Widerspruchsrecht, welches nach
           Durchsetzung eine Änderung der Verarbeitung mit sich bringt.
-          <ul className="adsimple-313241308">
-            <li className="adsimple-313241308">
+          <ul>
+            <li>
               Wenn die Verarbeitung Ihrer Daten auf Artikel 6 Abs. 1 lit. e
               (öffentliches Interesse, Ausübung öffentlicher Gewalt) oder
               Artikel 6 Abs. 1 lit. f (berechtigtes Interesse) basiert, können
@@ -303,24 +266,24 @@ export default function PrivacyPolicy() {
               so rasch wie möglich, ob wir diesem Widerspruch rechtlich
               nachkommen können.
             </li>
-            <li className="adsimple-313241308">
+            <li>
               Werden Daten verwendet, um Direktwerbung zu betreiben, können Sie
               jederzeit gegen diese Art der Datenverarbeitung widersprechen. Wir
               dürfen Ihre Daten danach nicht mehr für Direktmarketing verwenden.
             </li>
-            <li className="adsimple-313241308">
+            <li>
               Werden Daten verwendet, um Profiling zu betreiben, können Sie
               jederzeit gegen diese Art der Datenverarbeitung widersprechen. Wir
               dürfen Ihre Daten danach nicht mehr für Profiling verwenden.
             </li>
           </ul>
         </li>
-        <li className="adsimple-313241308">
+        <li>
           Sie haben laut Artikel 22 DSGVO unter Umständen das Recht, nicht einer
           ausschließlich auf einer automatisierten Verarbeitung (zum Beispiel
           Profiling) beruhenden Entscheidung unterworfen zu werden.
         </li>
-        <li className="adsimple-313241308">
+        <li>
           Sie haben laut Artikel 77 DSGVO das Recht auf Beschwerde. Das heißt,
           Sie können sich jederzeit bei der Datenschutzbehörde beschweren, wenn
           Sie der Meinung sind, dass die Datenverarbeitung von personenbezogenen
@@ -328,9 +291,8 @@ export default function PrivacyPolicy() {
         </li>
       </ul>
       <p>
-        <strong className="adsimple-313241308">Kurz gesagt:</strong> Sie haben
-        Rechte - zögern Sie nicht, die oben gelistete verantwortliche Stelle bei
-        uns zu kontaktieren!
+        <strong>Kurz gesagt:</strong> Sie haben Rechte - zögern Sie nicht, die
+        oben gelistete verantwortliche Stelle bei uns zu kontaktieren!
       </p>
       <p>
         Wenn Sie glauben, dass die Verarbeitung Ihrer Daten gegen das
@@ -339,7 +301,6 @@ export default function PrivacyPolicy() {
         Aufsichtsbehörde beschweren. Diese ist für Österreich die
         Datenschutzbehörde, deren Website Sie unter{" "}
         <a
-          className="adsimple-313241308"
           href="https://www.dsb.gv.at/?tid=313241308"
           target="_blank"
           rel="noopener"
@@ -349,7 +310,6 @@ export default function PrivacyPolicy() {
         finden. In Deutschland gibt es für jedes Bundesland einen
         Datenschutzbeauftragten. Für nähere Informationen können Sie sich an die{" "}
         <a
-          className="adsimple-313241308"
           href="https://www.bfdi.bund.de/DE/Home/home_node.html"
           target="_blank"
           rel="noopener"
@@ -360,23 +320,16 @@ export default function PrivacyPolicy() {
         wenden. Für unser Unternehmen ist die folgende lokale Datenschutzbehörde
         zuständig:
       </p>
-      <h2 id="berlin-datenschutzbehoerde" className="adsimple-313241308">
-        Berlin Datenschutzbehörde
-      </h2>
+      <h2 id="berlin-datenschutzbehoerde">Berlin Datenschutzbehörde</h2>
       <p>
-        <strong className="adsimple-313241308">
-          Landesbeauftragte für Datenschutz:
-        </strong>{" "}
-        Meike Kamp
+        <strong>Landesbeauftragte für Datenschutz:</strong> Meike Kamp
         <br />
-        <strong className="adsimple-313241308">Adresse: </strong>Alt-Moabit
-        59-61, 10969 Berlin
+        <strong>Adresse: </strong>Alt-Moabit 59-61, 10969 Berlin
         <br />
-        <strong className="adsimple-313241308">Telefonnr.:</strong> 030/138 89-0
+        <strong>Telefonnr.:</strong> 030/138 89-0
         <br />
-        <strong className="adsimple-313241308">E-Mail-Adresse:</strong>{" "}
+        <strong>E-Mail-Adresse:</strong>{" "}
         <a
-          className="adsimple-313241308"
           href="mailto:mailbox@datenschutz-berlin.de"
           target="_blank"
           rel="follow noopener"
@@ -384,9 +337,8 @@ export default function PrivacyPolicy() {
           mailbox@datenschutz-berlin.de
         </a>
         <br />
-        <strong className="adsimple-313241308">Website: </strong>
+        <strong>Website: </strong>
         <a
-          className="adsimple-313241308"
           href="https://www.datenschutz-berlin.de/?tid=313241308"
           target="_blank"
           rel="noopener"
@@ -394,9 +346,7 @@ export default function PrivacyPolicy() {
           https://www.datenschutz-berlin.de/
         </a>
       </p>
-      <h2 id="tls-verschluesselung-https" className="adsimple-313241308">
-        TLS-Verschlüsselung mit https
-      </h2>
+      <h2 id="tls-verschluesselung-https">TLS-Verschlüsselung mit https</h2>
       <p>
         TLS, Verschlüsselung und https klingen sehr technisch und sind es auch.
         Wir verwenden HTTPS (das Hypertext Transfer Protocol Secure steht für
@@ -410,7 +360,6 @@ export default function PrivacyPolicy() {
         Damit haben wir eine zusätzliche Sicherheitsschicht eingeführt und
         erfüllen den Datenschutz durch Technikgestaltung (
         <a
-          className="adsimple-313241308"
           href="https://eur-lex.europa.eu/legal-content/DE/TXT/HTML/?uri=CELEX:32016R0679&amp;from=DE&amp;tid=313241308"
           target="_blank"
           rel="noopener"
@@ -437,16 +386,12 @@ export default function PrivacyPolicy() {
         die Google Suche nach "Hypertext Transfer Protocol Secure wiki" um gute
         Links zu weiterführenden Informationen zu erhalten.
       </p>
-      <h2 id="kommunikation" className="adsimple-313241308">
-        Kommunikation
-      </h2>
+      <h2 id="kommunikation">Kommunikation</h2>
       <table className="border-2 border-spacing-3">
         <tbody>
           <tr>
             <td>
-              <strong className="adsimple-313241308">
-                Kommunikation Zusammenfassung
-              </strong>
+              <strong>Kommunikation Zusammenfassung</strong>
               <br />
               &#x1f465; Betroffene: Alle, die mit uns per Telefon, E-Mail oder
               Online-Formular kommunizieren
@@ -478,12 +423,12 @@ export default function PrivacyPolicy() {
         damit zusammenhängenden Geschäftsvorgangs verarbeitet. Die Daten während
         eben solange gespeichert bzw. solange es das Gesetz vorschreibt.
       </p>
-      <h3 className="adsimple-313241308">Betroffene Personen</h3>
+      <h3>Betroffene Personen</h3>
       <p>
         Von den genannten Vorgängen sind alle betroffen, die über die von uns
         bereit gestellten Kommunikationswege den Kontakt zu uns suchen.
       </p>
-      <h3 className="adsimple-313241308">Telefon</h3>
+      <h3>Telefon</h3>
       <p>
         Wenn Sie uns anrufen, werden die Anrufdaten auf dem jeweiligen Endgerät
         und beim eingesetzten Telekommunikationsanbieter pseudonymisiert
@@ -492,7 +437,7 @@ export default function PrivacyPolicy() {
         werden. Die Daten werden gelöscht, sobald der Geschäftsfall beendet
         wurde und es gesetzliche Vorgaben erlauben.
       </p>
-      <h3 className="adsimple-313241308">E-Mail</h3>
+      <h3>E-Mail</h3>
       <p>
         Wenn Sie mit uns per E-Mail kommunizieren, werden Daten gegebenenfalls
         auf dem jeweiligen Endgerät (Computer, Laptop, Smartphone,...)
@@ -500,31 +445,31 @@ export default function PrivacyPolicy() {
         E-Mail-Server. Die Daten werden gelöscht, sobald der Geschäftsfall
         beendet wurde und es gesetzliche Vorgaben erlauben.
       </p>
-      <h3 className="adsimple-313241308">Online Formulare</h3>
+      <h3>Online Formulare</h3>
       <p>
         Wenn Sie mit uns mittels Online-Formular kommunizieren, werden Daten auf
         unserem Webserver gespeichert und gegebenenfalls an eine E-Mail-Adresse
         von uns weitergeleitet. Die Daten werden gelöscht, sobald der
         Geschäftsfall beendet wurde und es gesetzliche Vorgaben erlauben.
       </p>
-      <h3 className="adsimple-313241308">Rechtsgrundlagen</h3>
+      <h3>Rechtsgrundlagen</h3>
       <p>
         Die Verarbeitung der Daten basiert auf den folgenden Rechtsgrundlagen:
       </p>
-      <ul className="adsimple-313241308">
-        <li className="adsimple-313241308">
+      <ul>
+        <li>
           Art. 6 Abs. 1 lit. a DSGVO (Einwilligung): Sie geben uns die
           Einwilligung Ihre Daten zu speichern und weiter für den Geschäftsfall
           betreffende Zwecke zu verwenden;
         </li>
-        <li className="adsimple-313241308">
+        <li>
           Art. 6 Abs. 1 lit. b DSGVO (Vertrag): Es besteht die Notwendigkeit für
           die Erfüllung eines Vertrags mit Ihnen oder einem Auftragsverarbeiter
           wie z. B. dem Telefonanbieter oder wir müssen die Daten für
           vorvertragliche Tätigkeiten, wie z. B. die Vorbereitung eines
           Angebots, verarbeiten;
         </li>
-        <li className="adsimple-313241308">
+        <li>
           Art. 6 Abs. 1 lit. f DSGVO (Berechtigte Interessen): Wir wollen
           Kundenanfragen und geschäftliche Kommunikation in einem
           professionellen Rahmen betreiben. Dazu sind gewisse technische
@@ -533,16 +478,12 @@ export default function PrivacyPolicy() {
           zu können.
         </li>
       </ul>
-      <h2 id="cookies" className="adsimple-313241308">
-        Cookies
-      </h2>
+      <h2 id="cookies">Cookies</h2>
       <table className="border-2 border-spacing-3">
         <tbody>
           <tr>
             <td>
-              <strong className="adsimple-313241308">
-                Cookies Zusammenfassung
-              </strong>
+              <strong>Cookies Zusammenfassung</strong>
               <br />
               &#x1f465; Betroffene: Besucher der Website
               <br />
@@ -563,7 +504,7 @@ export default function PrivacyPolicy() {
           </tr>
         </tbody>
       </table>
-      <h3 className="adsimple-313241308">Was sind Cookies?</h3>
+      <h3>Was sind Cookies?</h3>
       <p>
         Unsere Website verwendet HTTP-Cookies, um nutzerspezifische Daten zu
         speichern.
@@ -626,26 +567,22 @@ export default function PrivacyPolicy() {
       </p>
       <p>So können zum Beispiel Cookie-Daten aussehen:</p>
       <p>
-        <strong className="adsimple-313241308">Name:</strong> _ga
+        <strong>Name:</strong> _ga
         <br />
-        <strong className="adsimple-313241308">Wert:</strong>
+        <strong>Wert:</strong>
          GA1.2.1326744211.152313241308-9
         <br />
-        <strong className="adsimple-313241308">Verwendungszweck:</strong>{" "}
-        Unterscheidung der Websitebesucher
+        <strong>Verwendungszweck:</strong> Unterscheidung der Websitebesucher
         <br />
-        <strong className="adsimple-313241308">Ablaufdatum:</strong> nach 2
-        Jahren
+        <strong>Ablaufdatum:</strong> nach 2 Jahren
       </p>
       <p>Diese Mindestgrößen sollte ein Browser unterstützen können:</p>
-      <ul className="adsimple-313241308">
-        <li className="adsimple-313241308">Mindestens 4096 Bytes pro Cookie</li>
-        <li className="adsimple-313241308">Mindestens 50 Cookies pro Domain</li>
-        <li className="adsimple-313241308">
-          Mindestens 3000 Cookies insgesamt
-        </li>
+      <ul>
+        <li>Mindestens 4096 Bytes pro Cookie</li>
+        <li>Mindestens 50 Cookies pro Domain</li>
+        <li>Mindestens 3000 Cookies insgesamt</li>
       </ul>
-      <h3 className="adsimple-313241308">Welche Arten von Cookies gibt es?</h3>
+      <h3>Welche Arten von Cookies gibt es?</h3>
       <p>
         Die Frage welche Cookies wir im Speziellen verwenden, hängt von den
         verwendeten Diensten ab und wird in den folgenden Abschnitten der
@@ -654,7 +591,7 @@ export default function PrivacyPolicy() {
       </p>
       <p>Man kann 4 Arten von Cookies unterscheiden:</p>
       <p>
-        <strong className="adsimple-313241308">
+        <strong>
           Unerlässliche Cookies
           <br />
         </strong>
@@ -665,7 +602,7 @@ export default function PrivacyPolicy() {
         nicht gelöscht, selbst wenn der User sein Browserfenster schließt.
       </p>
       <p>
-        <strong className="adsimple-313241308">
+        <strong>
           Zweckmäßige Cookies
           <br />
         </strong>
@@ -675,7 +612,7 @@ export default function PrivacyPolicy() {
         Browsern gemessen.
       </p>
       <p>
-        <strong className="adsimple-313241308">
+        <strong>
           Zielorientierte Cookies
           <br />
         </strong>
@@ -684,7 +621,7 @@ export default function PrivacyPolicy() {
         Formulardaten gespeichert.
       </p>
       <p>
-        <strong className="adsimple-313241308">
+        <strong>
           Werbe-Cookies
           <br />
         </strong>
@@ -700,24 +637,19 @@ export default function PrivacyPolicy() {
       <p>
         Wenn Sie mehr über Cookies wissen möchten und technische Dokumentationen
         nicht scheuen, empfehlen wir{" "}
-        <a
-          className="adsimple-313241308"
-          href="https://datatracker.ietf.org/doc/html/rfc6265"
-        >
+        <a href="https://datatracker.ietf.org/doc/html/rfc6265">
           https://datatracker.ietf.org/doc/html/rfc6265
         </a>
         , dem Request for Comments der Internet Engineering Task Force (IETF)
         namens "HTTP State Management Mechanism".
       </p>
-      <h3 className="adsimple-313241308">
-        Zweck der Verarbeitung über Cookies
-      </h3>
+      <h3>Zweck der Verarbeitung über Cookies</h3>
       <p>
         Der Zweck ist letztendlich abhängig vom jeweiligen Cookie. Mehr Details
         dazu finden Sie weiter unten bzw. beim Hersteller der Software, die das
         Cookie setzt.
       </p>
-      <h3 className="adsimple-313241308">Welche Daten werden verarbeitet?</h3>
+      <h3>Welche Daten werden verarbeitet?</h3>
       <p>
         Cookies sind kleine Gehilfen für viele verschiedene Aufgaben. Welche
         Daten in Cookies gespeichert werden, kann man leider nicht
@@ -725,7 +657,7 @@ export default function PrivacyPolicy() {
         Datenschutzerklärung über die verarbeiteten bzw. gespeicherten Daten
         informieren.
       </p>
-      <h3 className="adsimple-313241308">Speicherdauer von Cookies</h3>
+      <h3>Speicherdauer von Cookies</h3>
       <p>
         Die Speicherdauer hängt vom jeweiligen Cookie ab und wird weiter unter
         präzisiert. Manche Cookies werden nach weniger als einer Stunde
@@ -740,9 +672,7 @@ export default function PrivacyPolicy() {
         gelöscht, wobei die Rechtmäßigkeit der Speicherung bis dahin unberührt
         bleibt.
       </p>
-      <h3 className="adsimple-313241308">
-        Widerspruchsrecht - wie kann ich Cookies löschen?
-      </h3>
+      <h3>Widerspruchsrecht - wie kann ich Cookies löschen?</h3>
       <p>
         Wie und ob Sie Cookies verwenden wollen, entscheiden Sie selbst.
         Unabhängig von welchem Service oder welcher Website die Cookies stammen,
@@ -757,7 +687,6 @@ export default function PrivacyPolicy() {
       </p>
       <p>
         <a
-          className="adsimple-313241308"
           href="https://support.google.com/chrome/answer/95647?tid=313241308"
           target="_blank"
           rel="noopener noreferrer"
@@ -767,7 +696,6 @@ export default function PrivacyPolicy() {
       </p>
       <p>
         <a
-          className="adsimple-313241308"
           href="https://support.apple.com/de-at/guide/safari/sfri11471/mac?tid=313241308"
           target="_blank"
           rel="noopener noreferrer"
@@ -777,7 +705,6 @@ export default function PrivacyPolicy() {
       </p>
       <p>
         <a
-          className="adsimple-313241308"
           href="https://support.mozilla.org/de/kb/cookies-und-website-daten-in-firefox-loschen?tid=313241308"
           target="_blank"
           rel="noopener noreferrer"
@@ -787,18 +714,12 @@ export default function PrivacyPolicy() {
         </a>
       </p>
       <p>
-        <a
-          className="adsimple-313241308"
-          href="https://support.microsoft.com/de-de/windows/l%C3%B6schen-und-verwalten-von-cookies-168dab11-0753-043d-7c16-ede5947fc64d?tid=313241308"
-        >
+        <a href="https://support.microsoft.com/de-de/windows/l%C3%B6schen-und-verwalten-von-cookies-168dab11-0753-043d-7c16-ede5947fc64d?tid=313241308">
           Internet Explorer: Löschen und Verwalten von Cookies
         </a>
       </p>
       <p>
-        <a
-          className="adsimple-313241308"
-          href="https://support.microsoft.com/de-de/microsoft-edge/cookies-in-microsoft-edge-l%C3%B6schen-63947406-40ac-c3b8-57b9-2a946a29ae09?tid=313241308"
-        >
+        <a href="https://support.microsoft.com/de-de/microsoft-edge/cookies-in-microsoft-edge-l%C3%B6schen-63947406-40ac-c3b8-57b9-2a946a29ae09?tid=313241308">
           Microsoft Edge: Löschen und Verwalten von Cookies
         </a>
       </p>
@@ -811,15 +732,15 @@ export default function PrivacyPolicy() {
         Google mit dem Suchbegriff “Cookies löschen Chrome” oder "Cookies
         deaktivieren Chrome" im Falle eines Chrome Browsers.
       </p>
-      <h3 className="adsimple-313241308">Rechtsgrundlage</h3>
+      <h3>Rechtsgrundlage</h3>
       <p>
         Seit 2009 gibt es die sogenannten „Cookie-Richtlinien“. Darin ist
         festgehalten, dass das Speichern von Cookies eine{" "}
-        <strong className="adsimple-313241308">Einwilligung</strong> (Artikel 6
-        Abs. 1 lit. a DSGVO) von Ihnen verlangt. Innerhalb der EU-Länder gibt es
-        allerdings noch sehr unterschiedliche Reaktionen auf diese Richtlinien.
-        In Österreich erfolgte aber die Umsetzung dieser Richtlinie in § 165
-        Abs. 3 des Telekommunikationsgesetzes (2021). In Deutschland wurden die
+        <strong>Einwilligung</strong> (Artikel 6 Abs. 1 lit. a DSGVO) von Ihnen
+        verlangt. Innerhalb der EU-Länder gibt es allerdings noch sehr
+        unterschiedliche Reaktionen auf diese Richtlinien. In Österreich
+        erfolgte aber die Umsetzung dieser Richtlinie in § 165 Abs. 3 des
+        Telekommunikationsgesetzes (2021). In Deutschland wurden die
         Cookie-Richtlinien nicht als nationales Recht umgesetzt. Stattdessen
         erfolgte die Umsetzung dieser Richtlinie weitgehend in § 15 Abs. 3 des
         Telemediengesetzes (TMG), welches seit Mai 2024 durch das
@@ -827,12 +748,11 @@ export default function PrivacyPolicy() {
       </p>
       <p>
         Für unbedingt notwendige Cookies, auch soweit keine Einwilligung
-        vorliegt, bestehen{" "}
-        <strong className="adsimple-313241308">berechtigte Interessen</strong>{" "}
-        (Artikel 6 Abs. 1 lit. f DSGVO), die in den meisten Fällen
-        wirtschaftlicher Natur sind. Wir möchten den Besuchern der Website eine
-        angenehme Benutzererfahrung bescheren und dafür sind bestimmte Cookies
-        oft unbedingt notwendig.
+        vorliegt, bestehen <strong>berechtigte Interessen</strong> (Artikel 6
+        Abs. 1 lit. f DSGVO), die in den meisten Fällen wirtschaftlicher Natur
+        sind. Wir möchten den Besuchern der Website eine angenehme
+        Benutzererfahrung bescheren und dafür sind bestimmte Cookies oft
+        unbedingt notwendig.
       </p>
       <p>
         Soweit nicht unbedingt erforderliche Cookies zum Einsatz kommen,
@@ -843,16 +763,12 @@ export default function PrivacyPolicy() {
         In den folgenden Abschnitten werden Sie genauer über den Einsatz von
         Cookies informiert, sofern eingesetzte Software Cookies verwendet.
       </p>
-      <h2 id="webhosting-einleitung" className="adsimple-313241308">
-        Webhosting Einleitung
-      </h2>
+      <h2 id="webhosting-einleitung">Webhosting Einleitung</h2>
       <table className="border-2 border-spacing-3">
         <tbody>
           <tr>
             <td>
-              <strong className="adsimple-313241308">
-                Webhosting Zusammenfassung
-              </strong>
+              <strong>Webhosting Zusammenfassung</strong>
               <br />
               &#x1f465; Betroffene: Besucher der Website
               <br />
@@ -873,7 +789,7 @@ export default function PrivacyPolicy() {
           </tr>
         </tbody>
       </table>
-      <h3 className="adsimple-313241308">Was ist Webhosting?</h3>
+      <h3>Was ist Webhosting?</h3>
       <p>
         Wenn Sie heutzutage Websites besuchen, werden gewisse Informationen -
         auch personenbezogene Daten - automatisch erstellt und gespeichert, so
@@ -922,42 +838,31 @@ export default function PrivacyPolicy() {
           width="100%"
         />
       </p>
-      <h3 className="adsimple-313241308">
-        Warum verarbeiten wir personenbezogene Daten?
-      </h3>
+      <h3>Warum verarbeiten wir personenbezogene Daten?</h3>
       <p>Die Zwecke der Datenverarbeitung sind:</p>
       <ol>
-        <li className="adsimple-313241308">
+        <li>
           Professionelles Hosting der Website und Absicherung des Betriebs
         </li>
-        <li className="adsimple-313241308">
-          zur Aufrechterhaltung der Betriebs- und IT-Sicherheit
-        </li>
-        <li className="adsimple-313241308">
+        <li>zur Aufrechterhaltung der Betriebs- und IT-Sicherheit</li>
+        <li>
           Anonyme Auswertung des Zugriffsverhaltens zur Verbesserung unseres
           Angebots und ggf. zur Strafverfolgung bzw. Verfolgung von Ansprüchen
         </li>
       </ol>
-      <h3 className="adsimple-313241308">Welche Daten werden verarbeitet?</h3>
+      <h3>Welche Daten werden verarbeitet?</h3>
       <p>
         Auch während Sie unsere Website jetzt gerade besuchen, speichert unser
         Webserver, das ist der Computer auf dem diese Webseite gespeichert ist,
         in der Regel automatisch Daten wie
       </p>
-      <ul className="adsimple-313241308">
-        <li className="adsimple-313241308">
-          die komplette Internetadresse (URL) der aufgerufenen Webseite
-        </li>
-        <li className="adsimple-313241308">
-          Browser und Browserversion (z. B. Chrome 87)
-        </li>
-        <li className="adsimple-313241308">
-          das verwendete Betriebssystem (z. B. Windows 10)
-        </li>
-        <li className="adsimple-313241308">
+      <ul>
+        <li>die komplette Internetadresse (URL) der aufgerufenen Webseite</li>
+        <li>Browser und Browserversion (z. B. Chrome 87)</li>
+        <li>das verwendete Betriebssystem (z. B. Windows 10)</li>
+        <li>
           die Adresse (URL) der zuvor besuchten Seite (Referrer URL) (z. B.{" "}
           <a
-            className="adsimple-313241308"
             href="https://www.beispielquellsite.de/vondabinichgekommen/"
             target="_blank"
             rel="follow noopener"
@@ -966,18 +871,14 @@ export default function PrivacyPolicy() {
           </a>
           )
         </li>
-        <li className="adsimple-313241308">
+        <li>
           den Hostnamen und die IP-Adresse des Geräts von welchem aus
           zugegriffen wird (z. B. COMPUTERNAME und 194.23.43.121)
         </li>
-        <li className="adsimple-313241308">Datum und Uhrzeit</li>
-        <li className="adsimple-313241308">
-          in Dateien, den sogenannten Webserver-Logfiles
-        </li>
+        <li>Datum und Uhrzeit</li>
+        <li>in Dateien, den sogenannten Webserver-Logfiles</li>
       </ul>
-      <h3 className="adsimple-313241308">
-        Wie lange werden Daten gespeichert?
-      </h3>
+      <h3>Wie lange werden Daten gespeichert?</h3>
       <p>
         In der Regel werden die oben genannten Daten zwei Wochen gespeichert und
         danach automatisch gelöscht. Wir geben diese Daten nicht weiter, können
@@ -985,12 +886,12 @@ export default function PrivacyPolicy() {
         rechtswidrigem Verhalten von Behörden eingesehen werden.
       </p>
       <p>
-        <strong className="adsimple-313241308">Kurz gesagt:</strong> Ihr Besuch
-        wird durch unseren Provider (Firma, die unsere Website auf speziellen
-        Computern (Servern) laufen lässt), protokolliert, aber wir geben Ihre
-        Daten nicht ohne Zustimmung weiter!
+        <strong>Kurz gesagt:</strong> Ihr Besuch wird durch unseren Provider
+        (Firma, die unsere Website auf speziellen Computern (Servern) laufen
+        lässt), protokolliert, aber wir geben Ihre Daten nicht ohne Zustimmung
+        weiter!
       </p>
-      <h3 className="adsimple-313241308">Rechtsgrundlage</h3>
+      <h3>Rechtsgrundlage</h3>
       <p>
         Die Rechtmäßigkeit der Verarbeitung personenbezogener Daten im Rahmen
         des Webhosting ergibt sich aus Art. 6 Abs. 1 lit. f DSGVO (Wahrung der
@@ -1004,17 +905,14 @@ export default function PrivacyPolicy() {
         über die Auftragsverarbeitung gemäß Art. 28 f. DSGVO, der die Einhaltung
         von Datenschutz gewährleistet und Datensicherheit garantiert.
       </p>
-      <h2
-        id="content-delivery-networks-einleitung"
-        className="adsimple-313241308"
-      >
+      <h2 id="content-delivery-networks-einleitung">
         Content Delivery Networks Einleitung
       </h2>
       <table className="border-2 border-spacing-3">
         <tbody>
           <tr>
             <td>
-              <strong className="adsimple-313241308">
+              <strong>
                 Content Delivery Networks Datenschutzerklärung Zusammenfassung
               </strong>
               <br />
@@ -1039,9 +937,7 @@ export default function PrivacyPolicy() {
           </tr>
         </tbody>
       </table>
-      <h3 className="adsimple-313241308">
-        Was ist ein Content Delivery Network?
-      </h3>
+      <h3>Was ist ein Content Delivery Network?</h3>
       <p>
         Wir nutzen auf unserer Website ein sogenanntes Content Delivery Network.
         Meistens wird ein solchen Netzwerk nur CDN genannt. Ein CDN hilft uns,
@@ -1063,7 +959,7 @@ export default function PrivacyPolicy() {
         Website schnell ausgeliefert werden. Die Datenübertragung zu Ihrem
         Browser wird folglich durch das CDN deutlich verkürzt.
       </p>
-      <h3 className="adsimple-313241308">
+      <h3>
         Warum verwenden wir ein Content Delivery Network für unsere Website?
       </h3>
       <p>
@@ -1077,7 +973,7 @@ export default function PrivacyPolicy() {
         ist der Einsatz des CDNs wenn Sie im Ausland sind, weil die Website von
         einem Server in Ihrer Nähe ausgeliefert wird.
       </p>
-      <h3 className="adsimple-313241308">Welche Daten werden verarbeitet?</h3>
+      <h3>Welche Daten werden verarbeitet?</h3>
       <p>
         Wenn Sie eine Website bzw. die Inhalte einer Website anfordern und diese
         in einem CDN zwischengespeichert sind, leitet das CDN die Anforderung an
@@ -1086,12 +982,7 @@ export default function PrivacyPolicy() {
         JavaScript-Bibliotheken heruntergeladen werden können und auf npm- und
         Github-Servern gehostet werden. Alternativ können bei den meisten CDNs
         auch Wordpress-Plugins geladen werden, wenn diese auf{" "}
-        <a
-          className="adsimple-313241308"
-          href="https://wordpress.org/"
-          target="_blank"
-          rel="noopener"
-        >
+        <a href="https://wordpress.org/" target="_blank" rel="noopener">
           Wordpress.org
         </a>{" "}
         gehostet werden. Ihr Browser kann personenbezogene Daten an das von uns
@@ -1102,58 +993,47 @@ export default function PrivacyPolicy() {
         Cookies verwendet werden, hängt von dem eingesetzten Network ab. Bitte
         lesen Sie sich dafür die Datenschutztexte des jeweiligen Dienstes durch.
       </p>
-      <h3 className="adsimple-313241308">Widerspruchsrecht</h3>
+      <h3>Widerspruchsrecht</h3>
       <p>
         Falls Sie diese Datenübertragung vollkommen unterbinden wollen, können
         Sie einen JavaScript-Blocker (siehe beispielsweise{" "}
-        <a
-          className="adsimple-313241308"
-          href="https://noscript.net/"
-          target="_blank"
-          rel="noopener"
-        >
+        <a href="https://noscript.net/" target="_blank" rel="noopener">
           https://noscript.net/
         </a>
         ) auf Ihrem PC installieren. Natürlich kann dann unsere Website nicht
         mehr das gewohnte Service (wie beispielsweise eine schnelle
         Ladegeschwindigkeit) bieten.
       </p>
-      <h3 className="adsimple-313241308">Rechtsgrundlage</h3>
+      <h3>Rechtsgrundlage</h3>
       <p>
         Wenn Sie eingewilligt haben, dass ein Content Delivery Network
         eingesetzt werden darf, ist die Rechtsgrundlage der entsprechenden
         Datenverarbeitung diese Einwilligung. Diese Einwilligung stellt laut{" "}
-        <strong className="adsimple-313241308">
-          Art. 6 Abs. 1 lit. a DSGVO (Einwilligung)
-        </strong>{" "}
-        die Rechtsgrundlage für die Verarbeitung personenbezogener Daten, wie
-        sie bei der Erfassung durch ein Content Delivery Network vorkommen kann,
+        <strong>Art. 6 Abs. 1 lit. a DSGVO (Einwilligung)</strong> die
+        Rechtsgrundlage für die Verarbeitung personenbezogener Daten, wie sie
+        bei der Erfassung durch ein Content Delivery Network vorkommen kann,
         dar.
       </p>
       <p>
         Von unserer Seite besteht zudem ein berechtigtes Interesse, ein Content
         Delivery Network zu verwenden, um unser Online-Service zu optimieren und
         sicherer zu machen. Die dafür entsprechende Rechtsgrundlage ist{" "}
-        <strong className="adsimple-313241308">
-          Art. 6 Abs. 1 lit. f DSGVO (Berechtigte Interessen)
-        </strong>
-        . Wir setzen das Tool gleichwohl nur ein, soweit Sie eine Einwilligung
+        <strong>Art. 6 Abs. 1 lit. f DSGVO (Berechtigte Interessen)</strong>.
+        Wir setzen das Tool gleichwohl nur ein, soweit Sie eine Einwilligung
         erteilt haben.
       </p>
       <p>
         Informationen zu speziellen Content Delivery Network erhalten Sie -
         sofern vorhanden - in den folgenden Abschnitten.
       </p>
-      <h2 id="cloudflare-datenschutzerklaerung" className="adsimple-313241308">
+      <h2 id="cloudflare-datenschutzerklaerung">
         Cloudflare Datenschutzerklärung
       </h2>
       <table className="border-2 border-spacing-3">
         <tbody>
           <tr>
             <td>
-              <strong className="adsimple-313241308">
-                Cloudflare Datenschutzerklärung Zusammenfassung
-              </strong>
+              <strong>Cloudflare Datenschutzerklärung Zusammenfassung</strong>
               <br />
               &#x1f465; Betroffene: Besucher der Website
               <br />
@@ -1177,7 +1057,7 @@ export default function PrivacyPolicy() {
           </tr>
         </tbody>
       </table>
-      <h3 className="adsimple-313241308">Was ist Cloudflare?</h3>
+      <h3>Was ist Cloudflare?</h3>
       <p>
         Wir verwenden auf dieser Website Cloudflare der Firma Cloudflare, Inc.
         (101 Townsend St., San Francisco, CA 94107, USA), um unsere Webseite
@@ -1207,9 +1087,7 @@ export default function PrivacyPolicy() {
         Cloudflare auch diverse Sicherheitsdienste, wie den DDoS-Schutz oder die
         Web Application Firewall an.
       </p>
-      <h3 className="adsimple-313241308">
-        Warum verwenden wir Cloudflare auf unserer Website?
-      </h3>
+      <h3>Warum verwenden wir Cloudflare auf unserer Website?</h3>
       <p>
         Natürlich wollen wir Ihnen mit unserer Webseite das bestmögliche Service
         bieten. Cloudflare hilft uns dabei, unsere Webseite schneller und
@@ -1217,7 +1095,6 @@ export default function PrivacyPolicy() {
         auch Sicherheitsdienste, wie DDoS-Schutz und Web-Firewall, an. Dazu
         gehören auch ein{" "}
         <a
-          className="adsimple-313241308"
           href="https://de.wikipedia.org/wiki/Reverse_Proxy"
           target="_blank"
           rel="noopener noreferrer"
@@ -1239,9 +1116,7 @@ export default function PrivacyPolicy() {
         Webseite deutlich leistungsstärker und weniger anfällig auf Spam oder
         andere Angriffe.
       </p>
-      <h3 className="adsimple-313241308">
-        Welche Daten werden von Cloudflare verarbeitet?
-      </h3>
+      <h3>Welche Daten werden von Cloudflare verarbeitet?</h3>
       <p>
         Cloudflare leitet im Allgemeinen nur jene Daten weiter, die von
         Webseitenbetreibern gesteuert werden. Die Inhalte werden also nicht von
@@ -1263,9 +1138,7 @@ export default function PrivacyPolicy() {
         Sicherheitsmaßnahmen verarbeiten. Ohne explizite Einwilligung von uns
         gibt Cloudflare keine personenbezogenen Daten weiter.
       </p>
-      <h3 className="adsimple-313241308">
-        Wie lange und wo werden die Daten gespeichert?
-      </h3>
+      <h3>Wie lange und wo werden die Daten gespeichert?</h3>
       <p>
         Cloudflare speichert Ihre Informationen hauptsächlich in den USA und im
         Europäischen Wirtschaftsraum. Cloudflare kann die oben beschriebenen
@@ -1278,7 +1151,7 @@ export default function PrivacyPolicy() {
         auslösen, kann es zu Ausnahmen der oben angeführten Speicherungsdauer
         kommen.
       </p>
-      <h3 className="adsimple-313241308">
+      <h3>
         Wie kann ich meine Daten löschen bzw. die Datenspeicherung verhindern?
       </h3>
       <p>
@@ -1290,10 +1163,7 @@ export default function PrivacyPolicy() {
         speichert, um so die Gesamtleistung von Cloudflare Resolver zu
         verbessern und etwaige Sicherheitsrisiken zu erkennen. Welche
         permanenten Protokolle genau gespeichert werden, können Sie auf{" "}
-        <a
-          className="adsimple-313241308"
-          href="https://www.cloudflare.com/application/privacypolicy/"
-        >
+        <a href="https://www.cloudflare.com/application/privacypolicy/">
           https://www.cloudflare.com/application/privacypolicy/
         </a>{" "}
         nachlesen. Alle Daten, die Cloudflare sammelt (temporär oder permanent),
@@ -1310,26 +1180,21 @@ export default function PrivacyPolicy() {
         Sie die Ausführung von Script-Code in Ihrem Browser deaktivieren oder
         einen Script-Blocker in Ihren Browser einbinden.
       </p>
-      <h3 className="adsimple-313241308">Rechtsgrundlage</h3>
+      <h3>Rechtsgrundlage</h3>
       <p>
         Wenn Sie eingewilligt haben, dass Cloudflare eingesetzt werden darf, ist
         die Rechtsgrundlage der entsprechenden Datenverarbeitung diese
         Einwilligung. Diese Einwilligung stellt laut
-        <strong className="adsimple-313241308">
-          {" "}
-          Art. 6 Abs. 1 lit. a DSGVO (Einwilligung)
-        </strong>{" "}
-        die Rechtsgrundlage für die Verarbeitung personenbezogener Daten, wie
-        sie bei der Erfassung durch Cloudflare vorkommen kann, dar.
+        <strong> Art. 6 Abs. 1 lit. a DSGVO (Einwilligung)</strong> die
+        Rechtsgrundlage für die Verarbeitung personenbezogener Daten, wie sie
+        bei der Erfassung durch Cloudflare vorkommen kann, dar.
       </p>
       <p>
         Von unserer Seite besteht zudem ein berechtigtes Interesse, Cloudflare
         zu verwenden, um unser Online-Service zu optimieren und sicherer zu
         machen. Die dafür entsprechende Rechtsgrundlage ist{" "}
-        <strong className="adsimple-313241308">
-          Art. 6 Abs. 1 lit. f DSGVO (Berechtigte Interessen)
-        </strong>
-        . Wir setzen Cloudflare gleichwohl nur ein, soweit Sie eine Einwilligung
+        <strong>Art. 6 Abs. 1 lit. f DSGVO (Berechtigte Interessen)</strong>.
+        Wir setzen Cloudflare gleichwohl nur ein, soweit Sie eine Einwilligung
         erteilt haben.
       </p>
       <p>
@@ -1339,7 +1204,6 @@ export default function PrivacyPolicy() {
         EU-Bürgern in die USA geregelt wird. Mehr Informationen dazu finden Sie
         auf{" "}
         <a
-          className="adsimple-313241308"
           href="https://commission.europa.eu/document/fa09cbad-dd7d-4684-ae60-be03fcb0fddf_en"
           target="_blank"
           rel="follow noopener"
@@ -1363,7 +1227,6 @@ export default function PrivacyPolicy() {
         Durchführungsbeschluss der EU-Kommission. Sie finden den Beschluss und
         die entsprechenden Standardvertragsklauseln u.a. hier:{" "}
         <a
-          className="adsimple-313241308"
           href="https://eur-lex.europa.eu/eli/dec_impl/2021/914/oj?locale=de"
           target="_blank"
           rel="follow noopener"
@@ -1377,7 +1240,6 @@ export default function PrivacyPolicy() {
         Verwendung von Cloudflare verarbeitet werden, erfahren Sie in der
         Datenschutzerklärung auf{" "}
         <a
-          className="adsimple-313241308"
           href="https://www.cloudflare.com/de-de/privacypolicy/?tid=313241308"
           target="_blank"
           rel="noopener noreferrer"
@@ -1386,9 +1248,7 @@ export default function PrivacyPolicy() {
         </a>
         .
       </p>
-      <h2 id="schlusswort" className="adsimple-313241308">
-        Schlusswort
-      </h2>
+      <h2 id="schlusswort">Schlusswort</h2>
       <p>
         Herzlichen Glückwunsch! Wenn Sie diese Zeilen lesen, haben Sie sich
         wirklich durch unsere gesamte Datenschutzerklärung „gekämpft“ oder

@@ -10,7 +10,7 @@ interface ImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   ratio?: number;
 }
 
-export function ResponsiveImage({
+export default function ResponsiveImage({
   width,
   ratio = 16 / 9,
   className,
@@ -22,7 +22,7 @@ export function ResponsiveImage({
     <div style={{ width: width, ...style }} className="inline-block w-full">
       <AspectRatio ratio={ratio}>
         <LazyLoadImage
-          className={cn(`w-full h-full object-cover`, className)}
+          className={cn("w-full h-full object-cover", className)}
           effect="blur"
           placeholderSrc={placeholderSrc}
           {...props}
@@ -31,5 +31,3 @@ export function ResponsiveImage({
     </div>
   );
 }
-
-export default ResponsiveImage;

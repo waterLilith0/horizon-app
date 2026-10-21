@@ -1,19 +1,18 @@
-import { themeAtom } from "@/shared/theme/configAtoms";
-
-import { useAtomValue } from "jotai";
 import { Outlet, useLocation } from "react-router";
 import { useState } from "react";
 import Navbar from "./Navbar";
 import Footer from "@/shared/Footer";
 import { cn } from "cn";
+import { useApplyTheme } from "@/shared/theme/useResolvedTheme";
 
 function Layout() {
+  useApplyTheme();
+
   const location = useLocation();
   const isIframePage = location.pathname === "/yt-embed";
-  const theme = useAtomValue(themeAtom);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   return (
-    <div className={cn("flex flex-col", theme === "dark" && "dark")}>
+    <div className={"flex flex-col"}>
       <Navbar
         open={mobileMenuOpen}
         onToggle={() => setMobileMenuOpen((v) => !v)}

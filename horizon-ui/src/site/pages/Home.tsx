@@ -1,4 +1,3 @@
-import { ResponsiveImage } from "@/site/components/ResponsiveImage";
 import {
   Card,
   CardContent,
@@ -6,7 +5,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import MasonryGrid from "@/site/components/MasonryGrid";
 import { cards } from "@/site/content";
 
 function Home() {
@@ -19,34 +17,27 @@ function Home() {
         updating this as I go (might be a good idea to look at this as kinda my
         own little blog I suppose).
       </p>
-      <MasonryGrid>
-        {cards.map((card, index) => (
-          <Card className="" key={index}>
-            {card.image && (
-              <ResponsiveImage
-                src={card.image}
-                alt={card.title}
-                width="20px"
-                // ratio={16 / 9}
-              />
-            )}
+      <section className="flex flex-col gap-3">
+        {cards.map((card) => (
+          <Card key={card.title} className="w-full h-50 shrink-0">
             <CardHeader>
               <CardTitle>{card.title}</CardTitle>
             </CardHeader>
             <CardContent>{card.content}</CardContent>
             {card.footer && (
               <CardFooter>
-                {
+                {card.footer}
+                {card.link && (
                   <>
                     <p>{card.footer}</p>
                     <a href={card.link}>{card.link}</a>
                   </>
-                }
+                )}
               </CardFooter>
             )}
           </Card>
         ))}
-      </MasonryGrid>
+      </section>
     </>
   );
 }

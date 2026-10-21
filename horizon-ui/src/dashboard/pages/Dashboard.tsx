@@ -1,59 +1,42 @@
-import { useOutletContext } from "react-router";
-import {
-  createPromptColumns,
-  type PromptValues,
-} from "../features/collections/Prompt";
 import Collection from "../features/collections/Collection";
-import { useCallback, useMemo, useState } from "react";
+import { useOutletContext } from "react-router";
+import { createPromptColumns } from "../features/prompts/Prompt";
+import { useState } from "react";
+import { initialPrompts } from "../mocks/data";
+import type { PromptValues } from "../features/prompts/prompt.schema";
 
-export default function ApiHome() {
+export default function Dashboard() {
   const { selectedCollection } = useOutletContext<{
     selectedCollection: number;
   }>();
 
-  const initialPrompts: PromptValues[] = [
-    {
-      promptId: 0,
-      promptText: "Test",
-      type: "action",
-      creationDate: new Date("01-10-2026"),
-    },
-    {
-      promptId: 1,
-      promptText: "Test",
-      type: "question",
-      creationDate: new Date(),
-    },
-  ];
   const [prompts, setPrompts] = useState<PromptValues[]>(initialPrompts);
 
-  const updateText = useCallback((id: number, promptText: string) => {
+  const updateText = (id: number, promptText: string) => {
     setPrompts((current) =>
       current.map((prompt) =>
         prompt.promptId === id ? { ...prompt, promptText } : prompt,
       ),
     );
-  }, []);
+  };
 
-  const updateType = useCallback((id: number, type: PromptValues["type"]) => {
+  const updateType = (id: number, type: PromptValues["type"]) => {
     setPrompts((current) =>
       current.map((prompt) =>
         prompt.promptId === id ? { ...prompt, type } : prompt,
       ),
     );
-  }, []);
+  };
 
-  const deletePrompt = useCallback((id: number) => {
+  const deletePrompt = (id: number) => {
     setPrompts((current) => current.filter((prompt) => prompt.promptId !== id));
-  }, []);
+  };
 
-  const columns = useMemo(
-    () => createPromptColumns({ updateText, updateType, deletePrompt }),
-    [updateText, updateType, deletePrompt],
-  );
+  const columns = createPromptColumns({ updateText, updateType, deletePrompt });
 
   return (
     <>
+      // TODO: Replace placeholder with actual collection name and details
       <p>// Collectionname placeholder: {`${selectedCollection}`}</p>
       <p>Table creation date, table tags, use ID as table id</p>
       <p>Collection Rename and delete buttons</p>

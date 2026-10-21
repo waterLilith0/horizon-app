@@ -2,12 +2,10 @@ export default function Impressum() {
   return (
     <div className="legal">
       <title>Impressum</title>
-      <h1 className="adsimple-323241313">Impressum</h1>
-      <p className="adsimple-323241313">
-        Informationen über den Diensteanbieter.
-      </p>
-      <p className="adsimple-323241313">Miriam Fix</p>
-      <p className="adsimple-323241313">
+      <h1>Impressum</h1>
+      <p>Informationen über den Diensteanbieter.</p>
+      <p>Miriam Fix</p>
+      <p>
         Reinbeckstr 4-8, Apt. 222, <br />
         12459 Berlin, <br />
         Deutschland
@@ -18,10 +16,8 @@ export default function Impressum() {
         <strong>E-Mail:</strong>{" "}
         <a href="mailto:contact@waterlilith.space">contact@waterlilith.space</a>
       </p>
-      <h2 id="bildernachweis" className="adsimple-323241313">
-        Bildernachweis
-      </h2>
-      <p className="adsimple-323241313">
+      <h2 id="bildernachweis">Bildernachweis</h2>
+      <p>
         Die Bilder, Fotos und Grafiken auf dieser Webseite sind urheberrechtlich
         geschützt.
       </p>
@@ -30,9 +26,7 @@ export default function Impressum() {
         <br />
         Fotografin Miriam Fix
       </p>
-      <h2 id="onlineauftritte" className="adsimple-323241313">
-        Weitere Onlineauftritte
-      </h2>
+      <h2 id="onlineauftritte">Weitere Onlineauftritte</h2>
       <p>
         <strong>Dieses Impressum gilt auch für</strong>
         <br />
