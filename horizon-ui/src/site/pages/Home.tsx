@@ -18,15 +18,15 @@ function Home() {
         own little blog I suppose).
       </p>
       <section className="flex flex-col gap-3">
-        {cards.map((card) => (
-          <Card key={card.title} className="w-full h-50 shrink-0">
+        {cards.map((card, i) => (
+          <Card key={i} className="w-full h-50 shrink-0">
             <CardHeader>
               <CardTitle>{card.title}</CardTitle>
             </CardHeader>
             <CardContent>{card.content}</CardContent>
             {card.footer && (
               <CardFooter>
-                {card.footer}
+                {!card.link && card.footer}
                 {card.link && (
                   <>
                     <p>{card.footer}</p>

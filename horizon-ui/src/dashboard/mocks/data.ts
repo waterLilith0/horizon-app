@@ -1,4 +1,5 @@
-import type { PromptValues } from "../features/prompts/Prompt";
+import type { CollectionValues } from "../features/collections/collection.schema";
+import type { PromptValues } from "../features/prompts/prompt.schema";
 
 export const initialPrompts: PromptValues[] = [
   {
@@ -13,4 +14,9 @@ export const initialPrompts: PromptValues[] = [
     type: "question",
     creationDate: new Date(),
   },
+];
+
+export const initialCollections: CollectionValues[] = [
+  { collectionId: 0, name: "Test", creationDate: new Date() },
+  { collectionId: 1, name: "Second", creationDate: new Date() },
 ];

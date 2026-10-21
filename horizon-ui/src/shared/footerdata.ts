@@ -18,6 +18,10 @@ export const footerRows = [
         text: "Privacy Policy",
       },
       {
+        url: "/impressum",
+        text: "Impressum",
+      },
+      {
         url: "/dashboard",
         text: "Dashboard",
       },

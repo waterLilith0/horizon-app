@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/sidebar";
 import type { CollectionValues } from "./collection.schema";
 import { useState } from "react";
-import { CollectionNameSchema } from "./collection.schema";
 import CreateFooter from "./CreateFooter";
 import DeleteDialog from "./DeleteDialog";
 
@@ -29,18 +28,11 @@ export function CollectionsSidebar({
   selectedId,
   onSelect,
   onDelete,
+  onCreate,
 }: CollectionsSidebarProps) {
   const [pendingDelete, setPendingDelete] = useState<CollectionValues | null>(
     null,
   );
-
-  function handleCreate(name: string) {
-    const result = CollectionNameSchema.safeParse(name);
-
-    if (!result.success) {
-      return;
-    }
-  }
 
   function confirmDelete() {
     if (pendingDelete) onDelete(pendingDelete.collectionId);
@@ -77,7 +69,7 @@ export function CollectionsSidebar({
         </SidebarGroup>
       </SidebarContent>
 
-      <CreateFooter onCreate={handleCreate} />
+      <CreateFooter onCreate={onCreate} />
 
       <DeleteDialog
         collection={pendingDelete}

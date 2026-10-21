@@ -49,6 +49,7 @@ function Navbar({ open, onToggle }: { open: boolean; onToggle: () => void }) {
                 key={item.link}
                 className="flex min-h-12 lg:h-full w-full justify-center items-center lg:first:justify-self-start"
               >
+                {/* TODO: render icons */}
                 <NavLink
                   onClick={onToggle}
                   to={item.link}

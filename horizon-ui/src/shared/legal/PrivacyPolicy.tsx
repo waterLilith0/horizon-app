@@ -1,8 +1,110 @@
+import * as React from "react";
 import { Link } from "react-router";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+
+type PolicyHeading = React.ReactElement<{
+  id?: string;
+  className?: string;
+  children?: React.ReactNode;
+}>;
+
+type PolicySection = {
+  heading: PolicyHeading;
+  content: React.ReactNode[];
+};
+
+function isPolicyHeading(node: React.ReactNode): node is PolicyHeading {
+  return (
+    React.isValidElement<PolicyHeading["props"]>(node) &&
+    node.type === "h2" &&
+    typeof node.props.id === "string"
+  );
+}
+
+function getTextContent(node: React.ReactNode): string {
+  if (typeof node === "string" || typeof node === "number") {
+    return String(node);
+  }
+
+  if (Array.isArray(node)) {
+    return node.map(getTextContent).join("");
+  }
+
+  if (React.isValidElement<{ children?: React.ReactNode }>(node)) {
+    return getTextContent(node.props.children);
+  }
+
+  return "";
+}
+
+function PolicySections({ children }: React.PropsWithChildren) {
+  const sections: PolicySection[] = [];
+  const introduction: React.ReactNode[] = [];
+
+  for (const node of React.Children.toArray(children)) {
+    if (isPolicyHeading(node)) {
+      sections.push({ heading: node, content: [] });
+    } else if (sections.length > 0) {
+      sections[sections.length - 1].content.push(node);
+    } else {
+      introduction.push(node);
+    }
+  }
+
+  return (
+    <div className="legal mx-auto w-full max-w-5xl space-y-6 px-4 py-8">
+      <header className="space-y-3">{introduction}</header>
+
+      <Card>
+        <CardHeader className="border-b">
+          <CardTitle>Inhaltsverzeichnis</CardTitle>
+          <CardDescription>
+            Wählen Sie einen Abschnitt, um direkt zum Thema zu springen.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="pt-4">
+          <nav
+            aria-label="Inhaltsverzeichnis"
+            className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3"
+          >
+            {sections.map(({ heading }) => (
+              <a
+                key={heading.props.id}
+                href={`#${heading.props.id}`}
+                className="rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                {getTextContent(heading.props.children)}
+              </a>
+            ))}
+          </nav>
+        </CardContent>
+      </Card>
+
+      {sections.map(({ heading, content }) => (
+        <Card key={heading.props.id} className="scroll-mt-6">
+          <CardHeader className="border-b pb-4">
+            {React.cloneElement(heading, {
+              className: "scroll-mt-6 text-xl font-semibold tracking-tight",
+            })}
+          </CardHeader>
+          <CardContent className="space-y-4 pt-4 text-sm leading-7 [&>h3]:mt-6 [&>h3]:text-base [&>h3]:font-semibold [&>ol]:list-decimal [&>ol]:pl-6 [&>p]:leading-7 [&>table]:w-full [&>ul]:list-disc [&>ul]:pl-6 [&>p>img]:h-auto [&>p>img]:max-w-full">
+            {content}
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
 
 export default function PrivacyPolicy() {
   return (
-    <div className="legal">
+    <PolicySections>
       <title>Privacy Policy</title>
       <h1>Datenschutzerklärung</h1>
       <h2 id="einleitung-ueberblick">Einleitung und Überblick</h2>
@@ -1282,6 +1384,6 @@ export default function PrivacyPolicy() {
         </a>{" "}
         erstellt mit dem Datenschutz Generator für Deutschland von AdSimple
       </p>
-    </div>
+    </PolicySections>
   );
 }
