@@ -8,7 +8,6 @@ export type FieldErrors = Partial<
 >;
 export type AuthResult = { ok: true } | { ok: false; fieldErrors: FieldErrors };
 
-// ASP.NET returns validation errors as ProblemDetails: { errors: { Username: ["..."] } }
 type ValidationProblem = { errors?: Record<string, string[]> };
 
 function toFieldErrors(problem: ValidationProblem): FieldErrors {

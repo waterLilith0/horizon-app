@@ -7,7 +7,7 @@ import Gallery from "@/site/pages/Gallery.tsx";
 import PrivacyPolicy from "@/shared/legal/PrivacyPolicy.tsx";
 import Impressum from "@/shared/legal/Impressum.tsx";
 import VRChatShowcase from "@/site/pages/VRChatShowcase.tsx";
-import { createBrowserRouter } from "react-router";
+import { createBrowserRouter, Navigate } from "react-router";
 import { env } from "@/shared/config/env";
 import { withFaroRouterInstrumentation } from "@grafana/faro-react";
 
@@ -18,7 +18,7 @@ const routes = [
     errorElement: <NotFound />,
     children: [
       { index: true, element: <Home /> },
-      { path: "home", element: <Home /> },
+      { path: "home", element: <Navigate to="/" replace /> },
       { path: "about-contact", element: <About /> },
       { path: "gallery", element: <Gallery /> },
       { path: "yt-embed", element: <YTEmbed /> },
