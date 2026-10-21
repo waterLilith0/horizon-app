@@ -42,7 +42,6 @@ function Navbar({ open, onToggle }: { open: boolean; onToggle: () => void }) {
           <FontAwesomeIcon icon={open ? faXmark : faBars} className="size-5" />
         </button>
 
-        {/* dims the page and closes the drawer on tap, mobile only */}
         <div
           aria-hidden="true"
           onClick={onToggle}
@@ -62,7 +61,7 @@ function Navbar({ open, onToggle }: { open: boolean; onToggle: () => void }) {
               >
                 <NavLink
                   to={item.link}
-                  className="flex h-full w-full no-underline justify-center items-center px-5 hover:bg-gray-500 hover::h-full hover:w-full"
+                  className="flex h-full w-full no-underline justify-center items-center px-5 hover:bg-gray-500 hover:h-full hover:w-full"
                 >
                   {item.name}
                 </NavLink>
@@ -79,7 +78,7 @@ function Navbar({ open, onToggle }: { open: boolean; onToggle: () => void }) {
                 <a
                   href={item.link}
                   target="_blank"
-                  className="flex justify-center h-full w-full items-center px-5 hover:bg-gray-500 hover::h-full hover:w-full"
+                  className="flex justify-center h-full w-full items-center px-5 hover:bg-gray-500 hover:h-full hover:w-full"
                 >
                   <FontAwesomeIcon icon={item.icon} className="mr-2" />
                   {item.name}

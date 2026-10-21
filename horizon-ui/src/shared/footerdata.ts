@@ -15,21 +15,6 @@ export const footerRows = [
     ],
   },
   {
-    row: 2,
-    links: [
-      {
-        type: "intern",
-        url: "/impressum",
-        text: "Impressum",
-      },
-      {
-        type: "intern",
-        url: "/sitemap",
-        text: "Sitemap",
-      },
-    ],
-  },
-  {
     row: 3,
     links: [
       {
@@ -40,7 +25,7 @@ export const footerRows = [
       {
         type: "intern",
         url: "/dashboard",
-        text: "API Dashboard",
+        text: "Dashboard",
       },
     ],
   },

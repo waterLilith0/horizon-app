@@ -1,4 +1,3 @@
-import packageJson from "@/../package.json";
 import { Link } from "react-router";
 import { footerRows } from "./footerdata";
 
@@ -33,7 +32,7 @@ export default function Footer() {
 
         <p className="text-xs">
           © {new Date().getFullYear()} Miriam Lilith Fix
-          <span className="ml-2 opacity-70">v{packageJson.version}</span>
+          <span className="ml-2 opacity-70">v{__APP_VERSION__}</span>
         </p>
       </div>
     </footer>

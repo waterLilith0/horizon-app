@@ -24,8 +24,6 @@ export default function AccountDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const [isDeleting, setIsDeleting] = useState(false);
-  const [email, setEmail] = useState("");
-  const [apiKeys, setApiKeys] = useState("");
 
   const PasswordForm = useForm({
     defaultValues: { currentPassword: "", newPassword: "" },

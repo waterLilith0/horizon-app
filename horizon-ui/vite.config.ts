@@ -1,27 +1,35 @@
 import { defineConfig, loadEnv } from "vite";
+import pkg from "./package.json";
 import react, { reactCompilerPreset } from "@vitejs/plugin-react";
 import babel from "@rolldown/plugin-babel";
 import path from "path";
 import tailwindcss from "@tailwindcss/vite";
 import faroUploader from "@grafana/faro-rollup-plugin";
 
-// https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
-
+  const uploadSourcemaps = !!env.FARO_API_KEY;
   return {
+    define: {
+      __APP_VERSION__: JSON.stringify(pkg.version),
+    },
+    build: { sourcemap: uploadSourcemaps ? "hidden" : false },
     plugins: [
       react(),
       babel({ presets: [reactCompilerPreset()] }),
       tailwindcss(),
-      faroUploader({
-        appName: "horizon-ui",
-        endpoint: "https://faro-api-prod-eu-west-2.grafana.net/faro/api/v1",
-        appId: "7883",
-        stackId: "1602980",
-        apiKey: env.FARO_API_KEY,
-        gzipContents: true,
-      }),
+      ...(uploadSourcemaps
+        ? [
+            faroUploader({
+              appName: "horizon-ui",
+              endpoint: env.FARO_UPLOAD_ENDPOINT,
+              appId: env.FARO_APP_ID,
+              stackId: env.FARO_STACK_ID,
+              apiKey: env.FARO_API_KEY,
+              gzipContents: true,
+            }),
+          ]
+        : []),
     ],
     resolve: {
       alias: {
