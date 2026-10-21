@@ -1,5 +1,5 @@
 import { defineConfig, loadEnv } from "vite";
-import pkg from "./package.json";
+import pkg from "./package.json" with { type: "json" };
 import react, { reactCompilerPreset } from "@vitejs/plugin-react";
 import babel from "@rolldown/plugin-babel";
 import path from "path";

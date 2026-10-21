@@ -1,6 +1,5 @@
 import { useAtom } from "jotai";
-import { z } from "zod";
-import { themeAtom } from "./configAtoms";
+import { themeAtom } from "../shared/theme/configAtoms";
 import {
   DropdownMenuPortal,
   DropdownMenuRadioGroup,
@@ -9,16 +8,9 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
 } from "@/components/ui/dropdown-menu";
+import { THEMES, themeSchema } from "../shared/theme/useResolvedTheme";
 
-const THEMES = [
-  { label: "System", value: "system" },
-  { label: "Light", value: "light" },
-  { label: "Dark", value: "dark" },
-] as const;
-
-const themeSchema = z.enum(["system", "light", "dark"]);
-
-export default function ThemeMenu({ className }: { className?: string }) {
+export default function ThemeMenu() {
   const [theme, setTheme] = useAtom(themeAtom);
 
   return (

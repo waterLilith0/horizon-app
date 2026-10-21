@@ -1,6 +1,7 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { useAtomValue } from "jotai";
 import { themeAtom } from "@/shared/theme/configAtoms";
+import z from "zod";
 
 const query = "(prefers-color-scheme: dark)";
 
@@ -26,3 +27,11 @@ export function useApplyTheme() {
     document.documentElement.classList.toggle("dark", theme === "dark");
   }, [theme]);
 }
+
+export const THEMES = [
+  { label: "System", value: "system" },
+  { label: "Light", value: "light" },
+  { label: "Dark", value: "dark" },
+] as const;
+
+export const themeSchema = z.enum(["system", "light", "dark"]);

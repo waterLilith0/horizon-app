@@ -3,7 +3,7 @@ import { links, socials } from "@/site/content";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBars, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { cn } from "@/lib/utils";
-import ThemeMenu from "@/shared/theme/ThemeMenu";
+import NavbarThemeMenu from "./NavbarThemeMenu";
 
 function Navbar({ open, onToggle }: { open: boolean; onToggle: () => void }) {
   return (
@@ -60,7 +60,7 @@ function Navbar({ open, onToggle }: { open: boolean; onToggle: () => void }) {
             );
           })}
           <li className="flex h-full w-full items-center justify-center px-5 lg:w-auto lg:ml-auto">
-            <ThemeMenu className="h-8 w-full lg:w-32 border-transparent bg-transparent hover:bg-gray-500 text-sm" />
+            <NavbarThemeMenu className="h-8 w-full lg:w-32 border-transparent bg-transparent hover:bg-gray-500 text-sm" />
           </li>
         </ul>
       </nav>
