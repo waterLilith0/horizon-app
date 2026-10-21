@@ -4,7 +4,7 @@ function VRChatShowcase() {
     <>
       <title>VRC Portfolio and Showcase</title>
       <div className="flex flex-col items-center justify-center w-full h-full p-4">
-        <h1 className="pb-6">VRChat Showcase</h1>
+        <h1>VRChat Showcase</h1>
         <p>
           This is a showcase of my work in VRChat Avatar development, including
           textures I have made.

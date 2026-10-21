@@ -14,7 +14,7 @@ import {
 } from "@/dashboard/features/auth/use-current-user";
 import { logout } from "@/dashboard/features/auth/auth";
 import LoginRegisterDialog from "../auth/LoginRegisterDialog";
-import ThemeMenu from "@/dashboard/DashboardThemeMenu";
+import ThemeMenu from "@/dashboard/ThemeMenu";
 import { useQueryClient } from "@tanstack/react-query";
 
 export default function AccountDropdown() {

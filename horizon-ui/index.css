@@ -139,6 +139,16 @@
     @apply border-border outline-ring/50;
   }
   body {
+    @apply text-base leading-relaxed md:text-lg;
     @apply bg-background text-foreground font-mono bg-image;
+  }
+  h1 {
+    @apply text-2xl font-bold md:text-4xl;
+  }
+  h2 {
+    @apply text-xl font-semibold md:text-2xl;
+  }
+  h3 {
+    @apply text-lg font-semibold md:text-xl;
   }
 }

@@ -62,7 +62,7 @@ function DashboardLayout() {
   }
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="flex flex-col text-[20px]">
+      <div className="flex flex-col text-base">
         <AccountDropdown />
         <SidebarProvider>
           <CollectionsSidebar

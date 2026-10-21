@@ -3,7 +3,7 @@ function Gallery() {
   return (
     <>
       <title>Gallery - WIP</title>
-      <div className="flex flex-col items-center overflow-y-scroll h-full w-3xl">
+      <div className="flex flex-col items-center overflow-y-scroll h-full w-full max-w-3xl">
         <h1>Gallery Page</h1>
       </div>
     </>

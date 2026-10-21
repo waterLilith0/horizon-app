@@ -11,7 +11,7 @@ function Home() {
   return (
     <>
       <title>Home</title>
-      <h1 className="text-4xl">Main Page</h1>
+      <h1>Main Page</h1>
       <p>
         This is my own little website/tinkering space. I'm gonna continue
         updating this as I go (might be a good idea to look at this as kinda my

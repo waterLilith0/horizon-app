@@ -3,7 +3,7 @@ import { links, socials } from "@/site/content";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBars, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { cn } from "@/lib/utils";
-import NavbarThemeMenu from "./NavbarThemeMenu";
+import NavbarThemeMenu from "./ThemeMenu";
 
 function Navbar({ open, onToggle }: { open: boolean; onToggle: () => void }) {
   return (
@@ -47,20 +47,20 @@ function Navbar({ open, onToggle }: { open: boolean; onToggle: () => void }) {
             return (
               <li
                 key={item.link}
-                className="flex h-full w-full justify-center items-center lg:first:justify-self-start"
+                className="flex min-h-12 lg:h-full w-full justify-center items-center lg:first:justify-self-start"
               >
                 <NavLink
-                  onClick={() => onToggle}
+                  onClick={onToggle}
                   to={item.link}
-                  className="flex h-full w-full no-underline justify-center items-center px-5 hover:bg-gray-500 hover:h-full hover:w-full"
+                  className="flex h-full w-full text-base py-3 lg:py-0 no-underline justify-center items-center px-5 hover:bg-gray-500 hover:h-full hover:w-full"
                 >
                   {item.name}
                 </NavLink>
               </li>
             );
           })}
-          <li className="flex h-full w-full items-center justify-center px-5 lg:w-auto lg:ml-auto">
-            <NavbarThemeMenu className="h-8 w-full lg:w-32 border-transparent bg-transparent hover:bg-gray-500 text-sm" />
+          <li className="flex min-h-12 lg:h-full w-full items-center justify-center px-5 lg:w-auto lg:ml-auto">
+            <NavbarThemeMenu className="h-11 lg:h-8 w-full lg:w-32 border-transparent bg-transparent hover:bg-gray-500 text-base lg:text-sm" />
           </li>
         </ul>
       </nav>
