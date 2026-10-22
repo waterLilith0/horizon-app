@@ -146,12 +146,12 @@ namespace horizon_api
                 });
 
                 builder.Services.AddHealthChecks()
-                    .AddCheck("self", () => HealthCheckResult.Healthy(), tags: new[] { "live" })
+                    .AddCheck("self", () => HealthCheckResult.Healthy(), tags: ["live"])
                     .AddMySql(
                         connectionString: connectionString!,
                         healthQuery: "mysql",
                         name: "mysql",
-                        tags: new[] { "ready" }
+                        tags: ["ready"]
                     );
 
                 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
