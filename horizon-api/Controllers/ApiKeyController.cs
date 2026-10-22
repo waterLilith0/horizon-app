@@ -1,13 +1,13 @@
-﻿using Microsoft.AspNetCore.Mvc;
-
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+﻿using horizon_api.Infrastructure;
+using Microsoft.AspNetCore.Mvc;
+using MySqlConnector;
 
 namespace horizon_api.Controllers
 {
     [Route("api/[controller]")]
     [ApiExplorerSettings(GroupName = "internal")]
     [ApiController]
-    public class ApiKeyController : ControllerBase
+    public class ApiKeyController(SqlQueryStore sqlQueryStore, MySqlDataSource dataSource, ILogger<ApiKeyController> logger) : ControllerBase
     {
         // GET: api/<ApiKeyController>
         [HttpGet]

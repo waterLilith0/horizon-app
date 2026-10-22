@@ -10,7 +10,7 @@ namespace horizon_api.Infrastructure
     {
         int CurrentPepperVersion { get; }
         PasswordHashResult Hash(string password);
-        bool Verify(string hash, int pepperVersion, string password);
+        bool Verify(string? hash, int pepperVersion, string password);
         bool NeedsRehash(int pepperVersion);
     }
 
@@ -23,6 +23,7 @@ namespace horizon_api.Infrastructure
         private const int Parallelism = 1;
         private const int MinPepperLength = 32;
 
+        private readonly string _dummyHash;
         private readonly Dictionary<int, byte[]> _peppers = [];
 
         public int CurrentPepperVersion { get; }
@@ -55,6 +56,7 @@ namespace horizon_api.Infrastructure
             }
 
             CurrentPepperVersion = current;
+            _dummyHash = Hash("dummy-password").Hash;
         }
 
         private static string ApplyPepper(byte[] pepper, string password) =>
@@ -71,15 +73,25 @@ namespace horizon_api.Infrastructure
                 Lanes = Parallelism,
                 Threads = Parallelism,
                 Password = Encoding.UTF8.GetBytes(ApplyPepper(_peppers[CurrentPepperVersion], password)),
+                Salt = RandomNumberGenerator.GetBytes(16),
                 HashLength = 32
             };
 
-            return new PasswordHashResult(Argon2.Hash(config), CurrentPepperVersion);
+            using var argon2 = new Argon2(config);
+            using var hash = argon2.Hash();
+            return new PasswordHashResult(config.EncodeString(hash.Buffer), CurrentPepperVersion);
         }
 
-        public bool Verify(string hash, int pepperVersion, string password) =>
-            _peppers.TryGetValue(pepperVersion, out var pepper)
-            && Argon2.Verify(hash, ApplyPepper(pepper, password));
+        public bool Verify(string? hash, int pepperVersion, string password)
+        {
+            if (hash is null || !_peppers.TryGetValue(pepperVersion, out var pepper))
+            {
+                Argon2.Verify(_dummyHash, ApplyPepper(_peppers[CurrentPepperVersion], password));
+                return false;
+            }
+
+            return Argon2.Verify(hash, ApplyPepper(pepper, password));
+        }
 
         public bool NeedsRehash(int pepperVersion) => pepperVersion != CurrentPepperVersion;
     }
