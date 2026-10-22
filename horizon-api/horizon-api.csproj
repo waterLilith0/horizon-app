@@ -11,11 +11,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AspNetCore.HealthChecks.MySql" Version="9.0.0" />
     <PackageReference Include="Dapper" Version="2.1.89" />
-    <PackageReference Include="Grafana.OpenTelemetry" Version="1.13.0" />
+    <PackageReference Include="Grafana.OpenTelemetry" Version="1.14.0" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.23.0" />
     <PackageReference Include="MySqlConnector" Version="2.6.2" />
-    <PackageReference Include="OpenTelemetry" Version="1.20.0-rc.1" />
+    <PackageReference Include="OpenTelemetry" Version="1.20.1" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.20.1" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.20.1" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" Version="1.20.1" />
     <PackageReference Include="Serilog" Version="4.4.1-dev-02447" />
     <PackageReference Include="Serilog.AspNetCore" Version="10.0.1-dev-02312" />
     <PackageReference Include="Serilog.Enrichers.Span" Version="3.1.0" />
@@ -23,11 +27,12 @@
     <PackageReference Include="Serilog.Sinks.File" Version="8.0.0-nblumhardt-02322" />
     <PackageReference Include="Serilog.Sinks.OpenTelemetry" Version="4.2.1-nblumhardt-02317" />
     <PackageReference Include="SSH.NET" Version="2026.0.0" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.3.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.3.1" />
   </ItemGroup>
 
   <ItemGroup>
     <Folder Include="Infrastructure\Accounts\" />
+    <Folder Include="Infrastructure\Queries\Accounts\" />
   </ItemGroup>
 
 </Project>
