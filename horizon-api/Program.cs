@@ -1,7 +1,12 @@
 using Grafana.OpenTelemetry;
 using horizon_api.Infrastructure;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using MySqlConnector;
+using OpenTelemetry;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
 using Serilog;
 using Serilog.Enrichers.Span;
 using System.Threading.RateLimiting;
@@ -13,7 +18,6 @@ namespace horizon_api
         public static void Main(string[] args)
         {
             Log.Logger = new LoggerConfiguration()
-                .MinimumLevel.Verbose()
                 .Enrich.FromLogContext()
                 .Enrich.WithSpan()
                 .WriteTo.Console(outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level}] {Message:lj}{Exception}{NewLine}")
@@ -39,7 +43,25 @@ namespace horizon_api
                     .UseGrafana(o =>
                     {
                         o.ServiceName = "horizon-api";
-                    });
+                    })
+                    .WithMetrics(metrics => metrics
+                        .AddRuntimeInstrumentation()
+                        .AddMeter("MySqlConnector")
+                        .AddOtlpExporter(options =>
+                        {
+                            options.Endpoint = new Uri(Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT") ?? "http://localhost:4317");
+                        }))
+                    .WithTracing(tracing => tracing
+                        .AddAspNetCoreInstrumentation(options =>
+                        {
+                            options.Filter = httpContext =>
+                                !httpContext.Request.Path.StartsWithSegments("/healthz");
+                        })
+                        .AddHttpClientInstrumentation()
+                        .AddOtlpExporter(options =>
+                        {
+                            options.Endpoint = new Uri(Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT") ?? "http://localhost:4317");
+                        }));
 
                 builder.Services.Configure<ForwardedHeadersOptions>(options =>
                 {
@@ -48,8 +70,6 @@ namespace horizon_api
                         ForwardedHeaders.XForwardedProto |
                         ForwardedHeaders.XForwardedHost;
 
-                    // If the app is only reachable through the tunnel/proxy,
-                    // clear trust restrictions so forwarded headers are applied.
                     options.KnownNetworks.Clear();
                     options.KnownProxies.Clear();
                 });
@@ -80,13 +100,32 @@ namespace horizon_api
                                 PermitLimit = 100,
                                 Window = TimeSpan.FromMinutes(1),
                                 QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
-                                QueueLimit = 0,
+                                QueueLimit = 15,
                                 AutoReplenishment = true
                             }));
                 });
 
+                builder.Services.AddHealthChecks()
+                    .AddCheck("self", () => HealthCheckResult.Healthy(), tags: new[] { "live" })
+                    .AddMySql(
+                        connectionString: connectionString!,
+                        healthQuery: "mysql",
+                        name: "mysql",
+                        tags: new[] { "ready" }
+                    );
+
+                builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+                    .AddCookie(o =>
+                    {
+                        o.Cookie.Name = "horizon.auth";
+                        o.Cookie.HttpOnly = true;
+                        o.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+                        o.Cookie.SameSite = SameSiteMode.Lax;
+                        o.SlidingExpiration = true;
+                        o.Events.OnRedirectToLogin = ctx => { ctx.Response.StatusCode = 401; return Task.CompletedTask; };
+                        o.Events.OnRedirectToAccessDenied = ctx => { ctx.Response.StatusCode = 403; return Task.CompletedTask; };
+                    });
                 builder.Services.AddAuthorization();
-                builder.Services.AddMvc();
                 builder.Services.AddSingleton<SqlQueryStore>();
                 builder.Services.AddMySqlDataSource(connectionString!);
                 builder.Services.AddEndpointsApiExplorer();
@@ -100,14 +139,22 @@ namespace horizon_api
                 app.UseExceptionHandler();
                 app.UseStatusCodePages();
 
-                // Configure the HTTP request pipeline.
                 if (builder.Environment.IsProduction())
                 {
                     app.UseHttpsRedirection();
                     app.UseHsts();
                 }
+                app.MapHealthChecks("healthz/live", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+                {
+                    Predicate = check => check.Tags.Contains("live")
+                }).DisableRateLimiting().AllowAnonymous();
+                app.MapHealthChecks("healthz/ready", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+                {
+                    Predicate = check => check.Tags.Contains("ready")
+                }).DisableRateLimiting().AllowAnonymous();
                 app.UseSwagger();
                 app.UseSwaggerUI();
+                app.UseAuthentication();
                 app.UseAuthorization();
                 app.UseRateLimiter();
                 app.MapControllers();
