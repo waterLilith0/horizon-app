@@ -3,20 +3,28 @@ using horizon_api.Infrastructure;
 using horizon_api.Shared;
 using Microsoft.AspNetCore.Mvc;
 using MySqlConnector;
-using System.Net;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using System.ComponentModel.DataAnnotations;
 
 namespace horizon_api.Controllers
 {
-
     [ApiController]
     [Authorize]
     [ApiExplorerSettings(GroupName = "public")]
     [Route("api/[controller]")]
+    [Produces("application/json")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
     public class CollectionController(SqlQueryStore sqlQueryStore, MySqlDataSource dataSource, ILogger<CollectionController> logger) : Controller
     {
+        private const int MaxNameLength = 255;
         private int CurrentUserId => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+        public record CollectionCreateDto(
+            [property: Required, StringLength(MaxNameLength, MinimumLength = 1)] string CollectionName);
+
+        public record UpdateCollectionDto(
+            [property: Required, StringLength(MaxNameLength, MinimumLength = 1)] string Name);
 
         private async Task<bool> OwnsCollection(MySqlConnection connection, int collectionId, CancellationToken ct)
         {
@@ -29,15 +37,19 @@ namespace horizon_api.Controllers
 
         [AllowAnonymous]
         [HttpGet("checkstatus")]
-        public async Task<ActionResult<HttpStatusCode>> GetCheck()
+        [ProducesResponseType<string>(StatusCodes.Status200OK)]
+        public IActionResult GetCheck()
         {
             logger.LogInformation("Successfully got to the CollectionController.");
             return Ok("CollectionController is running.");
         }
 
-        public record CollectionCreateDto(string CollectionName);
         // Create a single collection
         [HttpPost("create")]
+        [Consumes("application/json")]
+        [ProducesResponseType<Collection>(StatusCodes.Status201Created)]
+        [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType<ProblemDetails>(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<Collection>> Create([FromBody] CollectionCreateDto creationDto, CancellationToken cancellationToken)
         {
             logger.LogDebug("Create action called in CollectionController with name: {collectionName}", creationDto.CollectionName);
@@ -75,14 +87,21 @@ namespace horizon_api.Controllers
                 cancellationToken: cancellationToken));
 
             await transaction.CommitAsync(cancellationToken);
-
             logger.LogInformation("Successfully created a new collection with name: {collectionName}", creationDto);
-            return CreatedAtAction(nameof(GetCollectionById), new { collectionId }, creationDto.CollectionName);
+
+            var collection = await connection.QuerySingleAsync<Collection>(new CommandDefinition(
+                sqlQueryStore.Get("GetCollectionById"),
+                new { collectionId, userId = CurrentUserId },
+                cancellationToken: cancellationToken));
+
+            return CreatedAtAction(nameof(GetCollectionById), new { collectionId }, collection);
         }
 
         // Get a single collection
-        [HttpGet("{collectionId:int}")]
-        public async Task<ActionResult<Collection>> GetCollectionById([FromRoute]int collectionId, CancellationToken cancellationToken)
+        [HttpGet("{collectionId:int:min(1)}")]
+        [ProducesResponseType<Collection>(StatusCodes.Status200OK)]
+        [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<Collection>> GetCollectionById([FromRoute] int collectionId, CancellationToken cancellationToken)
         {
             logger.LogDebug("GetCollectionById method called in CollectionController for collection {collectionId}", collectionId);
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
@@ -105,23 +124,25 @@ namespace horizon_api.Controllers
 
         // Get all collections as an array
         [HttpGet]
-        public async Task<ActionResult<Collection[]>> GetAllCollections(CancellationToken cancellationToken)
+        [ProducesResponseType<IReadOnlyList<Collection>>(StatusCodes.Status200OK)]
+        public async Task<ActionResult<IReadOnlyList<Collection>>> GetAllCollections(CancellationToken cancellationToken)
         {
             logger.LogDebug("GetAllCollections method called in CollectionController.");
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
             var sql = sqlQueryStore.Get("GetAllCollections");
             var command = new CommandDefinition(sql, new { userId = CurrentUserId }, cancellationToken: cancellationToken);
-            var allCollections = await connection.QueryAsync<Collection>(command);
-
-            logger.LogInformation("Successfully retrieved all collections. Total collections: {allCollectionsLength}", allCollections.Count());
+            var allCollections = (await connection.QueryAsync<Collection>(command)).AsList();
+            logger.LogInformation("Retrieved {count} collections", allCollections.Count);
             return Ok(allCollections);
         }
 
-        public record UpdateCollectionDto(string Name);
-
         // Update call for a specific collection
-        [HttpPut("{collectionId:int}")]
-        public async Task<IActionResult> Edit([FromRoute]int collectionId, [FromBody] UpdateCollectionDto dto, CancellationToken cancellationToken)
+        [HttpPut("{collectionId:int:min(1)}")]
+        [Consumes("application/json")]
+        [ProducesResponseType<Collection>(StatusCodes.Status200OK)]
+        [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<Collection>> Edit([FromRoute] int collectionId, [FromBody] UpdateCollectionDto dto, CancellationToken cancellationToken)
         {
             logger.LogDebug("Edit action called for collection: {collectionId}", collectionId);
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
@@ -143,8 +164,10 @@ namespace horizon_api.Controllers
         }
 
         // DeleteCollection a specific collection
-        [HttpDelete("{collectionId:int}")]
-        public async Task<ActionResult<HttpStatusCode>> DeleteCollection([FromRoute] int collectionId, CancellationToken cancellationToken)
+        [HttpDelete("{collectionId:int:min(1)}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> DeleteCollection([FromRoute] int collectionId, CancellationToken cancellationToken)
         {
             logger.LogDebug("DeleteCollection action called for collection: {collectionId}", collectionId);
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
@@ -166,8 +189,12 @@ namespace horizon_api.Controllers
         }
 
         // Link a prompt to a collection
-        [HttpPost("{collectionId:int}/prompts/{promptId:int}")]
-        public async Task<IActionResult> LinkPromptToCollection([FromRoute] int collectionId, [FromRoute] int promptId, CancellationToken cancellationToken)
+        [HttpPost("{collectionId:int:min(1)}/prompts/{promptId:int:min(1)}")]
+        [ProducesResponseType<int>(StatusCodes.Status200OK)]
+        [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+        [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+        [ProducesResponseType<ProblemDetails>(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<int>> LinkPromptToCollection([FromRoute] int collectionId, [FromRoute] int promptId, CancellationToken cancellationToken) 
         {
             logger.LogDebug("Attempt to link a prompt to a collection Prompt: {promptId} - Collection: {collectionId}", promptId, collectionId);
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
@@ -181,7 +208,23 @@ namespace horizon_api.Controllers
             var sql = sqlQueryStore.Get("PostInsertConnection");
 
             var command = new CommandDefinition(sql, new { promptId, collectionId }, cancellationToken: cancellationToken);
-            var entryId = await connection.QuerySingleOrDefaultAsync<int?>(command);
+            int? entryId;
+            try
+            {
+                entryId = await connection.QuerySingleOrDefaultAsync<int?>(command);
+            }
+            catch (MySqlException ex) when (ex.ErrorCode == MySqlErrorCode.DuplicateKeyEntry)
+            {
+                return Problem(title: "Already linked",
+                    detail: $"Prompt {promptId} is already in collection {collectionId}.",
+                    statusCode: StatusCodes.Status409Conflict);
+            }
+            catch (MySqlException ex) when (ex.ErrorCode == MySqlErrorCode.NoReferencedRow2)
+            {
+                return Problem(title: "Prompt not found",
+                    detail: $"Prompt with ID {promptId} not found.",
+                    statusCode: StatusCodes.Status404NotFound);
+            }
             if (entryId == null)
             {
                 logger.LogError("Database returned no result when trying to connect Prompt {promptId} to Collection {collectionId}", promptId, collectionId);
@@ -206,7 +249,9 @@ namespace horizon_api.Controllers
         }
 
         // Unlink a prompt from a collection
-        [HttpDelete("{collectionId:int}/prompts/{promptId:int}")]
+        [HttpDelete("{collectionId:int:min(1)}/prompts/{promptId:int:min(1)}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> UnlinkPromptFromCollection([FromRoute] int collectionId, [FromRoute] int promptId, CancellationToken cancellationToken)
         {
             logger.LogDebug("UnlinkConnection action called for Prompt: {promptId} - Collection: {collectionId}", promptId, collectionId);
@@ -236,10 +281,12 @@ namespace horizon_api.Controllers
         }
 
         // Get all prompts in a specific collection
-        [HttpGet("all/{collectionId:int}")]
-        public async Task<ActionResult<Prompt[]>> GetAllFromCollection([FromRoute] int collectionId, CancellationToken cancellationToken)
+        [HttpGet("all/{collectionId:int:min(1)}")]
+        [ProducesResponseType<IReadOnlyList<Prompt>>(StatusCodes.Status200OK)]
+        [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<IReadOnlyList<Prompt>>> GetAllFromCollection([FromRoute] int collectionId, CancellationToken cancellationToken)
         {
-            logger.LogDebug("GetAllPrompts action called in PromptController.");
+            logger.LogDebug("GetAllPrompts in specific collection action called in CollectionController.");
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
             if (!await OwnsCollection(connection, collectionId, cancellationToken))
             {

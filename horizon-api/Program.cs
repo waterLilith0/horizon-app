@@ -10,6 +10,7 @@ using OpenTelemetry.Trace;
 using Scalar.AspNetCore;
 using Serilog;
 using Serilog.Enrichers.Span;
+using System.Security.Claims;
 using System.Threading.RateLimiting;
 
 namespace horizon_api
@@ -46,33 +47,24 @@ namespace horizon_api
                         o.ServiceName = "horizon-api";
                     })
                     .WithMetrics(metrics => metrics
-                        .AddRuntimeInstrumentation()
-                        .AddMeter("MySqlConnector")
-                        .AddOtlpExporter(options =>
-                        {
-                            options.Endpoint = new Uri(Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT") ?? "http://localhost:4317");
-                        }))
+                        .AddMeter("MySqlConnector"))
                     .WithTracing(tracing => tracing
                         .AddAspNetCoreInstrumentation(options =>
                         {
                             options.Filter = httpContext =>
                                 !httpContext.Request.Path.StartsWithSegments("/healthz");
-                        })
-                        .AddHttpClientInstrumentation()
-                        .AddOtlpExporter(options =>
-                        {
-                            options.Endpoint = new Uri(Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT") ?? "http://localhost:4317");
                         }));
 
                 builder.Services.Configure<ForwardedHeadersOptions>(options =>
                 {
                     options.ForwardedHeaders =
                         ForwardedHeaders.XForwardedFor |
-                        ForwardedHeaders.XForwardedProto |
-                        ForwardedHeaders.XForwardedHost;
-
-                    options.KnownNetworks.Clear();
+                        ForwardedHeaders.XForwardedProto;
+                    options.ForwardLimit = 1;
                     options.KnownProxies.Clear();
+                    options.KnownIPNetworks.Clear();
+                    options.KnownIPNetworks.Add(System.Net.IPNetwork.Parse(
+                        builder.Configuration["ForwardedHeaders:TrustedNetwork"] ?? "172.28.0.0/16"));
                 });
 
                 builder.Services.AddProblemDetails(options =>
@@ -88,22 +80,69 @@ namespace horizon_api
                     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
                     options.OnRejected = async (context, token) =>
                     {
-                        context.HttpContext.Response.Headers.RetryAfter = "60";
+                        var retryAfter = context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var ra)
+                            ? (int)ra.TotalSeconds
+                            : 60;
+                        context.HttpContext.Response.Headers.RetryAfter = retryAfter.ToString();
                         await context.HttpContext.Response.WriteAsync("Too many requests.", token);
                     };
-                    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
-                        RateLimitPartition.GetFixedWindowLimiter(
-                            partitionKey: httpContext.Request.Headers["CF-Connecting-IP"].FirstOrDefault()
-                            ?? httpContext.Connection.RemoteIpAddress?.ToString()
-                            ?? "unknown",
-                            factory: _ => new FixedWindowRateLimiterOptions
+
+                    static string ClientIp(HttpContext ctx) => ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+                    // Limiter 1 - 3: per-user (generous) for authenticated requests, per-IP (stricter) for anonymous ones
+                    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(ctx =>
+                    {
+                        if (ctx.Request.Path.StartsWithSegments("/healthz"))
+                        {
+                            return RateLimitPartition.GetNoLimiter("health");
+                        }
+
+                        // Username availability check: called per keystroke, so it gets its own bucket
+                        if (HttpMethods.IsGet(ctx.Request.Method) &&
+                            ctx.Request.Path.Equals("/api/auth", StringComparison.OrdinalIgnoreCase))
+                        {
+                            return RateLimitPartition.GetSlidingWindowLimiter($"username:{ClientIp(ctx)}", _ => new SlidingWindowRateLimiterOptions
                             {
-                                PermitLimit = 100,
+                                PermitLimit = 90,
+                                Window = TimeSpan.FromMinutes(1),
+                                SegmentsPerWindow = 6,
+                                QueueLimit = 0,
+                                AutoReplenishment = true
+                            });
+                        }
+
+                        var userId = ctx.User.FindFirstValue(ClaimTypes.NameIdentifier);
+                        if (userId is not null)
+                        {
+                            return RateLimitPartition.GetFixedWindowLimiter($"user:{userId}", _ => new FixedWindowRateLimiterOptions
+                            {
+                                PermitLimit = 300,
                                 Window = TimeSpan.FromMinutes(1),
                                 QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
                                 QueueLimit = 15,
                                 AutoReplenishment = true
-                            }));
+                            });
+                        }
+
+                        return RateLimitPartition.GetFixedWindowLimiter($"ip:{ClientIp(ctx)}", _ => new FixedWindowRateLimiterOptions
+                        {
+                            PermitLimit = 60,
+                            Window = TimeSpan.FromMinutes(1),
+                            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                            QueueLimit = 5,
+                            AutoReplenishment = true
+                        });
+                    });
+
+                    // Limiter 4: login / registration (brute-force protection), always per IP
+                    options.AddPolicy("auth", ctx =>
+                        RateLimitPartition.GetFixedWindowLimiter($"auth:{ClientIp(ctx)}", _ => new FixedWindowRateLimiterOptions
+                        {
+                            PermitLimit = 10,
+                            Window = TimeSpan.FromMinutes(5),
+                            QueueLimit = 0,
+                            AutoReplenishment = true
+                        }));
                 });
 
                 builder.Services.AddHealthChecks()
@@ -149,7 +188,6 @@ namespace horizon_api
 
                 if (builder.Environment.IsProduction())
                 {
-                    app.UseHttpsRedirection();
                     app.UseHsts();
                 }
 
@@ -162,6 +200,20 @@ namespace horizon_api
                     Predicate = check => check.Tags.Contains("ready")
                 }).DisableRateLimiting().AllowAnonymous();
 
+                // --------------------------------------------------------- // Swagger/Scalar
+
+                if (!app.Environment.IsDevelopment())
+                {
+                    app.Use(async (ctx, next) =>
+                    {
+                        if (ctx.Request.Path.Equals("/openapi/internal.json", StringComparison.OrdinalIgnoreCase))
+                        {
+                            ctx.Response.StatusCode = StatusCodes.Status404NotFound;
+                            return;
+                        }
+                        await next();
+                    });
+                }
                 app.UseSwagger(o => o.RouteTemplate = "openapi/{documentName}.json");
                 app.MapScalarApiReference(options =>
                 {
@@ -174,9 +226,11 @@ namespace horizon_api
                     }
                 });
 
+                // --------------------------------------------------------- //
+
                 app.UseAuthentication();
-                app.UseAuthorization();
                 app.UseRateLimiter();
+                app.UseAuthorization();
                 app.MapControllers();
 
                 app.Run();

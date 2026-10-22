@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using MySqlConnector;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
@@ -14,13 +15,33 @@ namespace horizon_api.Controllers
     [ApiController]
     [ApiExplorerSettings(GroupName = "internal")]
     [Route("api/auth")]
+    [Produces("application/json")]
     public class AuthController(SqlQueryStore sqlQueryStore, MySqlDataSource dataSource, ILogger<AuthController> logger, IPasswordService passGen) : ControllerBase
     {
+        public record LoginRequest(
+        [property: Required, StringLength(30, MinimumLength = 1)] string UserName,
+        [property: Required, StringLength(128, MinimumLength = 1)] string Password);
+
+        public record RegisterRequest(
+            [property: Required, EmailAddress, StringLength(255)] string Email,
+            [property: Required, StringLength(30, MinimumLength = 3)] string UserName,
+            [property: Required, StringLength(128, MinimumLength = 8)] string Password);
+
+        public class UserProfile
+        {
+            public int UserId { get; set; }
+            public string UserName { get; set; } = "";
+            public DateTime CreationDate { get; set; }
+            public bool Dev { get; set; }
+            public string Email { get; set; } = "";
+        }
+
         [HttpGet]
         [AllowAnonymous]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status409Conflict)]
-        public async Task<IActionResult> UserNameCheck([FromQuery]string userName, CancellationToken cancellationToken)
+        [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+        public async Task<IActionResult> UserNameCheck([FromQuery, Required, StringLength(30, MinimumLength = 3)] string userName, CancellationToken cancellationToken)
         {
             logger.LogDebug("Username available action called in AuthController");
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
@@ -45,12 +66,14 @@ namespace horizon_api.Controllers
             return Ok();
         }
 
-        public record LoginRequest(string UserName, string Password);
-
         [HttpPost("login")]
+        [EnableRateLimiting("auth")]
+        [AllowAnonymous]
+        [Consumes("application/json")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public async Task<IActionResult> Login(LoginRequest req, CancellationToken cancellationToken)
+        [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> Login([FromBody] LoginRequest req, CancellationToken cancellationToken)
         {
             logger.LogDebug("User login action called in AuthController");
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
@@ -92,29 +115,22 @@ namespace horizon_api.Controllers
 
         [HttpPost("logout")]
         [Authorize]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> Logout()
         {
             await HttpContext.SignOutAsync();
             return NoContent();
         }
 
-        public class UserProfile
-        {
-            public long UserId { get; set; }
-            public string UserName { get; set; } = "";
-            public DateTime CreationDate { get; set; }
-            public bool Dev { get; set; }
-            public string Email { get; set; } = "";
-        }
-
         [HttpGet("me")]
         [Authorize]
-        [ProducesResponseType(typeof(UserProfile), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType<UserProfile>(StatusCodes.Status200OK)]
+        [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
         public async Task<ActionResult<UserProfile>> Me(CancellationToken cancellationToken)
         {
             var idClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!long.TryParse(idClaim, out var userId))
+            if (!int.TryParse(idClaim, out var userId))
             {
                 return Unauthorized();
             }
@@ -136,16 +152,14 @@ namespace horizon_api.Controllers
             return Ok(profile);
         }
 
-        public record RegisterRequest(
-            [Required, EmailAddress] string Email,
-            [Required, StringLength(50, MinimumLength = 3)] string UserName,
-            [Required, StringLength(128, MinimumLength = 8)] string Password
-            );
-
         [HttpPost("register")]
+        [EnableRateLimiting("auth")]
         [AllowAnonymous]
-        [ProducesResponseType(typeof(User), 201)]
-        public async Task<ActionResult<User>> CreateUser(RegisterRequest req, CancellationToken cancellationToken)
+        [Consumes("application/json")]
+        [ProducesResponseType<UserProfile>(StatusCodes.Status201Created)]
+        [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
+        public async Task<ActionResult<UserProfile>> CreateUser([FromBody] RegisterRequest req, CancellationToken cancellationToken)
         {
             logger.LogDebug("User registration action called in AuthController");
             var result = passGen.Hash(req.Password);
