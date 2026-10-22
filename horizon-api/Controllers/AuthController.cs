@@ -129,7 +129,6 @@ namespace horizon_api.Controllers
 
             if (profile is null)
             {
-                // The cookie is valid, but the user no longer exists.
                 await HttpContext.SignOutAsync();
                 return Unauthorized();
             }
