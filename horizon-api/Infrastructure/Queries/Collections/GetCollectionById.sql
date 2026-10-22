@@ -1,6 +1,5 @@
-﻿SELECT
-    collectionId AS CollectionId,
-    name AS Name,
-    creationDate AS CreationDate
-FROM PromptCollections
-WHERE collectionId = @collectionId;
+﻿SELECT c.* 
+FROM PromptCollections c
+JOIN CollectionToUser cu ON cu.collectionId = c.collectionId
+WHERE c.collectionId = @collectionId 
+AND cu.userId = @userId;;

@@ -4,15 +4,30 @@ using horizon_api.Shared;
 using Microsoft.AspNetCore.Mvc;
 using MySqlConnector;
 using System.Net;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace horizon_api.Controllers
 {
+
     [ApiController]
+    [Authorize]
     [ApiExplorerSettings(GroupName = "public")]
     [Route("api/[controller]")]
     public class CollectionController(SqlQueryStore sqlQueryStore, MySqlDataSource dataSource, ILogger<CollectionController> logger) : Controller
     {
-        // GET: CollectionController/checkstatus
+        private int CurrentUserId => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+        private async Task<bool> OwnsCollection(MySqlConnection connection, int collectionId, CancellationToken ct)
+        {
+            var command = new CommandDefinition(
+                sqlQueryStore.Get("GetCollectionOwnership"),
+                new { collectionId, userId = CurrentUserId },
+                cancellationToken: ct);
+            return await connection.ExecuteScalarAsync<int>(command) > 0;
+        }
+
+        [AllowAnonymous]
         [HttpGet("checkstatus")]
         public async Task<ActionResult<HttpStatusCode>> GetCheck()
         {
@@ -27,10 +42,14 @@ namespace horizon_api.Controllers
         {
             logger.LogDebug("Create action called in CollectionController with name: {collectionName}", creationDto.CollectionName);
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
-            var sql = sqlQueryStore.Get("PostInsertCollection");
+            await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
 
-            var command = new CommandDefinition(sql, new { name = creationDto.CollectionName }, cancellationToken: cancellationToken);
-            var collectionId = await connection.QuerySingleOrDefaultAsync<int?>(command);
+            var collectionId = await connection.QuerySingleOrDefaultAsync<int?>(new CommandDefinition(
+                sqlQueryStore.Get("PostInsertCollection"),
+                new { name = creationDto.CollectionName },
+                transaction,
+                cancellationToken: cancellationToken));
+
             if (collectionId == null)
             {
                 logger.LogError("Database returned no result when creating collection with name: {collectionName}", creationDto.CollectionName);
@@ -49,6 +68,14 @@ namespace horizon_api.Controllers
                         statusCode: StatusCodes.Status500InternalServerError
                     );
             }
+            await connection.ExecuteAsync(new CommandDefinition(
+                sqlQueryStore.Get("PostInsertCollectionToUser"),
+                new { collectionId, userId = CurrentUserId },
+                transaction,
+                cancellationToken: cancellationToken));
+
+            await transaction.CommitAsync(cancellationToken);
+
             logger.LogInformation("Successfully created a new collection with name: {collectionName}", creationDto);
             return CreatedAtAction(nameof(GetCollectionById), new { collectionId }, creationDto.CollectionName);
         }
@@ -60,7 +87,7 @@ namespace horizon_api.Controllers
             logger.LogDebug("GetCollectionById method called in CollectionController for collection {collectionId}", collectionId);
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
             var sql = sqlQueryStore.Get("GetCollectionById");
-            var command = new CommandDefinition(sql, new { collectionId }, cancellationToken: cancellationToken);
+            var command = new CommandDefinition(sql, new { collectionId, userId = CurrentUserId }, cancellationToken: cancellationToken);
             var collection = await connection.QuerySingleOrDefaultAsync<Collection>(command);
 
             if (collection == null)
@@ -83,7 +110,7 @@ namespace horizon_api.Controllers
             logger.LogDebug("GetAllCollections method called in CollectionController.");
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
             var sql = sqlQueryStore.Get("GetAllCollections");
-            var command = new CommandDefinition(sql, cancellationToken: cancellationToken);
+            var command = new CommandDefinition(sql, new { userId = CurrentUserId }, cancellationToken: cancellationToken);
             var allCollections = await connection.QueryAsync<Collection>(command);
 
             logger.LogInformation("Successfully retrieved all collections. Total collections: {allCollectionsLength}", allCollections.Count());
@@ -99,7 +126,7 @@ namespace horizon_api.Controllers
             logger.LogDebug("Edit action called for collection: {collectionId}", collectionId);
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
             var sql = sqlQueryStore.Get("PostUpdateCollectionById");
-            var command = new CommandDefinition(sql, new { collectionId, name = dto.Name }, cancellationToken: cancellationToken);
+            var command = new CommandDefinition(sql, new { collectionId, name = dto.Name, userId = CurrentUserId }, cancellationToken: cancellationToken);
             var updatedCollection = await connection.QuerySingleOrDefaultAsync<Collection>(command);
 
             if (updatedCollection == null)
@@ -122,7 +149,7 @@ namespace horizon_api.Controllers
             logger.LogDebug("DeleteCollection action called for collection: {collectionId}", collectionId);
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
             var sql = sqlQueryStore.Get("DeleteCollectionById");
-            var command = new CommandDefinition(sql, new { collectionId }, cancellationToken: cancellationToken);
+            var command = new CommandDefinition(sql, new { collectionId, userId = CurrentUserId }, cancellationToken: cancellationToken);
             var rowsAffected = await connection.ExecuteAsync(command);
 
             if (rowsAffected == 0)
@@ -144,6 +171,13 @@ namespace horizon_api.Controllers
         {
             logger.LogDebug("Attempt to link a prompt to a collection Prompt: {promptId} - Collection: {collectionId}", promptId, collectionId);
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+            if (!await OwnsCollection(connection, collectionId, cancellationToken))
+            {
+                return Problem(
+                    title: "Collection not found",
+                    detail: $"Collection with ID {collectionId} not found.",
+                    statusCode: StatusCodes.Status404NotFound);
+            }
             var sql = sqlQueryStore.Get("PostInsertConnection");
 
             var command = new CommandDefinition(sql, new { promptId, collectionId }, cancellationToken: cancellationToken);
@@ -177,6 +211,13 @@ namespace horizon_api.Controllers
         {
             logger.LogDebug("UnlinkConnection action called for Prompt: {promptId} - Collection: {collectionId}", promptId, collectionId);
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+            if (!await OwnsCollection(connection, collectionId, cancellationToken))
+            {
+                return Problem(
+                    title: "Collection not found",
+                    detail: $"Collection with ID {collectionId} not found.",
+                    statusCode: StatusCodes.Status404NotFound);
+            }
             var sql = sqlQueryStore.Get("DeletePromptCollectionConnection");
             var command = new CommandDefinition(sql, new { promptId, collectionId }, cancellationToken: cancellationToken);
             var rowsAffected = await connection.ExecuteAsync(command);
@@ -200,6 +241,13 @@ namespace horizon_api.Controllers
         {
             logger.LogDebug("GetAllPrompts action called in PromptController.");
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+            if (!await OwnsCollection(connection, collectionId, cancellationToken))
+            {
+                return Problem(
+                    title: "Collection not found",
+                    detail: $"Collection with ID {collectionId} not found.",
+                    statusCode: StatusCodes.Status404NotFound);
+            }
             var sql = sqlQueryStore.Get("GetAllFromCollection");
             var command = new CommandDefinition(sql, new { collectionId }, cancellationToken: cancellationToken);
             var allPrompts = await connection.QueryAsync<Prompt>(command);
