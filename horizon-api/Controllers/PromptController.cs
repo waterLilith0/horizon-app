@@ -3,13 +3,11 @@ using horizon_api.Infrastructure;
 using horizon_api.Shared;
 using Microsoft.AspNetCore.Mvc;
 using MySqlConnector;
-using Serilog;
-using System.Data;
-using System.Data.Common;
 
 namespace horizon_api.Controllers
 {
     [ApiController]
+    [ApiExplorerSettings(GroupName = "public")]
     [Route("api/[controller]")]
     public class PromptController(SqlQueryStore sqlQueryStore, MySqlDataSource dataSource, ILogger<PromptController> logger) : Controller
     {

@@ -7,6 +7,7 @@ using MySqlConnector;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
+using Scalar.AspNetCore;
 using Serilog;
 using Serilog.Enrichers.Span;
 using System.Threading.RateLimiting;
@@ -126,10 +127,17 @@ namespace horizon_api
                         o.Events.OnRedirectToAccessDenied = ctx => { ctx.Response.StatusCode = 403; return Task.CompletedTask; };
                     });
                 builder.Services.AddAuthorization();
-                builder.Services.AddSingleton<SqlQueryStore>();
+                builder.Services.AddControllers();
+                builder.Services.AddSingleton<SqlQueryStore>(); 
+                builder.Services.AddSingleton<IPasswordService, PasswordService>();
                 builder.Services.AddMySqlDataSource(connectionString!);
+
                 builder.Services.AddEndpointsApiExplorer();
-                builder.Services.AddSwaggerGen();
+                builder.Services.AddSwaggerGen(c =>
+                {
+                    c.SwaggerDoc("public", new() { Title = "Horizon API", Version = "v1.1.0" });
+                    c.SwaggerDoc("internal", new() { Title = "Horizon Internal", Version = "v1.0.0" });
+                });
 
                 Log.Debug("DI configured");
 
@@ -144,6 +152,7 @@ namespace horizon_api
                     app.UseHttpsRedirection();
                     app.UseHsts();
                 }
+
                 app.MapHealthChecks("healthz/live", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
                 {
                     Predicate = check => check.Tags.Contains("live")
@@ -152,8 +161,19 @@ namespace horizon_api
                 {
                     Predicate = check => check.Tags.Contains("ready")
                 }).DisableRateLimiting().AllowAnonymous();
-                app.UseSwagger();
-                app.UseSwaggerUI();
+
+                app.UseSwagger(o => o.RouteTemplate = "openapi/{documentName}.json");
+                app.MapScalarApiReference(options =>
+                {
+                    options.WithTitle("Horizon API")
+                           .AddDocument("public", "Horizon API", "/openapi/public.json");
+
+                    if (app.Environment.IsDevelopment())
+                    {
+                        options.AddDocument("internal", "Horizon Internal", "/openapi/internal.json");
+                    }
+                });
+
                 app.UseAuthentication();
                 app.UseAuthorization();
                 app.UseRateLimiter();

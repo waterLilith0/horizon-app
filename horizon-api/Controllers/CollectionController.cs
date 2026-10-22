@@ -8,6 +8,7 @@ using System.Net;
 namespace horizon_api.Controllers
 {
     [ApiController]
+    [ApiExplorerSettings(GroupName = "public")]
     [Route("api/[controller]")]
     public class CollectionController(SqlQueryStore sqlQueryStore, MySqlDataSource dataSource, ILogger<CollectionController> logger) : Controller
     {

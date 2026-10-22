@@ -5,6 +5,7 @@
 namespace horizon_api.Controllers
 {
     [Route("api/[controller]")]
+    [ApiExplorerSettings(GroupName = "internal")]
     [ApiController]
     public class ApiKeyController : ControllerBase
     {
