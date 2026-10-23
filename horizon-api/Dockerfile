@@ -26,5 +26,3 @@ FROM base AS final
 WORKDIR /app
 COPY --from=build /app .
 ENTRYPOINT ["dotnet", "horizon-api.dll"]
-
-####################################################################
