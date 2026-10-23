@@ -2,6 +2,9 @@
 @import "tw-animate-css";
 @import "@fontsource-variable/geist";
 @import "@fontsource-variable/jetbrains-mono";
+@import "lightgallery/css/lightgallery.css";
+@import "lightgallery/css/lg-thumbnail.css";
+@import "lightgallery/css/lg-zoom.css";
 
 @custom-variant dark (&:is(.dark *));
 @custom-variant dark (&:where(.dark, .dark *));
@@ -125,35 +128,27 @@
   background-position: center;
 }
 
+@layer components {
+  .legal :where(p, h1, h2, h3, h4, h5, h6) {
+    @apply m-1;
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
-
   body {
-    @apply bg-background text-foreground;
-    @apply bg-image dark:bg-image;
+    @apply text-base leading-relaxed md:text-lg;
+    @apply bg-background text-foreground font-mono bg-image;
   }
-
-  html {
-    @apply font-mono;
+  h1 {
+    @apply text-2xl font-bold md:text-4xl;
   }
-
-  a {
-    @apply no-underline;
+  h2 {
+    @apply text-xl font-semibold md:text-2xl;
   }
-
-  p,
-  a,
-  span,
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    @apply m-1;
-    @apply text-foreground;
-    @apply dark:text-foreground;
+  h3 {
+    @apply text-lg font-semibold md:text-xl;
   }
 }

@@ -1,2 +1,4 @@
-﻿DELETE FROM PromptCollections
-WHERE collectionId = @collectionId;
+﻿DELETE c FROM PromptCollections c
+JOIN CollectionToUser cu ON cu.collectionId = c.collectionId
+WHERE c.collectionId = @collectionId 
+AND cu.userId = @userId;

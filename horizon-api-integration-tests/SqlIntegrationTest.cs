@@ -1,4 +1,4 @@
-﻿using Dapper;
+using Dapper;
 using FluentAssertions;
 using horizon_api.Infrastructure;
 using horizon_api.Shared;
@@ -40,6 +40,7 @@ namespace horizon_api_integration_tests
 
     public class SqlIntegrationTest : IClassFixture<MySqlDatabaseFixture>, IAsyncLifetime
     {
+        private const int TestUserId = 1;
         private readonly MySqlDatabaseFixture _dbFixture;
         private readonly string _realApiPath;
         private readonly IConfiguration _configuration;
@@ -89,6 +90,7 @@ namespace horizon_api_integration_tests
             await using var connection = await MySqlDataSource.OpenConnectionAsync(TestContext.Current.CancellationToken);
             var schemaSql = @"
                 SET FOREIGN_KEY_CHECKS = 0;
+                DROP TABLE IF EXISTS CollectionToUser;
                 DROP TABLE IF EXISTS PromptToCollection;
                 DROP TABLE IF EXISTS WheelSpinPrompts;
                 DROP TABLE IF EXISTS PromptCollections;
@@ -98,6 +100,13 @@ namespace horizon_api_integration_tests
                     collectionId INT AUTO_INCREMENT PRIMARY KEY,
                     name VARCHAR(255) NOT NULL,
                     creationDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+                );
+
+                CREATE TABLE CollectionToUser (
+                    collectionId INT NOT NULL,
+                    userId INT NOT NULL,
+                    PRIMARY KEY (collectionId, userId),
+                    FOREIGN KEY (collectionId) REFERENCES PromptCollections(collectionId) ON DELETE CASCADE
                 );
 
                 CREATE TABLE WheelSpinPrompts (
@@ -127,6 +136,12 @@ namespace horizon_api_integration_tests
             var sqlQuery = sqlQueryStore.Get("PostInsertCollection");
             var command = new CommandDefinition(sqlQuery, new { name = collectionName }, cancellationToken: TestContext.Current.CancellationToken);
             var collectionId = await connection.QuerySingleAsync<int>(command);
+
+            var linkCommand = new CommandDefinition(
+                sqlQueryStore.Get("PostInsertCollectionToUser"),
+                new { collectionId, userId = TestUserId },
+                cancellationToken: TestContext.Current.CancellationToken);
+            await connection.ExecuteAsync(linkCommand);
 
             return (collectionId, collectionName);
         }
@@ -159,7 +174,7 @@ namespace horizon_api_integration_tests
             var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
 
             var sqlQuery = sqlQueryStore.Get("GetAllCollections");
-            var command = new CommandDefinition(sqlQuery, cancellationToken: TestContext.Current.CancellationToken);
+            var command = new CommandDefinition(sqlQuery, new { userId = TestUserId }, cancellationToken: TestContext.Current.CancellationToken);
             var collections = await connection.QueryAsync<Collection>(command);
 
             collections.Should().ContainSingle(collection =>
@@ -176,7 +191,7 @@ namespace horizon_api_integration_tests
             var sqlQuery = sqlQueryStore.Get("GetCollectionById");
             var command = new CommandDefinition(
                 sqlQuery,
-                new { collectionId = insertedCollection.collectionId },
+                new { collectionId = insertedCollection.collectionId, userId = TestUserId },
                 cancellationToken: TestContext.Current.CancellationToken);
             var collection = await connection.QuerySingleOrDefaultAsync<Collection>(command);
 
@@ -192,7 +207,7 @@ namespace horizon_api_integration_tests
             var sqlQuery = sqlQueryStore.Get("GetCollectionById");
             var command = new CommandDefinition(
                 sqlQuery,
-                new { collectionId = 9999 },
+                new { collectionId = 9999, userId = TestUserId },
                 cancellationToken: TestContext.Current.CancellationToken);
             var collection = await connection.QuerySingleOrDefaultAsync<Collection>(command);
 
@@ -206,7 +221,7 @@ namespace horizon_api_integration_tests
             var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
 
             var sqlQuery = sqlQueryStore.Get("GetAllCollections");
-            var command = new CommandDefinition(sqlQuery, cancellationToken: TestContext.Current.CancellationToken);
+            var command = new CommandDefinition(sqlQuery, new { userId = TestUserId }, cancellationToken: TestContext.Current.CancellationToken);
             var results = await connection.QueryAsync<Collection>(command);
 
             results.Should().NotBeEmpty();
@@ -219,7 +234,7 @@ namespace horizon_api_integration_tests
 
             var actualQuery = sqlQueryStore.Get("GetAllCollections");
 
-            actualQuery.Should().MatchEquivalentOf("SELECT\r\n    collectionId AS CollectionId,\r\n    name AS Name,\r\n    creationDate AS CreationDate\r\nFROM PromptCollections;");
+            actualQuery.Should().MatchEquivalentOf("SELECT c.**FROM PromptCollections c*JOIN CollectionToUser cu ON cu.collectionId = c.collectionId*WHERE cu.userId = @userId;");
         }
 
         [Fact]
@@ -228,7 +243,7 @@ namespace horizon_api_integration_tests
             var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
 
             var sqlQuery = sqlQueryStore.Get("GetAllCollections");
-            var command = new CommandDefinition(sqlQuery, cancellationToken: TestContext.Current.CancellationToken);
+            var command = new CommandDefinition(sqlQuery, new { userId = TestUserId }, cancellationToken: TestContext.Current.CancellationToken);
             var collections = await connection.QueryAsync<Collection>(command);
 
             collections.Should().BeEmpty();
@@ -241,7 +256,7 @@ namespace horizon_api_integration_tests
             var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
 
             var sqlQuery = sqlQueryStore.Get("GetAllCollections");
-            var command = new CommandDefinition(sqlQuery, cancellationToken: TestContext.Current.CancellationToken);
+            var command = new CommandDefinition(sqlQuery, new { userId = TestUserId }, cancellationToken: TestContext.Current.CancellationToken);
             var collections = await connection.QueryAsync<Collection>(command);
 
             collections.Should().NotBeEmpty();
@@ -257,7 +272,7 @@ namespace horizon_api_integration_tests
             var sqlQuery = sqlQueryStore.Get("PostUpdateCollectionById");
             var command = new CommandDefinition(
                 sqlQuery,
-                new { collectionId = insertedCollection.collectionId, name = updatedCollectionName },
+                new { collectionId = insertedCollection.collectionId, name = updatedCollectionName, userId = TestUserId },
                 cancellationToken: TestContext.Current.CancellationToken);
             var updatedCollection = await connection.QuerySingleOrDefaultAsync<Collection>(command);
 
@@ -274,7 +289,7 @@ namespace horizon_api_integration_tests
             var sqlQuery = sqlQueryStore.Get("DeleteCollectionById");
             var deleteCommand = new CommandDefinition(
                 sqlQuery,
-                new { collectionId = insertedCollection.collectionId },
+                new { collectionId = insertedCollection.collectionId, userId = TestUserId },
                 cancellationToken: TestContext.Current.CancellationToken);
             var deletedRows = await connection.ExecuteAsync(deleteCommand);
 
@@ -282,7 +297,7 @@ namespace horizon_api_integration_tests
 
             var getByIdCommand = new CommandDefinition(
                 sqlQueryStore.Get("GetCollectionById"),
-                new { collectionId = insertedCollection.collectionId },
+                new { collectionId = insertedCollection.collectionId, userId = TestUserId },
                 cancellationToken: TestContext.Current.CancellationToken);
             var collection = await connection.QuerySingleOrDefaultAsync<Collection>(getByIdCommand);
 
@@ -297,7 +312,7 @@ namespace horizon_api_integration_tests
             var sqlQuery = sqlQueryStore.Get("DeleteCollectionById");
             var command = new CommandDefinition(
                 sqlQuery,
-                new { collectionId = 9999 },
+                new { collectionId = 9999, userId = TestUserId },
                 cancellationToken: TestContext.Current.CancellationToken);
             var deletedRows = await connection.ExecuteAsync(command);
 
