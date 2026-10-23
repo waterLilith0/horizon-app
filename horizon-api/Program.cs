@@ -213,7 +213,7 @@ namespace horizon_api
                 {
                     app.Use(async (ctx, next) =>
                     {
-                        if (ctx.Request.Path.Equals("/openapi/internal.json", StringComparison.OrdinalIgnoreCase))
+                        if (ctx.Request.Path.Equals("/api/openapi/internal.json", StringComparison.OrdinalIgnoreCase))
                         {
                             ctx.Response.StatusCode = StatusCodes.Status404NotFound;
                             return;
@@ -221,15 +221,16 @@ namespace horizon_api
                         await next();
                     });
                 }
-                app.UseSwagger(o => o.RouteTemplate = "openapi/{documentName}.json");
-                app.MapScalarApiReference(options =>
+
+                app.UseSwagger(o => o.RouteTemplate = "api/openapi/{documentName}.json");
+                app.MapScalarApiReference("/api/scalar", options =>
                 {
                     options.WithTitle("Horizon API")
-                           .AddDocument("public", "Horizon API", "/openapi/public.json");
+                           .AddDocument("public", "Horizon API", "/api/openapi/public.json");
 
                     if (app.Environment.IsDevelopment())
                     {
-                        options.AddDocument("internal", "Horizon Internal", "/openapi/internal.json");
+                        options.AddDocument("internal", "Horizon Internal", "/api/openapi/internal.json");
                     }
                 });
 
