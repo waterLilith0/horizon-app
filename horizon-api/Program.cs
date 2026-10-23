@@ -148,7 +148,7 @@ namespace horizon_api
                     .AddCheck("self", () => HealthCheckResult.Healthy(), tags: ["live"])
                     .AddMySql(
                         connectionString: connectionString!,
-                        healthQuery: "mysql",
+                        healthQuery: "SELECT 1;",
                         name: "mysql",
                         tags: ["ready"]
                     );

@@ -14,7 +14,7 @@ namespace horizon_api.Controllers
 {
     [ApiController]
     [ApiExplorerSettings(GroupName = "internal")]
-    [Route("api/auth")]
+    [Route("api/[controller]")]
     [Produces("application/json")]
     public class AuthController(SqlQueryStore sqlQueryStore, MySqlDataSource dataSource, ILogger<AuthController> logger, IPasswordService passGen) : ControllerBase
     {
