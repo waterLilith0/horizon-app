@@ -18,7 +18,7 @@ namespace horizon_api
 {
     public class Program
     {
-        public static void Main(string[] args)
+        internal static void Main(string[] args)
         {
             Log.Logger = new LoggerConfiguration()
                 .Enrich.FromLogContext()
@@ -57,8 +57,9 @@ namespace horizon_api
                 {
                     options.ForwardedHeaders =
                         ForwardedHeaders.XForwardedFor |
-                        ForwardedHeaders.XForwardedProto;
-                    options.ForwardLimit = 1;
+                        ForwardedHeaders.XForwardedProto |
+                        ForwardedHeaders.XForwardedHost;
+                    options.KnownIPNetworks.Clear();
                     options.KnownProxies.Clear();
                     options.KnownIPNetworks.Clear();
                     options.KnownIPNetworks.Add(System.Net.IPNetwork.Parse(
