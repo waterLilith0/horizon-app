@@ -1,6 +1,7 @@
 using Grafana.OpenTelemetry;
 using horizon_api.Infrastructure;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using MySqlConnector;
@@ -42,10 +43,7 @@ namespace horizon_api
 
                 builder.Host.UseSerilog();
                 builder.Services.AddOpenTelemetry()
-                    .UseGrafana(o =>
-                    {
-                        o.ServiceName = "horizon-api";
-                    })
+                    .UseGrafana()
                     .WithMetrics(metrics => metrics
                         .AddMeter("MySqlConnector"))
                     .WithTracing(tracing => tracing
@@ -153,6 +151,14 @@ namespace horizon_api
                         name: "mysql",
                         tags: ["ready"]
                     );
+
+                var keysPath = builder.Configuration["DataProtection:KeysPath"]
+                    ?? Path.Combine(builder.Environment.ContentRootPath, "keys");
+                Directory.CreateDirectory(keysPath);
+
+                builder.Services.AddDataProtection()
+                    .SetApplicationName("horizon-api")
+                    .PersistKeysToFileSystem(new DirectoryInfo(keysPath));
 
                 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                     .AddCookie(o =>
