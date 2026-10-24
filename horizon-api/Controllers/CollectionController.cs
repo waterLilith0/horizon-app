@@ -21,10 +21,10 @@ namespace horizon_api.Controllers
         private int CurrentUserId => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
         public record CollectionCreateDto(
-            [property: Required, StringLength(MaxNameLength, MinimumLength = 1)] string CollectionName);
+            [Required, StringLength(MaxNameLength, MinimumLength = 1)] string CollectionName);
 
         public record UpdateCollectionDto(
-            [property: Required, StringLength(MaxNameLength, MinimumLength = 1)] string Name);
+            [Required, StringLength(MaxNameLength, MinimumLength = 1)] string Name);
 
         private async Task<bool> OwnsCollection(MySqlConnection connection, int collectionId, CancellationToken ct)
         {

@@ -19,13 +19,13 @@ namespace horizon_api.Controllers
     public class AuthController(SqlQueryStore sqlQueryStore, MySqlDataSource dataSource, ILogger<AuthController> logger, IPasswordService passGen) : ControllerBase
     {
         public record LoginRequest(
-        [property: Required, StringLength(30, MinimumLength = 1)] string UserName,
-        [property: Required, StringLength(128, MinimumLength = 1)] string Password);
+        [Required, StringLength(30, MinimumLength = 1)] string UserName,
+        [Required, StringLength(128, MinimumLength = 1)] string Password);
 
         public record RegisterRequest(
-            [property: Required, EmailAddress, StringLength(255)] string Email,
-            [property: Required, StringLength(30, MinimumLength = 3)] string UserName,
-            [property: Required, StringLength(128, MinimumLength = 8)] string Password);
+            [Required, EmailAddress, StringLength(255)] string Email,
+            [Required, StringLength(30, MinimumLength = 3)] string UserName,
+            [Required, StringLength(128, MinimumLength = 8)] string Password);
 
         public class UserProfile
         {
