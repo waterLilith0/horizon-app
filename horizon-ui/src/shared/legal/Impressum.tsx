@@ -101,7 +101,10 @@ export default function Impressum() {
               https://github.com/waterlilith0
             </a>
             <br />
-            <a href="https://bsky.app/profile/waterlilith.space" target="_blank">
+            <a
+              href="https://bsky.app/profile/waterlilith.space"
+              target="_blank"
+            >
               https://bsky.app/profile/waterlilith.space
             </a>
           </p>

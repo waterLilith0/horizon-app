@@ -1,1 +1,8 @@
 **/.prettierrc
+node_modules
+dist
+dist-ssr
+.cache
+public
+*.html
+**/components/ui/**.tsx
