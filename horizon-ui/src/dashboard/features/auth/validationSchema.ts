@@ -37,7 +37,7 @@ export const changePasswordSchema = z
     path: ["newPassword"],
   });
 
-type ChangePasswordData = z.infer<typeof changePasswordSchema>;
+// type ChangePasswordData = z.infer<typeof changePasswordSchema>;
 
 const emailSchema = z.email({ error: "Invalid email address" });
 
