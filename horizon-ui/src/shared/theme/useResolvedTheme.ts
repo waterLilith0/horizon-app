@@ -14,7 +14,7 @@ function subscribe(callback: () => void) {
 const getSystemDark = () => window.matchMedia(query).matches;
 
 // Resolves "system" to "light" or "dark" and follows OS changes live.
-export function useResolvedTheme(): "light" | "dark" {
+function useResolvedTheme(): "light" | "dark" {
   const theme = useAtomValue(themeAtom);
   const systemDark = useSyncExternalStore(subscribe, getSystemDark);
   if (theme === "system") return systemDark ? "dark" : "light";

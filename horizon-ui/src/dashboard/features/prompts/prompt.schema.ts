@@ -2,7 +2,7 @@ import z from "zod";
 
 export const PROMPT_TYPES = ["question", "action", "group-action"] as const;
 
-export const PromptSchema = z.object({
+const PromptSchema = z.object({
   promptId: z.int(),
   promptText: z.string(),
   type: z.enum(PROMPT_TYPES),

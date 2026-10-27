@@ -3,7 +3,7 @@ import type {
   RegisterData,
 } from "@/dashboard/features/auth/validationSchema";
 
-export type FieldErrors = Partial<
+type FieldErrors = Partial<
   Record<keyof RegisterData, { message: string }>
 >;
 export type AuthResult = { ok: true } | { ok: false; fieldErrors: FieldErrors };

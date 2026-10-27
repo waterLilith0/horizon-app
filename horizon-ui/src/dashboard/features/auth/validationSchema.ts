@@ -19,7 +19,7 @@ const OFFENSIVE_TERMS = Object.values(offensiveByLanguage)
   .flat()
   .map((term) => term.toLowerCase());
 
-export const passwordSchema = z
+const passwordSchema = z
   .string()
   .min(8, "Must be at least 8 characters")
   .max(128, "Must be at most 128 characters")
@@ -37,9 +37,9 @@ export const changePasswordSchema = z
     path: ["newPassword"],
   });
 
-export type ChangePasswordData = z.infer<typeof changePasswordSchema>;
+type ChangePasswordData = z.infer<typeof changePasswordSchema>;
 
-export const emailSchema = z.email({ error: "Invalid email address" });
+const emailSchema = z.email({ error: "Invalid email address" });
 
 export const usernameSchema = z
   .string()
