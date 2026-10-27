@@ -3,9 +3,9 @@ import { createPromptColumns } from "../features/prompts/Prompt";
 import { useState } from "react";
 import { initialCollections, initialPrompts } from "../mocks/data";
 import type { PromptValues } from "../features/prompts/prompt.schema";
-import { CollectionsSidebar } from "../features/collections/CollectionsSidebar";
+import { CustomSidebar } from "../features/collections/CustomSidebar";
 import type { CollectionValues } from "../features/collections/collection.schema";
-import FloatingSidebarTrigger from "../features/collections/FloatingSidebarTrigger";
+import CustomSidebarTrigger from "../features/collections/CustomSidebarTrigger";
 
 export default function Dashboard() {
   const [prompts, setPrompts] = useState<PromptValues[]>(initialPrompts);
@@ -17,6 +17,7 @@ export default function Dashboard() {
   );
 
   function createCollection(name: string) {
+    // TODO: temporary until the actual save functionality is provided
     const collectionId =
       collections.reduce((max, c) => Math.max(max, c.collectionId), -1) + 1;
 
@@ -58,19 +59,26 @@ export default function Dashboard() {
   const columns = createPromptColumns({ updateText, updateType, deletePrompt });
 
   return (
-    <>
-      <CollectionsSidebar
-        collections={collections}
-        selectedId={selectedCollection}
-        onSelect={setSelectedCollection}
-        onDelete={deleteCollection}
-        onCreate={createCollection}
-      />
-      // TODO: Replace placeholder with actual collection name and details
-      <p>// Collectionname placeholder: {`${selectedCollection}`}</p>
-      <p>table tags</p>
-      <Collection columns={columns} data={prompts} />
-      <FloatingSidebarTrigger />
-    </>
+    <main className="flex flex-col bg-secondary items-center grow shrink">
+      <section className="flex flex-col items-center bg-primary w-[85%] p-2 overflow-hidden">
+        <CustomSidebarTrigger />
+        <CustomSidebar
+          collections={collections}
+          selectedId={selectedCollection}
+          onSelect={setSelectedCollection}
+          onDelete={deleteCollection}
+          onCreate={createCollection}
+        />
+        // TODO: Replace placeholder with actual collection name and details
+        <p>// Collectionname placeholder: {`${selectedCollection}`}</p>
+        <p>table tags</p>
+        <Collection columns={columns} data={prompts} />
+        <section>
+          <p>
+            Placeholder for export and import functions of individual prompts
+          </p>
+        </section>
+      </section>
+    </main>
   );
 }

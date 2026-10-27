@@ -3,10 +3,21 @@ import {
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  SidebarHeader,
+  SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
+} from "@/components/ui/sidebar";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { useState } from "react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import AccountDialog from "./AccountDialog";
 import {
   currentUserQueryKey,
@@ -31,21 +42,46 @@ export default function AccountDropdown() {
 
   return (
     <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <button
-            type="button"
-            aria-label="Account menu"
-            className="fixed right-2 top-2 z-10 rounded-full focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <Avatar>
+      <Collapsible>
+        <SidebarMenuItem className="flex flex-row align-middle">
+          <Avatar>
+            {user ? (
               <AvatarFallback>
-                {user ? user.username.slice(0, 2).toUpperCase() : "?"}
+                {user.username.slice(0, 2).toUpperCase()}
               </AvatarFallback>
-            </Avatar>
-          </button>
-        </DropdownMenuTrigger>
+            ) : (
+              <AvatarImage>{"?"}</AvatarImage>
+            )}
+          </Avatar>
+          <CollapsibleTrigger
+            aria-label="Account menu"
+            className="flex flex-row items-center ps-2 w-full hover:bg-sidebar-primary rounded"
+          >
+            <p>{user ? user.username.slice(0, 2).toUpperCase() : "?"}</p>
+          </CollapsibleTrigger>
+        </SidebarMenuItem>
+        <CollapsibleContent>
+          <SidebarMenuItem>
+            <SidebarHeader>Account</SidebarHeader>
+            <SidebarMenuSub>
+              {user ? (
+                <>
+                  <SidebarMenuSubButton>Profile</SidebarMenuSubButton>
+                  <SidebarMenuSubButton>Log out</SidebarMenuSubButton>
+                </>
+              ) : (
+                <>
+                  <SidebarMenuSubButton>Login</SidebarMenuSubButton>
+                  <SidebarMenuSubButton>Register</SidebarMenuSubButton>
+                </>
+              )}
+              <SidebarMenuSubItem>Theme</SidebarMenuSubItem>
+            </SidebarMenuSub>
+          </SidebarMenuItem>
+        </CollapsibleContent>
+      </Collapsible>
 
+      <DropdownMenu>
         <DropdownMenuContent>
           <DropdownMenuGroup>
             {user ? (

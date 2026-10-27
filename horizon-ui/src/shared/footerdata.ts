@@ -6,8 +6,8 @@ export const footerRows = [
         text: "Home",
       },
       {
-        url: "/about-contact",
-        text: "About Me & Contact",
+        url: "https://waterlilith.space",
+        text: "Blog",
       },
     ],
   },
@@ -20,10 +20,6 @@ export const footerRows = [
       {
         url: "/impressum",
         text: "Impressum",
-      },
-      {
-        url: "/dashboard",
-        text: "Dashboard",
       },
     ],
   },
