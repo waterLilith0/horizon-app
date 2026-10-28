@@ -245,7 +245,7 @@ namespace horizon_api
                     Predicate = check => check.Tags.Contains("ready")
                 }).DisableRateLimiting().AllowAnonymous();
 
-                // --------------------------------------------------------- // Swagger/Scalar
+                // --------------------------------------------------------- // Scalar
 
                 if (!app.Environment.IsDevelopment())
                 {
