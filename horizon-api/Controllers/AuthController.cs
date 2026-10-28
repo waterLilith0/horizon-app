@@ -36,6 +36,7 @@ namespace horizon_api.Controllers
             public string Email { get; set; } = "";
         }
 
+        /// Check if the username is available to use
         [HttpGet]
         [AllowAnonymous]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -66,6 +67,7 @@ namespace horizon_api.Controllers
             return Ok();
         }
 
+        /// Log into an account
         [HttpPost("login")]
         [EnableRateLimiting("auth")]
         [AllowAnonymous]
@@ -113,6 +115,7 @@ namespace horizon_api.Controllers
             return Ok();
         }
 
+        /// Log out of currently logged in account
         [HttpPost("logout")]
         [Authorize]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -123,6 +126,7 @@ namespace horizon_api.Controllers
             return NoContent();
         }
 
+        /// Check if you're logged in and if so, who is
         [HttpGet("me")]
         [Authorize]
         [ProducesResponseType<UserProfile>(StatusCodes.Status200OK)]
@@ -152,6 +156,7 @@ namespace horizon_api.Controllers
             return Ok(profile);
         }
 
+        /// Create a new account
         [HttpPost("register")]
         [EnableRateLimiting("auth")]
         [AllowAnonymous]

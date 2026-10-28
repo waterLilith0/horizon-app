@@ -9,6 +9,8 @@
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <StartupObject></StartupObject>
 	  <NoWarn>$(NoWarn);CA1873</NoWarn>
+	<GenerateDocumentationFile>true</GenerateDocumentationFile>
+	  <NoWarn>$(NoWarn);1591</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -34,7 +36,7 @@
     <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
     <PackageReference Include="Serilog.Sinks.OpenTelemetry" Version="4.2.0" />
     <PackageReference Include="SSH.NET" Version="2026.0.0" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.3.1" />
+	<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.*" />
   </ItemGroup>
 
 </Project>

@@ -15,7 +15,7 @@ namespace horizon_api.Controllers
     [Route("api/[controller]")]
     [Produces("application/json")]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
-    public class CollectionController(SqlQueryStore sqlQueryStore, MySqlDataSource dataSource, ILogger<CollectionController> logger) : Controller
+    public class CollectionController(SqlQueryStore sqlQueryStore, MySqlDataSource dataSource, ILogger<CollectionController> logger) : ControllerBase
     {
         private const int MaxNameLength = 255;
         private int CurrentUserId => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
@@ -35,16 +35,7 @@ namespace horizon_api.Controllers
             return await connection.ExecuteScalarAsync<int>(command) > 0;
         }
 
-        [AllowAnonymous]
-        [HttpGet("checkstatus")]
-        [ProducesResponseType<string>(StatusCodes.Status200OK)]
-        public IActionResult GetCheck()
-        {
-            logger.LogInformation("Successfully got to the CollectionController.");
-            return Ok("CollectionController is running.");
-        }
-
-        // Create a single collection
+        /// Create a single collection
         [HttpPost("create")]
         [Consumes("application/json")]
         [ProducesResponseType<Collection>(StatusCodes.Status201Created)]
@@ -97,7 +88,7 @@ namespace horizon_api.Controllers
             return CreatedAtAction(nameof(GetCollectionById), new { collectionId }, collection);
         }
 
-        // Get a single collection
+        /// Get a single collection
         [HttpGet("{collectionId:int:min(1)}")]
         [ProducesResponseType<Collection>(StatusCodes.Status200OK)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
@@ -122,7 +113,7 @@ namespace horizon_api.Controllers
             return Ok(collection);
         }
 
-        // Get all collections as an array
+        /// Get all collections as an array
         [HttpGet]
         [ProducesResponseType<IReadOnlyList<Collection>>(StatusCodes.Status200OK)]
         public async Task<ActionResult<IReadOnlyList<Collection>>> GetAllCollections(CancellationToken cancellationToken)
@@ -136,7 +127,7 @@ namespace horizon_api.Controllers
             return Ok(allCollections);
         }
 
-        // Update call for a specific collection
+        /// Update call for a specific collection
         [HttpPut("{collectionId:int:min(1)}")]
         [Consumes("application/json")]
         [ProducesResponseType<Collection>(StatusCodes.Status200OK)]
@@ -163,7 +154,7 @@ namespace horizon_api.Controllers
             return Ok(updatedCollection);
         }
 
-        // DeleteCollection a specific collection
+        /// DeleteCollection a specific collection
         [HttpDelete("{collectionId:int:min(1)}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
@@ -188,7 +179,7 @@ namespace horizon_api.Controllers
             return NoContent();
         }
 
-        // Link a prompt to a collection
+        /// Link a prompt to a collection
         [HttpPost("{collectionId:int:min(1)}/prompts/{promptId:int:min(1)}")]
         [ProducesResponseType<int>(StatusCodes.Status200OK)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
@@ -248,7 +239,7 @@ namespace horizon_api.Controllers
             return Ok(entryId);
         }
 
-        // Unlink a prompt from a collection
+        /// Unlink a prompt from a collection
         [HttpDelete("{collectionId:int:min(1)}/prompts/{promptId:int:min(1)}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
@@ -280,7 +271,7 @@ namespace horizon_api.Controllers
             return NoContent();
         }
 
-        // Get all prompts in a specific collection
+        /// Get all prompts in a specific collection
         [HttpGet("all/{collectionId:int:min(1)}")]
         [ProducesResponseType<IReadOnlyList<Prompt>>(StatusCodes.Status200OK)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]

@@ -14,7 +14,7 @@ namespace horizon_api.Controllers
     [Route("api/[controller]")]
     [Produces("application/json")]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
-    public class PromptController(SqlQueryStore sqlQueryStore, MySqlDataSource dataSource, ILogger<PromptController> logger) : Controller
+    public class PromptController(SqlQueryStore sqlQueryStore, MySqlDataSource dataSource, ILogger<PromptController> logger) : ControllerBase
     {
         private const int MaxTextLength = 255;
 
@@ -29,18 +29,7 @@ namespace horizon_api.Controllers
             [Required, StringLength(MaxTextLength, MinimumLength = 1)] string PromptText,
             [Required, StringLength(MaxTextLength, MinimumLength = 1)] string Type);
 
-
-        // Check if the allPrompts controller is running
-        [AllowAnonymous]
-        [HttpGet("checkstatus")]
-        [ProducesResponseType<string>(StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetCheck()
-        {
-            logger.LogDebug("Successfully got to the PromptController.");
-            return Ok("PromptController is running.");
-        }
-
-        // Create a new prompt; optionally insert it into a collection immediately
+        /// Create a new prompt; optionally insert it into a collection immediately
         [HttpPost]
         [Consumes("application/json")]
         [ProducesResponseType<CreatePromptResponse>(StatusCodes.Status201Created)]
@@ -71,7 +60,7 @@ namespace horizon_api.Controllers
             return CreatedAtAction(nameof(GetPrompt), new { promptId = createdPrompt.PromptId }, response);
         }
 
-        // Get a specific allPrompts
+        /// Get a specific allPrompts
         [HttpGet("{promptId:int:min(1)}")]
         [ProducesResponseType<Prompt>(StatusCodes.Status200OK)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
@@ -96,7 +85,7 @@ namespace horizon_api.Controllers
             return Ok(prompt);
         }
 
-        // Get all prompts, optionally filtered by amount
+        /// Get all prompts, optionally filtered by amount
         [HttpGet]
         [ProducesResponseType<IReadOnlyList<Prompt>>(StatusCodes.Status200OK)]
         [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
@@ -112,7 +101,7 @@ namespace horizon_api.Controllers
             return Ok(allPrompts);
         }
 
-        // Get a random rowsAffected; optionally from a specific collection
+        /// Get a random rowsAffected; optionally from a specific collection
         [HttpGet("random")]
         [ProducesResponseType<Prompt>(StatusCodes.Status200OK)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
@@ -140,7 +129,7 @@ namespace horizon_api.Controllers
             return Ok(prompt);
         }
 
-        // Update/edit old prompt
+        /// Update/edit old prompt
         [HttpPut("{promptId:int:min(1)}")]
         [Consumes("application/json")]
         [ProducesResponseType<Prompt>(StatusCodes.Status200OK)]
@@ -168,7 +157,7 @@ namespace horizon_api.Controllers
             return Ok(updatedPrompt);
         }
 
-        // Deletes a specific prompt
+        /// Deletes a specific prompt
         [HttpDelete("{promptId:int:min(1)}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]

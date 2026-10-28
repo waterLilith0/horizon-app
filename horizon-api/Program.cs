@@ -3,6 +3,7 @@ using horizon_api.Infrastructure;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.OpenApi;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using MySqlConnector;
 using OpenTelemetry;
@@ -13,14 +14,54 @@ using Serilog;
 using Serilog.Enrichers.Span;
 using System.Security.Claims;
 using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.OpenApi;
 
 namespace horizon_api
 {
     public class Program
     {
+        private const string CookieSchemeId = "cookieAuth";
+
+        private static void ConfigureOpenApi(OpenApiOptions options, string title, string version)
+        {
+            options.AddDocumentTransformer((document, context, ct) =>
+            {
+                document.Info = new() { Title = title, Version = version };
+                document.Components ??= new();
+                document.Components.SecuritySchemes = new Dictionary<string, IOpenApiSecurityScheme>
+                {
+                    [CookieSchemeId] = new OpenApiSecurityScheme
+                    {
+                        Type = SecuritySchemeType.ApiKey,
+                        In = ParameterLocation.Cookie,
+                        Name = "horizon.auth",
+                        Description = "Session cookie issued by the login endpoint."
+                    }
+                };
+                return Task.CompletedTask;
+            });
+
+            // Mark only [Authorize] endpoints as secured (skips [AllowAnonymous])
+            options.AddOperationTransformer((operation, context, ct) =>
+            {
+                var metadata = context.Description.ActionDescriptor.EndpointMetadata;
+                if (metadata.OfType<IAuthorizeData>().Any() && !metadata.OfType<IAllowAnonymous>().Any())
+                {
+                    operation.Security ??= [];
+                    operation.Security.Add(new OpenApiSecurityRequirement
+                    {
+                        [new OpenApiSecuritySchemeReference(CookieSchemeId, context.Document)] = []
+                    });
+                }
+                return Task.CompletedTask;
+            });
+        }
+
+
         internal static void Main(string[] args)
         {
-            Log.Logger = new LoggerConfiguration()
+        Log.Logger = new LoggerConfiguration()
                 .Enrich.FromLogContext()
                 .Enrich.WithSpan()
                 .WriteTo.Console(outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level}] {Message:lj}{Exception}{NewLine}")
@@ -178,12 +219,9 @@ namespace horizon_api
                 builder.Services.AddSingleton<IPasswordService, PasswordService>();
                 builder.Services.AddMySqlDataSource(connectionString!);
 
-                builder.Services.AddEndpointsApiExplorer();
-                builder.Services.AddSwaggerGen(c =>
-                {
-                    c.SwaggerDoc("public", new() { Title = "Horizon API", Version = "v1.1.0" });
-                    c.SwaggerDoc("internal", new() { Title = "Horizon Internal", Version = "v1.0.0" });
-                });
+
+                builder.Services.AddOpenApi("public", o => ConfigureOpenApi(o, "Horizon API", "v1.1.0"));
+                builder.Services.AddOpenApi("internal", o => ConfigureOpenApi(o, "Horizon Internal", "v1.0.0"));
 
                 Log.Debug("DI configured");
 
@@ -222,7 +260,7 @@ namespace horizon_api
                     });
                 }
 
-                app.UseSwagger(o => o.RouteTemplate = "api/openapi/{documentName}.json");
+                app.MapOpenApi("/api/openapi/{documentName}.json");
                 app.MapScalarApiReference("/api/scalar", options =>
                 {
                     options.WithTitle("Horizon API")
