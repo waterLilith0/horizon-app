@@ -1,9 +1,6 @@
 import { createColumnHelper } from "@tanstack/react-table";
-import { type CollectionTableFeatures } from "../collections/collection-table-features";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTrash } from "@fortawesome/free-solid-svg-icons";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,6 +14,8 @@ import {
   type PromptValues,
 } from "./prompt.schema";
 import PromptTextCell from "./PromptTextCell";
+import { RiDeleteBinLine } from "@remixicon/react";
+import type { CollectionTableFeatures } from "../collections/collection-table-features";
 
 export function createPromptColumns({
   updateText,
@@ -88,10 +87,7 @@ export function createPromptColumns({
             type="button"
             onClick={() => deletePrompt(row.original.promptId)}
           >
-            <FontAwesomeIcon
-              icon={faTrash}
-              className="text-accent-foreground dark:text-secondary"
-            />
+            <RiDeleteBinLine className="text-accent-foreground dark:text-secondary" />
           </Button>
         );
       },

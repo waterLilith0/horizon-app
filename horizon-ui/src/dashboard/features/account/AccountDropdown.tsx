@@ -1,15 +1,7 @@
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
-import {
-  SidebarHeader,
   SidebarMenuItem,
   SidebarMenuSub,
   SidebarMenuSubButton,
-  SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
 import {
   Collapsible,
@@ -43,68 +35,61 @@ export default function AccountDropdown() {
   return (
     <>
       <Collapsible>
-        <SidebarMenuItem className="flex flex-row align-middle">
+        <SidebarMenuItem className="flex w-full flex-row items-center">
           <Avatar>
             {user ? (
-              <AvatarFallback>
+              <AvatarImage>
                 {user.username.slice(0, 2).toUpperCase()}
-              </AvatarFallback>
+              </AvatarImage>
             ) : (
-              <AvatarImage>{"?"}</AvatarImage>
+              <AvatarFallback>{"?"}</AvatarFallback>
             )}
           </Avatar>
           <CollapsibleTrigger
             aria-label="Account menu"
-            className="flex flex-row items-center ps-2 w-full hover:bg-sidebar-primary rounded"
+            className="flex h-full w-full flex-row items-center ps-2 hover:underline hover:cursor-pointer"
           >
-            <p>{user ? user.username.slice(0, 2).toUpperCase() : "?"}</p>
+            <p className="text-sm leading-none">
+              {user ? user.username.slice(0, 2).toUpperCase() : "UserName"}
+            </p>
           </CollapsibleTrigger>
         </SidebarMenuItem>
         <CollapsibleContent>
           <SidebarMenuItem>
-            <SidebarHeader>Account</SidebarHeader>
             <SidebarMenuSub>
               {user ? (
                 <>
-                  <SidebarMenuSubButton>Profile</SidebarMenuSubButton>
-                  <SidebarMenuSubButton>Log out</SidebarMenuSubButton>
+                  <SidebarMenuSubButton
+                    className="cursor-pointer"
+                    onClick={() => setAccountShown(true)}
+                  >
+                    Profile
+                  </SidebarMenuSubButton>
+                  <SidebarMenuSubButton
+                    className="cursor-pointer"
+                    onClick={handleLogout}
+                  >
+                    Log out
+                  </SidebarMenuSubButton>
                 </>
               ) : (
                 <>
-                  <SidebarMenuSubButton>Login</SidebarMenuSubButton>
-                  <SidebarMenuSubButton>Register</SidebarMenuSubButton>
+                  <SidebarMenuSubButton
+                    className="cursor-pointer"
+                    isActive={isPending}
+                    onClick={() => setLoginShown(true)}
+                  >
+                    Login/Register
+                  </SidebarMenuSubButton>
                 </>
               )}
-              <SidebarMenuSubItem>Theme</SidebarMenuSubItem>
+              <>
+                <ThemeMenu />
+              </>
             </SidebarMenuSub>
           </SidebarMenuItem>
         </CollapsibleContent>
       </Collapsible>
-
-      <DropdownMenu>
-        <DropdownMenuContent>
-          <DropdownMenuGroup>
-            {user ? (
-              <>
-                <DropdownMenuItem onClick={() => setAccountShown(true)}>
-                  Account
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleLogout}>
-                  Log out
-                </DropdownMenuItem>
-              </>
-            ) : (
-              <DropdownMenuItem
-                disabled={isPending}
-                onClick={() => setLoginShown(true)}
-              >
-                Log In/Register
-              </DropdownMenuItem>
-            )}
-          </DropdownMenuGroup>
-          <ThemeMenu />
-        </DropdownMenuContent>
-      </DropdownMenu>
 
       <AccountDialog open={accountShown} onOpenChange={setAccountShown} />
       <LoginRegisterDialog open={loginShown} onOpenChange={setLoginShown} />

@@ -1,11 +1,10 @@
 import type {
   LoginData,
   RegisterData,
-} from "@/dashboard/features/auth/validationSchema";
+} from "@/dashboard/features/auth/auth.schema";
+import { useMutation } from "@tanstack/react-query";
 
-type FieldErrors = Partial<
-  Record<keyof RegisterData, { message: string }>
->;
+type FieldErrors = Partial<Record<keyof RegisterData, { message: string }>>;
 export type AuthResult = { ok: true } | { ok: false; fieldErrors: FieldErrors };
 
 type ValidationProblem = { errors?: Record<string, string[]> };
@@ -46,15 +45,25 @@ export async function register(data: RegisterData): Promise<AuthResult> {
   throw new Error(`Registration failed: ${res.status}`);
 }
 
-export async function login(data: LoginData): Promise<{ ok: boolean }> {
-  const res = await fetch("/api/auth/login", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
+export async function login(login: LoginData): Promise<{ ok: boolean }> {
+  const loginMutations = useMutation({
+    mutationFn: async () => {
+      await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userName: login.identifier,
+          password: login.password,
+        }),
+      });
+    },
   });
-  if (res.ok) return { ok: true };
-  if (res.status === 401) return { ok: false };
-  throw new Error(`Login failed: ${res.status}`);
+
+  if (loginMutations.isPending) return { ok: true };
+  if (loginMutations.error) return { ok: false };
+  return { ok: true };
 }
 
 export type User = { username: string; email: string };

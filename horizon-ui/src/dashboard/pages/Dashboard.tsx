@@ -6,9 +6,15 @@ import type { PromptValues } from "../features/prompts/prompt.schema";
 import { CustomSidebar } from "../features/collections/CustomSidebar";
 import type { CollectionValues } from "../features/collections/collection.schema";
 import CustomSidebarTrigger from "../features/collections/CustomSidebarTrigger";
+import { GlobalDropzone, UploadQueuePanel } from "@/components/global-upload";
+import { UploadButton } from "@/components/upload-button";
+import { useUploadContext } from "@uploadcn/react";
+import { Button } from "@/components/ui/button";
+import { RiDownloadLine } from "@remixicon/react";
 
 export default function Dashboard() {
   const [prompts, setPrompts] = useState<PromptValues[]>(initialPrompts);
+  const { uploader } = useUploadContext();
 
   const [collections, setCollections] =
     useState<CollectionValues[]>(initialCollections);
@@ -59,8 +65,8 @@ export default function Dashboard() {
   const columns = createPromptColumns({ updateText, updateType, deletePrompt });
 
   return (
-    <main className="flex flex-col bg-secondary items-center grow shrink">
-      <section className="flex flex-col items-center bg-primary w-[85%] p-2 overflow-hidden">
+    <main className="flex flex-col bg-secondary items-center grow shrink overflow-hidden ps-20 pe-20">
+      <section className="flex flex-col items-center bg-primary w-full p-2 overflow-hidden">
         <CustomSidebarTrigger />
         <CustomSidebar
           collections={collections}
@@ -73,11 +79,15 @@ export default function Dashboard() {
         <p>// Collectionname placeholder: {`${selectedCollection}`}</p>
         <p>table tags</p>
         <Collection columns={columns} data={prompts} />
-        <section>
-          <p>
-            Placeholder for export and import functions of individual prompts
-          </p>
+        <section className="flex flex-row">
+          <UploadButton uploader={uploader}>Upload Collection</UploadButton>
+          <Button>
+            <RiDownloadLine />
+            Download Collection
+          </Button>
         </section>
+        <GlobalDropzone />
+        <UploadQueuePanel />
       </section>
     </main>
   );

@@ -1,10 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SidebarFooter } from "@/components/ui/sidebar";
-import { faPlus } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useState, type SyntheticEvent } from "react";
 import { CollectionNameSchema } from "./collection.schema";
+import { RiAddLine } from "@remixicon/react";
 
 export default function CreateFooter({
   onCreate,
@@ -39,7 +38,7 @@ export default function CreateFooter({
             maxLength={50}
           />
           <Button type="submit" aria-label="Create collection">
-            <FontAwesomeIcon icon={faPlus} />
+            <RiAddLine />
           </Button>
         </div>
         {error && (

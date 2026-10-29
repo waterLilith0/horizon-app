@@ -18,7 +18,7 @@ interface DataTableProps<TData extends RowData> {
 }
 
 const FLEXIBLE_COLUMN = "Prompt";
-
+// TODO: don't show type and created when in mobile view
 export default function Collection<TData extends RowData>({
   columns,
   data,

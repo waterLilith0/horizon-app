@@ -1,6 +1,5 @@
 import { useSidebar } from "@/components/ui/sidebar";
-import { faBars } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { RiMenuLine } from "@remixicon/react";
 import { cn } from "cn";
 
 export default function CustomSidebarTrigger() {
@@ -15,8 +14,8 @@ export default function CustomSidebarTrigger() {
       )}
       onClick={toggleSidebar}
     >
-      <span>
-        <FontAwesomeIcon icon={faBars} />
+      <span className="flex justify-center items-center">
+        <RiMenuLine />
       </span>
     </button>
   );

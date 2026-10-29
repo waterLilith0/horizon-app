@@ -14,7 +14,7 @@ import { Progress } from "@/components/ui/progress";
 import {
   registerSchema,
   usernameSchema,
-} from "@/dashboard/features/auth/validationSchema";
+} from "@/dashboard/features/auth/auth.schema";
 import { isUsernameAvailable, register } from "@/dashboard/features/auth/auth";
 
 const STRENGTH_LABELS = ["Very weak", "Weak", "Okay", "Strong", "Very strong"];

@@ -7,6 +7,7 @@ const PromptSchema = z.object({
   promptText: z.string(),
   type: z.enum(PROMPT_TYPES),
   creationDate: z.date(),
+  public: z.boolean(),
 });
 
 export type PromptValues = z.infer<typeof PromptSchema>;

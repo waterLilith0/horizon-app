@@ -1,5 +1,3 @@
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTrash } from "@fortawesome/free-solid-svg-icons";
 import {
   Sidebar,
   SidebarContent,
@@ -14,8 +12,8 @@ import type { CollectionValues } from "./collection.schema";
 import { useState } from "react";
 import CreateFooter from "./CreateFooter";
 import DeleteDialog from "./DeleteDialog";
-import { cn } from "cn";
 import AccountDropdown from "../account/AccountDropdown";
+import { RiDeleteBinLine } from "@remixicon/react";
 
 interface CollectionsSidebarProps {
   collections: CollectionValues[];
@@ -62,12 +60,6 @@ export function CustomSidebar({
                         ? "true"
                         : undefined
                     }
-                    className={cn(
-                      "hover:not-[data-active]:bg-sidebar-primary",
-                      collection.collectionId === selectedId
-                        ? "data-active:bg-primary"
-                        : "",
-                    )}
                     onClick={() => {
                       onSelect(collection.collectionId);
                     }}
@@ -80,7 +72,7 @@ export function CustomSidebar({
                     aria-label={`Delete ${collection.name}`}
                     onClick={() => setPendingDelete(collection)}
                   >
-                    <FontAwesomeIcon icon={faTrash} />
+                    <RiDeleteBinLine />
                   </SidebarMenuAction>
                 </SidebarMenuItem>
               ))}
