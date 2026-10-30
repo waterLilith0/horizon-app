@@ -15,10 +15,10 @@
         /// <summary>When the prompt was created.</summary>
         public required DateTime CreationDate { get; set; }
 
-        /// <summary>The ID of the user who owns the prompt.</summary>
+        /// <summary>The ID of the user who created the prompt (its author).</summary>
         public required long UserId { get; set; }
 
-        /// <summary>The username of the user who owns the prompt. Only set in list results.</summary>
+        /// <summary>The username of the prompt's author. Only set in list results.</summary>
         [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
         public string? UserName { get; set; }
 

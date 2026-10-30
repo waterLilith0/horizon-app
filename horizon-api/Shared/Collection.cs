@@ -12,10 +12,10 @@
         /// <summary>When the collection was created.</summary>
         public required DateTime CreationDate { get; set; }
 
-        /// <summary>The ID of the user who owns the collection.</summary>
+        /// <summary>The ID of the user who created the collection (its author).</summary>
         public required long UserId { get; set; }
 
-        /// <summary>The username of the user who owns the collection. Only set in list results.</summary>
+        /// <summary>The username of the collection's author. Only set in list results.</summary>
         [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
         public string? UserName { get; set; }
 

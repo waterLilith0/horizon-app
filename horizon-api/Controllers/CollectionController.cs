@@ -144,7 +144,7 @@ namespace horizon_api.Controllers
 
         /// <summary>List Collection</summary>
         /// <remarks>Returns a page of collections owned by the current user, or public collections, ordered by ID. 
-        /// Each collection includes the owner's username.</remarks>
+        /// Each collection includes the author's username.</remarks>
         /// <param name="page">Page number, starting at 1.</param>
         /// <param name="pageSize">Number of collections per page (1-100).</param>
         /// <param name="scope">all (default), owned, or others (public collections of other users).</param>
@@ -397,7 +397,8 @@ namespace horizon_api.Controllers
         }
 
         /// <summary>List prompts in a collection</summary>
-        /// <remarks>Returns the prompts in a collection owned by the current user, or in a public collection.</remarks>
+        /// <remarks>Returns the prompts in a collection owned by the current user, or in a public collection. 
+        /// Each prompt includes the author's username.</remarks>
         /// <param name="collectionId">The collection ID.</param>
         /// <response code="200">The prompts in the collection.</response>
         /// <response code="404">Collection not found.</response>
