@@ -9,7 +9,7 @@ public sealed class EmailOptions
     public string FromAddress { get; set; } = "";
     public string FromName { get; set; } = "Horizon";
     public string VerificationUrl { get; set; } = "";
-
+    public string PasswordResetUrl { get; set; } = "";
     public EmailTemplates Templates { get; set; } = new();
 
     public sealed class EmailTemplates

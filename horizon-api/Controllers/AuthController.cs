@@ -47,6 +47,13 @@ namespace horizon_api.Controllers
         public record ResendVerificationRequest(
             [Required, EmailAddress, StringLength(255)] string Email);
 
+        public record ForgotPasswordRequest(
+            [Required, EmailAddress, StringLength(255)] string Email);
+
+        public record ResetPasswordRequest(
+            [Required, StringLength(100, MinimumLength = 20)] string Token,
+            [Required, StringLength(128, MinimumLength = 8)] string NewPassword);
+
         public class UserProfile
         {
             public long UserId { get; set; }
@@ -276,6 +283,68 @@ namespace horizon_api.Controllers
             return NoContent();
         }
 
+        /// Send a password reset email
+        [HttpPost("forgot-password")]
+        [EnableRateLimiting("auth")]
+        [AllowAnonymous]
+        [Consumes("application/json")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest req, CancellationToken cancellationToken)
+        {
+            logger.LogDebug("Forgot password action called in AuthController");
+            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+
+            var user = await connection.QuerySingleOrDefaultAsync<User>(new CommandDefinition(
+                sqlQueryStore.Get("GetUserByEmail"),
+                new { email = req.Email },
+                cancellationToken: cancellationToken));
+
+            // Always return 204 so account existence isn't leaked.
+            if (user is not null)
+            {
+                await SendPasswordResetEmailAsync(connection, user.UserId, user.Email, cancellationToken);
+            }
+
+            return NoContent();
+        }
+
+        /// Set a new password using a reset token
+        [HttpPost("reset-password")]
+        [EnableRateLimiting("auth")]
+        [AllowAnonymous]
+        [Consumes("application/json")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest req, CancellationToken cancellationToken)
+        {
+            logger.LogDebug("Reset password action called in AuthController");
+            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+
+            var hashed = passGen.Hash(req.NewPassword);
+            var updated = await connection.ExecuteAsync(new CommandDefinition(
+                sqlQueryStore.Get("PutResetPassword"),
+                new
+                {
+                    tokenHash = SecureToken.Hash(req.Token),
+                    passwordHash = hashed.Hash,
+                    pepperVersion = hashed.PepperVersion
+                },
+                cancellationToken: cancellationToken));
+
+            if (updated == 0)
+            {
+                logger.LogInformation("Password reset rejected: invalid or expired token");
+                return Problem(
+                    title: "Invalid token",
+                    detail: "The password reset link is invalid or has expired.",
+                    statusCode: StatusCodes.Status400BadRequest);
+            }
+
+            logger.LogInformation("Password reset completed");
+            return NoContent();
+        }
+
         [HttpPut("password")]
         [EnableRateLimiting("auth")]
         [Consumes("application/json")]
@@ -368,34 +437,52 @@ namespace horizon_api.Controllers
             return NoContent();
         }
 
-        private async Task SendVerificationEmailAsync(
-            MySqlConnection connection, long userId, string email, string userName, CancellationToken cancellationToken)
+        private async Task SendTokenEmailAsync(
+    MySqlConnection connection,
+    long userId,
+    string email,
+    long templateId,
+    int validHours,
+    Func<string, Dictionary<string, object?>> buildVariables,
+    CancellationToken cancellationToken)
         {
             var (token, tokenHash) = SecureToken.Create();
 
             await connection.ExecuteAsync(new CommandDefinition(
                 sqlQueryStore.Get("PutVerificationToken"),
-                new { userId, tokenHash },
+                new { userId, tokenHash, hours = validHours },
                 cancellationToken: cancellationToken));
-
-            var options = emailOptions.Value;
 
             try
             {
-                await emailSender.SendTemplateAsync(
-                    email,
-                    options.Templates.Verification,
-                    new Dictionary<string, object?>
-                    {
-                        ["userName"] = WebUtility.HtmlEncode(userName),
-                        ["verificationLink"] = $"{options.VerificationUrl}?token={token}"
-                    },
-                    cancellationToken: cancellationToken);
+                await emailSender.SendTemplateAsync(email, templateId, buildVariables(token), cancellationToken: cancellationToken);
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Failed to send verification email for user {UserId}", userId);
+                logger.LogError(ex, "Failed to send token email for user {UserId}", userId);
             }
+        }
+
+        private Task SendVerificationEmailAsync(
+            MySqlConnection connection, long userId, string email, string userName, CancellationToken cancellationToken)
+        {
+            var options = emailOptions.Value;
+            return SendTokenEmailAsync(connection, userId, email, options.Templates.Verification, 24,
+                token => new()
+                {
+                    ["userName"] = WebUtility.HtmlEncode(userName),
+                    ["verificationLink"] = $"{options.VerificationUrl}?token={token}"
+                },
+                cancellationToken);
+        }
+
+        private Task SendPasswordResetEmailAsync(
+            MySqlConnection connection, long userId, string email, CancellationToken cancellationToken)
+        {
+            var options = emailOptions.Value;
+            return SendTokenEmailAsync(connection, userId, email, options.Templates.PasswordReset, 1,
+                token => new() { ["passwordChangeLink"] = $"{options.PasswordResetUrl}?token={token}" },
+                cancellationToken);
         }
     }
 }
