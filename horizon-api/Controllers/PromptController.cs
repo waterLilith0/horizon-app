@@ -15,7 +15,10 @@ namespace horizon_api.Controllers
     [Route("api/[controller]")]
     [Produces("application/json")]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
-    public class PromptController(SqlQueryStore sqlQueryStore, MySqlDataSource dataSource, ILogger<PromptController> logger) : ControllerBase
+    public class PromptController(
+        SqlQueryStore sqlQueryStore, 
+        MySqlDataSource dataSource, 
+        ILogger<PromptController> logger) : ControllerBase
     {
         private const int MaxTextLength = 255;
 
@@ -27,13 +30,13 @@ namespace horizon_api.Controllers
         public record CreatePromptDto(
             [Required, StringLength(MaxTextLength, MinimumLength = 1)] string PromptText,
             [Required, StringLength(MaxTextLength, MinimumLength = 1)] string Type,
-            int? CollectionId = null,
+            long? CollectionId = null,
             bool Public = false);
 
         /// <summary>Response body after creating a prompt.</summary>
         /// <param name="Prompt">The created prompt.</param>
         /// <param name="CollectionId">The collection the prompt was added to, if any.</param>
-        public record CreatePromptResponse(Prompt Prompt, int? CollectionId);
+        public record CreatePromptResponse(Prompt Prompt, long? CollectionId);
 
         /// <summary>Request body for changing a prompt's visibility.</summary>
         /// <param name="Public">Whether the prompt is visible to other users.</param>
@@ -49,7 +52,8 @@ namespace horizon_api.Controllers
             bool Public = false);
 
         /// <summary>Create a prompt</summary>
-        /// <remarks>Creates a new prompt owned by the current user. If a collection ID is provided, the prompt is also added to that collection. Set <c>public</c> to make it visible to other users.</remarks>
+        /// <remarks>Creates a new prompt owned by the current user. If a collection ID is provided, 
+        /// the prompt is also added to that collection. Set <c>public</c> to make it visible to other users.</remarks>
         /// <response code="201">Prompt created.</response>
         /// <response code="400">Invalid request.</response>
         /// <response code="404">Collection not found.</response>
@@ -60,12 +64,14 @@ namespace horizon_api.Controllers
         [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status500InternalServerError)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<CreatePromptResponse>> PostCreate([FromBody] CreatePromptDto promptDto, CancellationToken cancellationToken)
+        public async Task<ActionResult<CreatePromptResponse>> PostCreate(
+            [FromBody] CreatePromptDto promptDto, 
+            CancellationToken cancellationToken)
         {
             logger.LogDebug("Create action called in PromptController with: {@PromptDto}", promptDto);
 
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
-            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var userId = long.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
             if (promptDto.CollectionId is { } collectionId)
             {
@@ -114,15 +120,15 @@ namespace horizon_api.Controllers
         /// <param name="promptId">The prompt ID.</param>
         /// <response code="200">The prompt.</response>
         /// <response code="404">Prompt not found.</response>
-        [HttpGet("{promptId:int:min(1)}")]
+        [HttpGet("{promptId:long:min(1)}")]
         [ProducesResponseType<Prompt>(StatusCodes.Status200OK)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<Prompt>> GetPrompt([FromRoute, Required] int promptId, CancellationToken cancellationToken)
+        public async Task<ActionResult<Prompt>> GetPrompt([FromRoute, Required] long promptId, CancellationToken cancellationToken)
         {
             logger.LogDebug("GetPrompt called for prompt {PromptId}", promptId);
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
             var sql = sqlQueryStore.Get("GetById"); 
-            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var userId = long.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
             var command = new CommandDefinition(sql, new { promptId, userId }, cancellationToken: cancellationToken);
             var prompt = await connection.QuerySingleOrDefaultAsync<Prompt>(command);
 
@@ -140,22 +146,53 @@ namespace horizon_api.Controllers
         }
 
         /// <summary>List prompts</summary>
-        /// <remarks>Returns the prompts available to the current user, optionally limited to a maximum number of results.</remarks>
-        /// <param name="resultAmount">Maximum number of prompts to return (1-1000).</param>
-        /// <response code="200">The list of prompts.</response>
+        /// <remarks>Returns a page of the prompts available to the current user, ordered by ID.</remarks>
+        /// <param name="page">Page number, starting at 1.</param>
+        /// <param name="pageSize">Number of prompts per page (1-100).</param>
         /// <param name="scope">all (default), owned, or others (public prompts of other users).</param>
-        /// <response code="400">Invalid result amount.</response>
+        /// <param name="includeCollectionIds">Also return the IDs of the collections each prompt belongs to.</param>
+        /// <param name="userId">Only return prompts created by this user ID.</param>
+        /// <param name="search">Fulltext search on the prompt text.</param>
+        /// <response code="200">The page of prompts.</response>
+        /// <response code="400">Invalid paging values.</response>
         [HttpGet]
         [ProducesResponseType<IReadOnlyList<Prompt>>(StatusCodes.Status200OK)]
         [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<IReadOnlyList<Prompt>>> GetAllPrompts([FromQuery, Range(1, 1000)] int? resultAmount, [FromQuery] ListScope scope, CancellationToken cancellationToken)
+        public async Task<ActionResult<IReadOnlyList<Prompt>>> GetAllPrompts(
+            [FromQuery, Range(1, int.MaxValue)] int page = 1, 
+            [FromQuery, Range(1, 100)] int pageSize = 50, 
+            [FromQuery] ListScope scope = ListScope.All, 
+            [FromQuery] bool includeCollectionIds = false, 
+            [FromQuery] long? userId = null,
+            [FromQuery, StringLength(100)] string? search = null,
+            CancellationToken cancellationToken = default)
         {
-            logger.LogDebug("GetAllPrompts called (ResultAmount: {ResultAmount})", resultAmount);
+            logger.LogDebug("GetAllPrompts called (Page: {Page}, PageSize: {PageSize})", page, pageSize);
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
             var sql = sqlQueryStore.Get("GetAll");
-            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            var command = new CommandDefinition(sql, new { resultAmount, userId, scope = scope.ToString().ToLowerInvariant() }, cancellationToken: cancellationToken);
+            var currentUserId = long.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var command = new CommandDefinition(sql, new { 
+                pageSize, 
+                offset = (long)(page - 1) * pageSize, 
+                userId = currentUserId, 
+                authorId = userId,
+                search = string.IsNullOrWhiteSpace(search) ? null : search.Trim(),
+                scope = scope.ToString().ToLowerInvariant() 
+            }, cancellationToken: cancellationToken);
             var allPrompts = (await connection.QueryAsync<Prompt>(command)).AsList();
+
+            if (includeCollectionIds && allPrompts.Count > 0)
+            {
+                var links = await connection.QueryAsync<(long PromptId, long CollectionId)>(new CommandDefinition(
+                    sqlQueryStore.Get("GetCollectionIdsForPrompts"),
+                    new { promptIds = allPrompts.Select(p => p.PromptId).ToArray(), userId = currentUserId },
+                    cancellationToken: cancellationToken));
+                var byPrompt = links.ToLookup(l => l.PromptId, l => l.CollectionId);
+                foreach (var prompt in allPrompts)
+                {
+                    prompt.CollectionIds = byPrompt[prompt.PromptId].ToList();
+                }
+            }
 
             logger.LogInformation("Retrieved {Count} prompts", allPrompts.Count);
             return Ok(allPrompts);
@@ -169,13 +206,16 @@ namespace horizon_api.Controllers
         [HttpGet("random")]
         [ProducesResponseType<Prompt>(StatusCodes.Status200OK)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<Prompt>> GetRandomPrompt([FromQuery] int? collectionId, CancellationToken cancellationToken)
+        public async Task<ActionResult<Prompt>> GetRandomPrompt([FromQuery] long? collectionId, CancellationToken cancellationToken)
         {
             logger.LogDebug("GetRandomPrompt called (CollectionId: {CollectionId})", collectionId);
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
 
             var sql = sqlQueryStore.Get("GetRandomPrompt");
-            var command = new CommandDefinition(sql, new { collectionId, userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!) }, cancellationToken: cancellationToken);
+            var command = new CommandDefinition(sql, new { 
+                collectionId, 
+                userId = long.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!)
+            }, cancellationToken: cancellationToken);
 
             var prompt = await connection.QuerySingleOrDefaultAsync<Prompt>(command);
 
@@ -194,24 +234,34 @@ namespace horizon_api.Controllers
         }
 
         /// <summary>Update a prompt</summary>
-        /// <remarks>Replaces the text, type and visibility of a prompt owned by the current user. Omitting <c>public</c> makes the prompt private.</remarks>
+        /// <remarks>Replaces the text, type and visibility of a prompt owned by the current user. 
+        /// Omitting <c>public</c> makes the prompt private.</remarks>
         /// <param name="promptId">The prompt ID.</param>
         /// <param name="promptDto">The new prompt text, type and visibility.</param>
         /// <response code="200">The updated prompt.</response>
         /// <response code="400">Invalid request.</response>
         /// <response code="404">Prompt not found.</response>
-        [HttpPut("{promptId:int:min(1)}")]
+        [HttpPut("{promptId:long:min(1)}")]
         [Consumes("application/json")]
         [ProducesResponseType<Prompt>(StatusCodes.Status200OK)]
         [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> PostEdit([FromRoute] int promptId, [FromBody] UpdatePromptDto promptDto, CancellationToken cancellationToken)
+        public async Task<IActionResult> PostEdit(
+            [FromRoute] long promptId, 
+            [FromBody] UpdatePromptDto promptDto, 
+            CancellationToken cancellationToken)
         {
             logger.LogDebug("Edit called for prompt {PromptId}", promptId);
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
 
             var sql = sqlQueryStore.Get("PostUpdateById");
-            var command = new CommandDefinition(sql, new { promptId, promptDto.PromptText, promptDto.Type, promptDto.Public, userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!) }, cancellationToken: cancellationToken);
+            var command = new CommandDefinition(sql, new { 
+                promptId, 
+                promptDto.PromptText, 
+                promptDto.Type, 
+                promptDto.Public, 
+                userId = long.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!)
+            }, cancellationToken: cancellationToken);
             var updatedPrompt = await connection.QuerySingleOrDefaultAsync<Prompt>(command);
 
             if (updatedPrompt == null)
@@ -233,17 +283,24 @@ namespace horizon_api.Controllers
         /// <param name="dto">The desired visibility.</param>
         /// <response code="200">The updated prompt.</response>
         /// <response code="404">Prompt not found.</response>
-        [HttpPut("{promptId:int:min(1)}/visibility")]
+        [HttpPut("{promptId:long:min(1)}/visibility")]
         [Consumes("application/json")]
         [ProducesResponseType<Prompt>(StatusCodes.Status200OK)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> SetVisibility([FromRoute] int promptId, [FromBody] VisibilityDto dto, CancellationToken cancellationToken)
+        public async Task<IActionResult> SetVisibility(
+            [FromRoute] long promptId, 
+            [FromBody] VisibilityDto dto, 
+            CancellationToken cancellationToken)
         {
             logger.LogDebug("SetVisibility called for prompt {PromptId} (public: {Public})", promptId, dto.Public);
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
 
-            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            var command = new CommandDefinition(sqlQueryStore.Get("SetVisibility"), new { promptId, @public = dto.Public, userId }, cancellationToken: cancellationToken);
+            var userId = long.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var command = new CommandDefinition(sqlQueryStore.Get("SetVisibility"), new { 
+                promptId, 
+                @public = dto.Public, 
+                userId 
+            }, cancellationToken: cancellationToken);
             var prompt = await connection.QuerySingleOrDefaultAsync<Prompt>(command);
 
             if (prompt == null)
@@ -264,19 +321,18 @@ namespace horizon_api.Controllers
         /// <param name="promptId">The prompt ID.</param>
         /// <response code="204">Prompt deleted.</response>
         /// <response code="404">Prompt not found.</response>
-        [HttpDelete("{promptId:int:min(1)}")]
+        [HttpDelete("{promptId:long:min(1)}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> Delete([FromRoute] int promptId, CancellationToken cancellationToken)
+        public async Task<IActionResult> Delete([FromRoute] long promptId, CancellationToken cancellationToken)
         {
             logger.LogDebug("Delete called for prompt {PromptId}", promptId);
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
 
             var sql = sqlQueryStore.Get("DeleteById");
-            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var userId = long.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
             var command = new CommandDefinition(sql, new { promptId, userId }, cancellationToken: cancellationToken);
             var rowsAffected = await connection.ExecuteAsync(command);
-
             if (rowsAffected == 0)
             {
                 logger.LogWarning("Prompt {PromptId} not found or not owned by the user; delete skipped", promptId);

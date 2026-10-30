@@ -4,7 +4,7 @@
     public class Prompt
     {
         /// <summary>The prompt ID.</summary>
-        public required int PromptId { get; set; }
+        public required long PromptId { get; set; }
 
         /// <summary>The prompt text.</summary>
         public required string PromptText { get; set; }
@@ -16,9 +16,13 @@
         public required DateTime CreationDate { get; set; }
 
         /// <summary>The ID of the user who owns the prompt.</summary>
-        public required int UserId { get; set; }
+        public required long UserId { get; set; }
 
         /// <summary>Whether the prompt is visible to other users.</summary>
         public required bool Public { get; set; }
+
+        /// <summary>IDs of the collections the prompt belongs to. Only set when requested.</summary>
+        [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+        public IReadOnlyList<long>? CollectionIds { get; set; }
     }
 }
