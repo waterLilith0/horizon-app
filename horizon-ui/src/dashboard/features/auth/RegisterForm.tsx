@@ -14,8 +14,12 @@ import { Progress } from "@/components/ui/progress";
 import {
   registerSchema,
   usernameSchema,
-} from "@/dashboard/features/auth/validationSchema";
-import { isUsernameAvailable, register } from "@/dashboard/features/auth/auth";
+} from "@/dashboard/features/auth/auth.schema";
+import {
+  getApiAuth,
+  postApiAuthRegister,
+  type ValidationProblemDetails,
+} from "@/api/generated/internal/horizonInternal";
 
 const STRENGTH_LABELS = ["Very weak", "Weak", "Okay", "Strong", "Very strong"];
 
@@ -27,13 +31,27 @@ export default function RegisterForm({
   const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm({
-    defaultValues: { username: "", email: "", password: "" },
+    defaultValues: { userName: "", email: "", password: "" },
     validators: {
       onChange: registerSchema,
       onSubmit: registerSchema,
       onSubmitAsync: async ({ value }) => {
-        const result = await register(registerSchema.parse(value));
-        return result.ok ? undefined : { fields: result.fieldErrors };
+        const { userName, email, password } = registerSchema.parse(value);
+        const res = await postApiAuthRegister({
+          userName,
+          email,
+          password,
+        });
+        if (res.status === 201) return undefined;
+        const { errors } = res.data as ValidationProblemDetails;
+        return {
+          fields: Object.fromEntries(
+            Object.entries(errors ?? {}).map(([key, [message]]) => [
+              key.toLowerCase(),
+              { message },
+            ]),
+          ),
+        };
       },
     },
     onSubmit: ({ value }) => onRegistered(value.email),
@@ -50,14 +68,15 @@ export default function RegisterForm({
     >
       <FieldGroup>
         <form.Field
-          name="username"
+          name="userName"
           validators={{
             onChangeAsyncDebounceMs: 400,
             onChangeAsync: async ({ value, signal }) => {
               if (!usernameSchema.safeParse(value).success) return undefined;
-              return (await isUsernameAvailable(value, signal))
-                ? undefined
-                : { message: "That username is taken" };
+              const res = await getApiAuth({ userName: value }, { signal });
+              return res.status === 409
+                ? { message: "That username is taken" }
+                : undefined;
             },
           }}
         >
@@ -117,7 +136,7 @@ export default function RegisterForm({
               field.state.meta.isTouched && !field.state.meta.isValid;
             const strength = field.state.value
               ? zxcvbn(field.state.value, [
-                  form.getFieldValue("username"),
+                  form.getFieldValue("userName"),
                   form.getFieldValue("email"),
                 ])
               : null;

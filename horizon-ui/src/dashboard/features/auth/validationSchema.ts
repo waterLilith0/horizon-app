@@ -59,11 +59,11 @@ export const usernameSchema = z
 
 export const registerSchema = z
   .object({
-    username: usernameSchema,
+    userName: usernameSchema,
     email: emailSchema,
     password: passwordSchema,
   })
-  .refine((d) => !d.password.toLowerCase().includes(d.username.toLowerCase()), {
+  .refine((d) => !d.password.toLowerCase().includes(d.userName.toLowerCase()), {
     message: "Password must not contain your username",
     path: ["password"],
   });

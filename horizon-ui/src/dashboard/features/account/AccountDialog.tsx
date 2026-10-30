@@ -9,8 +9,7 @@ import {
   FieldSet,
 } from "@/components/ui/field";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
-import ApiAccess from "./ApiAccess";
-import PasswordChange from "./PasswordChange";
+import { useCurrentUser } from "../auth/auth";
 
 export default function AccountDialog({
   open,
@@ -19,6 +18,7 @@ export default function AccountDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const user = useCurrentUser();
   const [isDeleting, setIsDeleting] = useState(false);
 
   function handleDeleteAccount() {
@@ -39,7 +39,7 @@ export default function AccountDialog({
                   <FieldLabel>Username</FieldLabel>
                 </TableCell>
                 <TableCell>
-                  <FieldContent>coolestCat</FieldContent>
+                  <FieldContent>{user.data?.userName}</FieldContent>
                 </TableCell>
               </TableRow>
               <TableRow>
@@ -47,17 +47,17 @@ export default function AccountDialog({
                   <FieldLabel>Email</FieldLabel>
                 </TableCell>
                 <TableCell>
-                  <FieldContent>coolesCat@meow.com</FieldContent>
+                  <FieldContent>{user.data?.email}</FieldContent>
                 </TableCell>
               </TableRow>
             </TableBody>
           </Table>
         </FieldSet>
-        <FieldSeparator>Settings</FieldSeparator>
-        <FieldSet>
+        {/* <FieldSeparator>Settings</FieldSeparator> */}
+        {/* <FieldSet>
           <PasswordChange />
           <ApiAccess />
-        </FieldSet>
+        </FieldSet> */}
         <FieldSeparator>Account Actions</FieldSeparator>
         <FieldSet>
           <FieldLegend>Account Actions</FieldLegend>
