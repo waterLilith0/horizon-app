@@ -27,11 +27,12 @@ namespace horizon_api
     {
         private const string CookieSchemeId = "cookieAuth";
 
-        private static void ConfigureOpenApi(OpenApiOptions options, string title, string version)
+        private static void ConfigureOpenApi(OpenApiOptions options, string title, string version, string description, params (string Name, string Description)[] tags)
         {
             options.AddDocumentTransformer((document, context, ct) =>
             {
-                document.Info = new() { Title = title, Version = version };
+                document.Info = new() { Title = title, Version = version, Description = description };
+                document.Tags = new HashSet<OpenApiTag>(tags.Select(t => new OpenApiTag { Name = t.Name, Description = t.Description }));
                 document.Components ??= new();
                 document.Components.SecuritySchemes = new Dictionary<string, IOpenApiSecurityScheme>
                 {
@@ -241,8 +242,20 @@ namespace horizon_api
                     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", token);
                 });
 
-                builder.Services.AddOpenApi("public", o => ConfigureOpenApi(o, "Horizon API", "v1.1.0"));
-                builder.Services.AddOpenApi("internal", o => ConfigureOpenApi(o, "Horizon Internal", "v1.0.0"));
+                builder.Services.AddOpenApi("public", o => 
+                    ConfigureOpenApi(o, 
+                    "Horizon API", 
+                    "v1.0.0", 
+                    "Create and share prompts, organise them into collections, and spin them on the wheel.", 
+                    ("Collection", "Named groups of prompts. Collections can be private or public."), 
+                    ("Prompt", "Prompts owned by a user. Public prompts can be used by other users.")));
+                builder.Services.AddOpenApi("internal", o => 
+                ConfigureOpenApi(o, 
+                    "Horizon Internal", 
+                    "v1.0.0", 
+                    "Account and session endpoints used by the Horizon app itself.", 
+                    ("Auth", "Registration, sign-in, email verification and password management.")
+                    ));
 
                 Log.Debug("DI configured");
 
