@@ -282,10 +282,12 @@ namespace horizon_api.Controllers
         /// <param name="promptId">The prompt ID.</param>
         /// <param name="dto">The desired visibility.</param>
         /// <response code="200">The updated prompt.</response>
+        /// <response code="400">Invalid request.</response>
         /// <response code="404">Prompt not found.</response>
         [HttpPut("{promptId:long:min(1)}/visibility")]
         [Consumes("application/json")]
         [ProducesResponseType<Prompt>(StatusCodes.Status200OK)]
+        [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> SetVisibility(
             [FromRoute] long promptId, 
