@@ -34,13 +34,15 @@ namespace horizon_api_integration_tests
 
         public async ValueTask DisposeAsync()
         {
+            // Reusable containers survive disposal, so stop and remove it explicitly once the last test finished.
+            await Container.StopAsync();
             await Container.DisposeAsync();
         }
     }
 
     public class SqlIntegrationTest : IClassFixture<MySqlDatabaseFixture>, IAsyncLifetime
     {
-        private const int TestUserId = 1;
+        private const long TestUserId = 1;
         private readonly MySqlDatabaseFixture _dbFixture;
         private readonly string _realApiPath;
         private readonly IConfiguration _configuration;
@@ -96,19 +98,19 @@ namespace horizon_api_integration_tests
             await command.ExecuteNonQueryAsync(TestContext.Current.CancellationToken);
         }
 
-        private async Task<(int collectionId, string collectionName)> AddEntriesToCollectionDatabase()
+        private async Task<(long collectionId, string collectionName)> AddEntriesToCollectionDatabase()
         {
             var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
 
             const string collectionName = "Mega Jackpot Spin";
             var sqlQuery = sqlQueryStore.Get("PostInsertCollection");
             var command = new CommandDefinition(sqlQuery, new { name = collectionName, @public = false, userId = TestUserId }, cancellationToken: TestContext.Current.CancellationToken);
-            var collectionId = await connection.QuerySingleAsync<int>(command);
+            var collectionId = await connection.QuerySingleAsync<long>(command);
 
             return (collectionId, collectionName);
         }
 
-        private async Task<(Prompt prompt, int collectionId)> AddEntriesToPromptsDatabase(int? collectionId = null, string promptName = "Mega Jackpot Spin", string promptType = "Wheel Spin", bool createCollectionWhenMissing = true)
+        private async Task<(Prompt prompt, long collectionId)> AddEntriesToPromptsDatabase(long? collectionId = null, string promptName = "Mega Jackpot Spin", string promptType = "Wheel Spin", bool createCollectionWhenMissing = true)
         {
             var promptCollectionId = collectionId;
             if (!promptCollectionId.HasValue && createCollectionWhenMissing)
@@ -136,7 +138,7 @@ namespace horizon_api_integration_tests
             var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
 
             var sqlQuery = sqlQueryStore.Get("GetAllCollections");
-            var command = new CommandDefinition(sqlQuery, new { userId = TestUserId, scope = "all" }, cancellationToken: TestContext.Current.CancellationToken);
+            var command = new CommandDefinition(sqlQuery, new { pageSize = 100, offset = 0, userId = TestUserId, scope = "all" }, cancellationToken: TestContext.Current.CancellationToken);
             var collections = await connection.QueryAsync<Collection>(command);
 
             collections.Should().ContainSingle(collection =>
@@ -183,7 +185,7 @@ namespace horizon_api_integration_tests
             var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
 
             var sqlQuery = sqlQueryStore.Get("GetAllCollections");
-            var command = new CommandDefinition(sqlQuery, new { userId = TestUserId, scope = "all" }, cancellationToken: TestContext.Current.CancellationToken);
+            var command = new CommandDefinition(sqlQuery, new { pageSize = 100, offset = 0, userId = TestUserId, scope = "all" }, cancellationToken: TestContext.Current.CancellationToken);
             var results = await connection.QueryAsync<Collection>(command);
 
             results.Should().NotBeEmpty();
@@ -204,7 +206,7 @@ namespace horizon_api_integration_tests
             var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
 
             var sqlQuery = sqlQueryStore.Get("GetAllCollections");
-            var command = new CommandDefinition(sqlQuery, new { userId = TestUserId, scope = "all" }, cancellationToken: TestContext.Current.CancellationToken);
+            var command = new CommandDefinition(sqlQuery, new { pageSize = 100, offset = 0, userId = TestUserId, scope = "all" }, cancellationToken: TestContext.Current.CancellationToken);
             var collections = await connection.QueryAsync<Collection>(command);
 
             collections.Should().BeEmpty();
@@ -217,7 +219,7 @@ namespace horizon_api_integration_tests
             var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
 
             var sqlQuery = sqlQueryStore.Get("GetAllCollections");
-            var command = new CommandDefinition(sqlQuery, new { userId = TestUserId, scope = "all" }, cancellationToken: TestContext.Current.CancellationToken);
+            var command = new CommandDefinition(sqlQuery, new { pageSize = 100, offset = 0, userId = TestUserId, scope = "all" }, cancellationToken: TestContext.Current.CancellationToken);
             var collections = await connection.QueryAsync<Collection>(command);
 
             collections.Should().NotBeEmpty();
@@ -383,7 +385,7 @@ namespace horizon_api_integration_tests
             var sqlQuery = sqlQueryStore.Get("GetAll");
             var command = new CommandDefinition(
                 sqlQuery,
-                new { resultAmount = amount, userId = TestUserId, scope = "all" },
+                new { pageSize = amount, offset = 0, userId = TestUserId, scope = "all" },
                 cancellationToken: TestContext.Current.CancellationToken);
             var prompts = await connection.QueryAsync<Prompt>(command);
 
@@ -467,7 +469,7 @@ namespace horizon_api_integration_tests
 
             var command = new CommandDefinition(
                 sqlQueryStore.Get("GetAll"),
-                new { resultAmount = (int?)null, userId = TestUserId + 1, scope = "all" },
+                new { pageSize = 100, offset = 0, userId = TestUserId + 1, scope = "all" },
                 cancellationToken: TestContext.Current.CancellationToken);
             var prompts = await connection.QueryAsync<Prompt>(command);
 
@@ -592,7 +594,7 @@ namespace horizon_api_integration_tests
             var (collectionId, _) = await AddEntriesToCollectionDatabase();
             var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
 
-            var entryId = await connection.QuerySingleOrDefaultAsync<int?>(new CommandDefinition(
+            var entryId = await connection.QuerySingleOrDefaultAsync<long?>(new CommandDefinition(
                 sqlQueryStore.Get("PostInsertConnection"),
                 new { collectionId, promptId = insertedPrompt.PromptId, userId = TestUserId + 1 },
                 cancellationToken: TestContext.Current.CancellationToken));
@@ -606,7 +608,7 @@ namespace horizon_api_integration_tests
             var (insertedPrompt, collectionId) = await AddEntriesToPromptsDatabase();
             var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
 
-            var act = async () => await connection.QuerySingleOrDefaultAsync<int?>(new CommandDefinition(
+            var act = async () => await connection.QuerySingleOrDefaultAsync<long?>(new CommandDefinition(
                 sqlQueryStore.Get("PostInsertConnection"),
                 new { collectionId, promptId = insertedPrompt.PromptId, userId = TestUserId },
                 cancellationToken: TestContext.Current.CancellationToken));
@@ -703,7 +705,7 @@ namespace horizon_api_integration_tests
 
             var prompts = await connection.QueryAsync<Prompt>(new CommandDefinition(
                 sqlQueryStore.Get("GetAll"),
-                new { resultAmount = (int?)null, userId = TestUserId, scope = "others" },
+                new { pageSize = 100, offset = 0, userId = TestUserId, scope = "others" },
                 cancellationToken: TestContext.Current.CancellationToken));
 
             prompts.Should().BeEmpty();
@@ -717,7 +719,7 @@ namespace horizon_api_integration_tests
 
             var prompts = await connection.QueryAsync<Prompt>(new CommandDefinition(
                 sqlQueryStore.Get("GetAll"),
-                new { resultAmount = (int?)null, userId = TestUserId, scope = "owned" },
+                new { pageSize = 100, offset = 0, userId = TestUserId, scope = "owned" },
                 cancellationToken: TestContext.Current.CancellationToken));
 
             prompts.Should().HaveCount(1);
