@@ -88,41 +88,9 @@ namespace horizon_api_integration_tests
         private async Task InitializeDatabaseSchemaAsync()
         {
             await using var connection = await MySqlDataSource.OpenConnectionAsync(TestContext.Current.CancellationToken);
-            var schemaSql = @"
-                SET FOREIGN_KEY_CHECKS = 0;
-                DROP TABLE IF EXISTS CollectionToUser;
-                DROP TABLE IF EXISTS PromptToCollection;
-                DROP TABLE IF EXISTS WheelSpinPrompts;
-                DROP TABLE IF EXISTS PromptCollections;
-                SET FOREIGN_KEY_CHECKS = 1;
-
-                CREATE TABLE PromptCollections (
-                    collectionId INT AUTO_INCREMENT PRIMARY KEY,
-                    name VARCHAR(255) NOT NULL,
-                    creationDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-                );
-
-                CREATE TABLE CollectionToUser (
-                    collectionId INT NOT NULL,
-                    userId INT NOT NULL,
-                    PRIMARY KEY (collectionId, userId),
-                    FOREIGN KEY (collectionId) REFERENCES PromptCollections(collectionId) ON DELETE CASCADE
-                );
-
-                CREATE TABLE WheelSpinPrompts (
-                    promptId INT AUTO_INCREMENT PRIMARY KEY,
-                    promptText VARCHAR(255) NOT NULL,
-                    type VARCHAR(255) NOT NULL,
-                    creationDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-                );
-
-                CREATE TABLE PromptToCollection (
-                    entryId INT AUTO_INCREMENT PRIMARY KEY,
-                    collectionId INT NOT NULL,
-                    promptId INT NOT NULL,
-                    FOREIGN KEY (collectionId) REFERENCES PromptCollections(collectionId),
-                    FOREIGN KEY (promptId) REFERENCES WheelSpinPrompts(promptId)
-                );";
+            var schemaSql = await File.ReadAllTextAsync(
+                Path.Combine(AppContext.BaseDirectory, "Schema", "schema.sql"),
+                TestContext.Current.CancellationToken);
 
             await using var command = new MySqlCommand(schemaSql, connection);
             await command.ExecuteNonQueryAsync(TestContext.Current.CancellationToken);
@@ -134,14 +102,8 @@ namespace horizon_api_integration_tests
 
             const string collectionName = "Mega Jackpot Spin";
             var sqlQuery = sqlQueryStore.Get("PostInsertCollection");
-            var command = new CommandDefinition(sqlQuery, new { name = collectionName }, cancellationToken: TestContext.Current.CancellationToken);
+            var command = new CommandDefinition(sqlQuery, new { name = collectionName, @public = false, userId = TestUserId }, cancellationToken: TestContext.Current.CancellationToken);
             var collectionId = await connection.QuerySingleAsync<int>(command);
-
-            var linkCommand = new CommandDefinition(
-                sqlQueryStore.Get("PostInsertCollectionToUser"),
-                new { collectionId, userId = TestUserId },
-                cancellationToken: TestContext.Current.CancellationToken);
-            await connection.ExecuteAsync(linkCommand);
 
             return (collectionId, collectionName);
         }
@@ -160,7 +122,7 @@ namespace horizon_api_integration_tests
             var sqlQuery = sqlQueryStore.Get("PostInsert");
             var command = new CommandDefinition(
                 sqlQuery,
-                new { PromptText = promptName, Type = promptType, CollectionId = promptCollectionId },
+                new { PromptText = promptName, Type = promptType, CollectionId = promptCollectionId, Public = false, UserId = TestUserId },
                 cancellationToken: TestContext.Current.CancellationToken);
 
             var prompt = await connection.QuerySingleAsync<Prompt>(command);
@@ -234,7 +196,7 @@ namespace horizon_api_integration_tests
 
             var actualQuery = sqlQueryStore.Get("GetAllCollections");
 
-            actualQuery.Should().MatchEquivalentOf("SELECT c.**FROM PromptCollections c*JOIN CollectionToUser cu ON cu.collectionId = c.collectionId*WHERE cu.userId = @userId;");
+            actualQuery.Should().MatchEquivalentOf("SELECT c.**FROM PromptCollections c*WHERE c.userId = @userId*public*");
         }
 
         [Fact]
@@ -272,7 +234,7 @@ namespace horizon_api_integration_tests
             var sqlQuery = sqlQueryStore.Get("PostUpdateCollectionById");
             var command = new CommandDefinition(
                 sqlQuery,
-                new { collectionId = insertedCollection.collectionId, name = updatedCollectionName, userId = TestUserId },
+                new { collectionId = insertedCollection.collectionId, name = updatedCollectionName, @public = false, userId = TestUserId },
                 cancellationToken: TestContext.Current.CancellationToken);
             var updatedCollection = await connection.QuerySingleOrDefaultAsync<Collection>(command);
 
@@ -332,7 +294,7 @@ namespace horizon_api_integration_tests
             var sqlQuery = sqlQueryStore.Get("GetById");
             var command = new CommandDefinition(
                 sqlQuery,
-                new { promptId = insertedPrompt.PromptId },
+                new { promptId = insertedPrompt.PromptId, userId = TestUserId },
                 cancellationToken: TestContext.Current.CancellationToken);
             var prompt = await connection.QuerySingleOrDefaultAsync<Prompt>(command);
 
@@ -350,7 +312,7 @@ namespace horizon_api_integration_tests
             var sqlQuery = sqlQueryStore.Get("GetById");
             var command = new CommandDefinition(
                 sqlQuery,
-                new { promptId = insertedPrompt.PromptId },
+                new { promptId = insertedPrompt.PromptId, userId = TestUserId },
                 cancellationToken: TestContext.Current.CancellationToken);
             var prompt = await connection.QuerySingleOrDefaultAsync<Prompt>(command);
 
@@ -366,7 +328,7 @@ namespace horizon_api_integration_tests
             var sqlQuery = sqlQueryStore.Get("GetById");
             var command = new CommandDefinition(
                 sqlQuery,
-                new { promptId = 9999 },
+                new { promptId = 9999, userId = TestUserId },
                 cancellationToken: TestContext.Current.CancellationToken);
             var prompt = await connection.QuerySingleOrDefaultAsync<Prompt>(command);
 
@@ -387,7 +349,7 @@ namespace horizon_api_integration_tests
             var sqlQuery = sqlQueryStore.Get("GetAllFromCollection");
             var command = new CommandDefinition(
                 sqlQuery,
-                new { collectionId },
+                new { collectionId, userId = TestUserId },
                 cancellationToken: TestContext.Current.CancellationToken);
             var prompts = await connection.QueryAsync<Prompt>(command);
 
@@ -402,7 +364,7 @@ namespace horizon_api_integration_tests
             var sqlQuery = sqlQueryStore.Get("GetAllFromCollection");
             var command = new CommandDefinition(
                 sqlQuery,
-                new { collectionId },
+                new { collectionId, userId = TestUserId },
                 cancellationToken: TestContext.Current.CancellationToken);
             var prompts = await connection.QueryAsync<Prompt>(command);
 
@@ -422,7 +384,7 @@ namespace horizon_api_integration_tests
             var sqlQuery = sqlQueryStore.Get("GetAll");
             var command = new CommandDefinition(
                 sqlQuery,
-                new { resultAmount = amount },
+                new { resultAmount = amount, userId = TestUserId },
                 cancellationToken: TestContext.Current.CancellationToken);
             var prompts = await connection.QueryAsync<Prompt>(command);
 
@@ -440,13 +402,77 @@ namespace horizon_api_integration_tests
             var sqlQuery = sqlQueryStore.Get("PostUpdateById");
             var command = new CommandDefinition(
                 sqlQuery,
-                new { promptId = insertedPrompt.PromptId, PromptText = updatedPromptText, Type = updatedPromptType },
+                new { promptId = insertedPrompt.PromptId, PromptText = updatedPromptText, Type = updatedPromptType, Public = false, userId = TestUserId },
                 cancellationToken: TestContext.Current.CancellationToken);
             var updatedPrompt = await connection.QuerySingleOrDefaultAsync<Prompt>(command);
 
             updatedPrompt.Should().NotBeNull();
             updatedPrompt!.PromptText.Should().Be(updatedPromptText);
             updatedPrompt.Type.Should().Be(updatedPromptType);
+        }
+
+        [Fact]
+        public async Task PostUpdateById_ShouldNotUpdatePromptWhenUserIsNotOwner()
+        {
+            var (insertedPrompt, _) = await AddEntriesToPromptsDatabase();
+            var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
+
+            var command = new CommandDefinition(
+                sqlQueryStore.Get("PostUpdateById"),
+                new { promptId = insertedPrompt.PromptId, PromptText = "Hijacked", Type = "Hijacked", Public = false, userId = TestUserId + 1 },
+                cancellationToken: TestContext.Current.CancellationToken);
+            var updatedPrompt = await connection.QuerySingleOrDefaultAsync<Prompt>(command);
+
+            updatedPrompt.Should().BeNull();
+        }
+
+        [Fact]
+        public async Task GetById_ShouldNotReturnPrompt_WhenPromptIsPrivateAndUserIsNotOwner()
+        {
+            var (insertedPrompt, _) = await AddEntriesToPromptsDatabase(createCollectionWhenMissing: false);
+            var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
+
+            var command = new CommandDefinition(
+                sqlQueryStore.Get("GetById"),
+                new { promptId = insertedPrompt.PromptId, userId = TestUserId + 1 },
+                cancellationToken: TestContext.Current.CancellationToken);
+            var prompt = await connection.QuerySingleOrDefaultAsync<Prompt>(command);
+
+            prompt.Should().BeNull();
+        }
+
+        [Fact]
+        public async Task GetById_ShouldReturnPrompt_WhenPromptIsPublicAndUserIsNotOwner()
+        {
+            var (insertedPrompt, _) = await AddEntriesToPromptsDatabase(createCollectionWhenMissing: false);
+            var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
+            await connection.ExecuteAsync(new CommandDefinition(
+                "UPDATE WheelSpinPrompts SET `public` = 1 WHERE promptId = @promptId",
+                new { promptId = insertedPrompt.PromptId },
+                cancellationToken: TestContext.Current.CancellationToken));
+
+            var command = new CommandDefinition(
+                sqlQueryStore.Get("GetById"),
+                new { promptId = insertedPrompt.PromptId, userId = TestUserId + 1 },
+                cancellationToken: TestContext.Current.CancellationToken);
+            var prompt = await connection.QuerySingleOrDefaultAsync<Prompt>(command);
+
+            prompt.Should().NotBeNull();
+        }
+
+        [Fact]
+        public async Task GetAll_ShouldNotReturnPrivatePrompts_WhenUserIsNotOwner()
+        {
+            await AddEntriesToPromptsDatabase(createCollectionWhenMissing: false);
+            var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
+
+            var command = new CommandDefinition(
+                sqlQueryStore.Get("GetAll"),
+                new { resultAmount = (int?)null, userId = TestUserId + 1 },
+                cancellationToken: TestContext.Current.CancellationToken);
+            var prompts = await connection.QueryAsync<Prompt>(command);
+
+            prompts.Should().BeEmpty();
         }
 
         [Fact]
@@ -458,7 +484,7 @@ namespace horizon_api_integration_tests
             var sqlQuery = sqlQueryStore.Get("DeleteById");
             var deleteCommand = new CommandDefinition(
                 sqlQuery,
-                new { promptId = insertedPrompt.PromptId },
+                new { promptId = insertedPrompt.PromptId, userId = TestUserId },
                 cancellationToken: TestContext.Current.CancellationToken);
             var deletedRows = await connection.ExecuteAsync(deleteCommand);
 
@@ -466,12 +492,238 @@ namespace horizon_api_integration_tests
 
             var getByIdCommand = new CommandDefinition(
                 sqlQueryStore.Get("GetById"),
-                new { promptId = insertedPrompt.PromptId },
+                new { promptId = insertedPrompt.PromptId, userId = TestUserId },
                 cancellationToken: TestContext.Current.CancellationToken);
             var prompt = await connection.QuerySingleOrDefaultAsync<Prompt>(getByIdCommand);
 
             prompt.Should().BeNull();
         }
 
+        [Fact]
+        public async Task DeleteById_ShouldNotDeletePromptWhenUserIsNotOwner()
+        {
+            var (insertedPrompt, _) = await AddEntriesToPromptsDatabase(createCollectionWhenMissing: false);
+            var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
+
+            var deleteCommand = new CommandDefinition(
+                sqlQueryStore.Get("DeleteById"),
+                new { promptId = insertedPrompt.PromptId, userId = TestUserId + 1 },
+                cancellationToken: TestContext.Current.CancellationToken);
+            var deletedRows = await connection.ExecuteAsync(deleteCommand);
+
+            deletedRows.Should().Be(0);
+        }
+
+        [Fact]
+        public async Task DeleteById_ShouldRemovePromptFromCollectionsWhenDeleted()
+        {
+            var (insertedPrompt, collectionId) = await AddEntriesToPromptsDatabase();
+            var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
+
+            var deleteCommand = new CommandDefinition(
+                sqlQueryStore.Get("DeleteById"),
+                new { promptId = insertedPrompt.PromptId, userId = TestUserId },
+                cancellationToken: TestContext.Current.CancellationToken);
+            var deletedRows = await connection.ExecuteAsync(deleteCommand);
+
+            deletedRows.Should().Be(1);
+
+            var remaining = await connection.ExecuteScalarAsync<int>(new CommandDefinition(
+                "SELECT COUNT(*) FROM PromptToCollection WHERE collectionId = @collectionId",
+                new { collectionId },
+                cancellationToken: TestContext.Current.CancellationToken));
+
+            remaining.Should().Be(0);
+        }
+
+        [Fact]
+        public async Task GetCollectionById_ShouldNotReturnCollection_WhenCollectionIsPrivateAndUserIsNotOwner()
+        {
+            var (collectionId, _) = await AddEntriesToCollectionDatabase();
+            var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
+
+            var collection = await connection.QuerySingleOrDefaultAsync<Collection>(new CommandDefinition(
+                sqlQueryStore.Get("GetCollectionById"),
+                new { collectionId, userId = TestUserId + 1 },
+                cancellationToken: TestContext.Current.CancellationToken));
+
+            collection.Should().BeNull();
+        }
+
+        [Fact]
+        public async Task GetCollectionById_ShouldReturnCollection_WhenCollectionIsPublicAndUserIsNotOwner()
+        {
+            var (collectionId, _) = await AddEntriesToCollectionDatabase();
+            var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
+            await connection.ExecuteAsync(new CommandDefinition(
+                "UPDATE PromptCollections SET `public` = 1 WHERE collectionId = @collectionId",
+                new { collectionId },
+                cancellationToken: TestContext.Current.CancellationToken));
+
+            var collection = await connection.QuerySingleOrDefaultAsync<Collection>(new CommandDefinition(
+                sqlQueryStore.Get("GetCollectionById"),
+                new { collectionId, userId = TestUserId + 1 },
+                cancellationToken: TestContext.Current.CancellationToken));
+
+            collection.Should().NotBeNull();
+        }
+
+        [Fact]
+        public async Task GetAllFromCollection_ShouldNotReturnPrivatePrompts_WhenUserIsNotOwner()
+        {
+            var (_, collectionId) = await AddEntriesToPromptsDatabase();
+            var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
+            await connection.ExecuteAsync(new CommandDefinition(
+                "UPDATE PromptCollections SET `public` = 1 WHERE collectionId = @collectionId",
+                new { collectionId },
+                cancellationToken: TestContext.Current.CancellationToken));
+
+            var prompts = await connection.QueryAsync<Prompt>(new CommandDefinition(
+                sqlQueryStore.Get("GetAllFromCollection"),
+                new { collectionId, userId = TestUserId + 1 },
+                cancellationToken: TestContext.Current.CancellationToken));
+
+            prompts.Should().BeEmpty();
+        }
+
+        [Fact]
+        public async Task PostInsertConnection_ShouldNotLinkPrompt_WhenPromptIsPrivateAndUserIsNotOwner()
+        {
+            var (insertedPrompt, _) = await AddEntriesToPromptsDatabase(createCollectionWhenMissing: false);
+            var (collectionId, _) = await AddEntriesToCollectionDatabase();
+            var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
+
+            var entryId = await connection.QuerySingleOrDefaultAsync<int?>(new CommandDefinition(
+                sqlQueryStore.Get("PostInsertConnection"),
+                new { collectionId, promptId = insertedPrompt.PromptId, userId = TestUserId + 1 },
+                cancellationToken: TestContext.Current.CancellationToken));
+
+            entryId.Should().BeNull();
+        }
+
+        [Fact]
+        public async Task PostInsertConnection_ShouldThrowDuplicateKey_WhenPromptAlreadyLinked()
+        {
+            var (insertedPrompt, collectionId) = await AddEntriesToPromptsDatabase();
+            var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
+
+            var act = async () => await connection.QuerySingleOrDefaultAsync<int?>(new CommandDefinition(
+                sqlQueryStore.Get("PostInsertConnection"),
+                new { collectionId, promptId = insertedPrompt.PromptId, userId = TestUserId },
+                cancellationToken: TestContext.Current.CancellationToken));
+
+            (await act.Should().ThrowAsync<MySqlException>())
+                .Which.ErrorCode.Should().Be(MySqlErrorCode.DuplicateKeyEntry);
+        }
+
+        [Fact]
+        public async Task PublishById_ShouldMakePromptPublic_WhenUserIsOwner()
+        {
+            var (insertedPrompt, _) = await AddEntriesToPromptsDatabase();
+            var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
+
+            var prompt = await connection.QuerySingleOrDefaultAsync<Prompt>(new CommandDefinition(
+                sqlQueryStore.Get("PublishById"),
+                new { promptId = insertedPrompt.PromptId, userId = TestUserId },
+                cancellationToken: TestContext.Current.CancellationToken));
+
+            prompt!.Public.Should().BeTrue();
+        }
+
+        [Fact]
+        public async Task PublishById_ShouldReturnNoPrompt_WhenUserIsNotOwner()
+        {
+            var (insertedPrompt, _) = await AddEntriesToPromptsDatabase();
+            var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
+
+            var prompt = await connection.QuerySingleOrDefaultAsync<Prompt>(new CommandDefinition(
+                sqlQueryStore.Get("PublishById"),
+                new { promptId = insertedPrompt.PromptId, userId = TestUserId + 1 },
+                cancellationToken: TestContext.Current.CancellationToken));
+
+            prompt.Should().BeNull();
+        }
+
+        [Fact]
+        public async Task PublishById_ShouldKeepPromptPrivate_WhenUserIsNotOwner()
+        {
+            var (insertedPrompt, _) = await AddEntriesToPromptsDatabase();
+            var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
+
+            await connection.QuerySingleOrDefaultAsync<Prompt>(new CommandDefinition(
+                sqlQueryStore.Get("PublishById"),
+                new { promptId = insertedPrompt.PromptId, userId = TestUserId + 1 },
+                cancellationToken: TestContext.Current.CancellationToken));
+            var prompt = await connection.QuerySingleAsync<Prompt>(new CommandDefinition(
+                sqlQueryStore.Get("GetById"),
+                new { promptId = insertedPrompt.PromptId, userId = TestUserId },
+                cancellationToken: TestContext.Current.CancellationToken));
+
+            prompt.Public.Should().BeFalse();
+        }
+
+        [Fact]
+        public async Task PublishCollectionById_ShouldMakeCollectionPublic_WhenUserIsOwner()
+        {
+            var (collectionId, _) = await AddEntriesToCollectionDatabase();
+            var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
+
+            var collection = await connection.QuerySingleOrDefaultAsync<Collection>(new CommandDefinition(
+                sqlQueryStore.Get("PublishCollectionById"),
+                new { collectionId, userId = TestUserId },
+                cancellationToken: TestContext.Current.CancellationToken));
+
+            collection!.Public.Should().BeTrue();
+        }
+
+        [Fact]
+        public async Task PublishCollectionById_ShouldReturnNoCollection_WhenUserIsNotOwner()
+        {
+            var (collectionId, _) = await AddEntriesToCollectionDatabase();
+            var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
+
+            var collection = await connection.QuerySingleOrDefaultAsync<Collection>(new CommandDefinition(
+                sqlQueryStore.Get("PublishCollectionById"),
+                new { collectionId, userId = TestUserId + 1 },
+                cancellationToken: TestContext.Current.CancellationToken));
+
+            collection.Should().BeNull();
+        }
+
+        [Fact]
+        public async Task PublishPromptsInCollection_ShouldMakeOwnedPromptsPublic()
+        {
+            var (insertedPrompt, collectionId) = await AddEntriesToPromptsDatabase();
+            var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
+
+            await connection.ExecuteAsync(new CommandDefinition(
+                sqlQueryStore.Get("PublishPromptsInCollection"),
+                new { collectionId, userId = TestUserId },
+                cancellationToken: TestContext.Current.CancellationToken));
+            var prompt = await connection.QuerySingleAsync<Prompt>(new CommandDefinition(
+                sqlQueryStore.Get("GetById"),
+                new { promptId = insertedPrompt.PromptId, userId = TestUserId },
+                cancellationToken: TestContext.Current.CancellationToken));
+
+            prompt.Public.Should().BeTrue();
+        }
+
+        [Fact]
+        public async Task PublishPromptsInCollection_ShouldNotPublishPrompts_WhenUserIsNotOwner()
+        {
+            var (insertedPrompt, collectionId) = await AddEntriesToPromptsDatabase();
+            var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
+
+            await connection.ExecuteAsync(new CommandDefinition(
+                sqlQueryStore.Get("PublishPromptsInCollection"),
+                new { collectionId, userId = TestUserId + 1 },
+                cancellationToken: TestContext.Current.CancellationToken));
+            var prompt = await connection.QuerySingleAsync<Prompt>(new CommandDefinition(
+                sqlQueryStore.Get("GetById"),
+                new { promptId = insertedPrompt.PromptId, userId = TestUserId },
+                cancellationToken: TestContext.Current.CancellationToken));
+
+            prompt.Public.Should().BeFalse();
+        }
     }
 }

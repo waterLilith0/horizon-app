@@ -9,13 +9,24 @@ import {
 } from "@/components/ui/dialog";
 import LoginForm from "./LoginForm";
 import RegisterForm from "./RegisterForm";
+import ResetPasswordForm from "./ResetPasswordForm";
+import { useSearchParams } from "react-router";
 
-type Mode = "login" | "register" | "registered";
+type Mode =
+  | "login"
+  | "register"
+  | "registered"
+  | "verify_email"
+  | "forgot_password"
+  | "reset_password";
 
 const TITLES: Record<Mode, string> = {
   login: "Log in",
   register: "Create an account",
   registered: "Thamkiesss",
+  verify_email: "Please vewify it's weally u!",
+  forgot_password: "UWU reset ur password?",
+  reset_password: "There ya go! New Password plss",
 };
 
 export default function LoginRegisterDialog({
@@ -25,7 +36,11 @@ export default function LoginRegisterDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const [mode, setMode] = useState<Mode>("login");
+  const [searchParams] = useSearchParams();
+  const verificationToken = searchParams.get("token");
+  const [mode, setMode] = useState<Mode>(
+    verificationToken ? "verify_email" : "login",
+  );
 
   function handleOpenChange(next: boolean) {
     if (!next) setMode("login");
@@ -41,6 +56,20 @@ export default function LoginRegisterDialog({
             <DialogDescription>Welcome in uwu</DialogDescription>
           )}
         </DialogHeader>
+
+        {verificationToken && mode === "verify_email" && (
+          <VerifyEmailForm
+            token={verificationToken}
+            onVerified={() => handleOpenChange(false)}
+          />
+        )}
+        {verificationToken && mode === "reset_password" && (
+          <ResetPasswordForm
+            token={verificationToken}
+            onVerified={() => handleOpenChange(false)}
+            onReset={() => handleOpenChange(false)}
+          />
+        )}
 
         {mode === "login" && (
           <>

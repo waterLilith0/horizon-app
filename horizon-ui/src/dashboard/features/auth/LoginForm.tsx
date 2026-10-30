@@ -13,13 +13,10 @@ import { useForm } from "@tanstack/react-form";
 import { currentUserQueryKey } from "./auth";
 import { loginSchema } from "./auth.schema";
 
-export default function LoginForm({
-  onLoggedIn,
-}: {
-  onLoggedIn: () => void;
-}) {
+export default function LoginForm({ onLoggedIn }: { onLoggedIn: () => void }) {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string>();
+  const [attempts, setAttempts] = useState(0);
   const queryClient = useQueryClient();
 
   const form = useForm({
@@ -38,9 +35,8 @@ export default function LoginForm({
 
       const status: number = response.status;
       if (status !== 200) {
-        setError(
-          response.data.detail ?? response.data.title ?? "Login failed",
-        );
+        setAttempts(attempts + 1);
+        setError(response.data.detail ?? response.data.title ?? "Login failed");
         return;
       }
 
@@ -129,6 +125,8 @@ export default function LoginForm({
             </Button>
           )}
         </form.Subscribe>
+
+        {/* {attempts >= 3 && <Button onClick={openReset}>Reset password</Button>} */}
       </FieldGroup>
     </form>
   );
