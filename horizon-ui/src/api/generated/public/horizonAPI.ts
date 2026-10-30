@@ -72,8 +72,6 @@ export interface ProblemDetails {
      */
   status?: number | string | null;
   /** @nullable */
-  status?: number | null;
-  /** @nullable */
   detail?: string | null;
   /** @nullable */
   instance?: string | null;
@@ -101,8 +99,6 @@ export interface ValidationProblemDetails {
      * @pattern ^-?(?:0|[1-9]\d*)$
      */
   status?: number | string | null;
-  /** @nullable */
-  status?: number | null;
   /** @nullable */
   detail?: string | null;
   /** @nullable */

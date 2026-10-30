@@ -44,8 +44,6 @@ export interface ProblemDetails {
      */
   status?: number | string | null;
   /** @nullable */
-  status?: number | null;
-  /** @nullable */
   detail?: string | null;
   /** @nullable */
   instance?: string | null;
@@ -83,8 +81,6 @@ export interface ValidationProblemDetails {
      * @pattern ^-?(?:0|[1-9]\d*)$
      */
   status?: number | string | null;
-  /** @nullable */
-  status?: number | null;
   /** @nullable */
   detail?: string | null;
   /** @nullable */
@@ -359,15 +355,19 @@ export type postApiAuthLoginResponse403 = {
   status: 403
 }
 
-;
+export type postApiAuthLoginResponse200 = {
+  data: void
+  status: 200
+}
+
+export type postApiAuthLoginResponseSuccess = (postApiAuthLoginResponse200) & {
+  headers: Headers;
+};
 export type postApiAuthLoginResponseError = (postApiAuthLoginResponse400 | postApiAuthLoginResponse401 | postApiAuthLoginResponse403) & {
   headers: Headers;
 };
-export type postApiAuthLoginResponseError = (postApiAuthLoginResponse400 | postApiAuthLoginResponse401) & {
-  headers: Headers;
-};
 
-export type postApiAuthLoginResponse = (postApiAuthLoginResponseError)
+export type postApiAuthLoginResponse = (postApiAuthLoginResponseSuccess | postApiAuthLoginResponseError)
 
 export const getPostApiAuthLoginUrl = () => {
 
