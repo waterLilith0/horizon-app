@@ -89,7 +89,7 @@ namespace horizon_api_integration_tests
         {
             await using var connection = await MySqlDataSource.OpenConnectionAsync(TestContext.Current.CancellationToken);
             var schemaSql = await File.ReadAllTextAsync(
-                Path.Combine(AppContext.BaseDirectory, "Schema", "schema.sql"),
+                Path.Combine(AppContext.BaseDirectory, "Schema", "schema.mysql"),
                 TestContext.Current.CancellationToken);
 
             await using var command = new MySqlCommand(schemaSql, connection);

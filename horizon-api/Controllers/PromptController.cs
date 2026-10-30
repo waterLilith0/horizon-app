@@ -19,16 +19,30 @@ namespace horizon_api.Controllers
     {
         private const int MaxTextLength = 255;
 
+        /// <summary>Request body for creating a prompt.</summary>
+        /// <param name="PromptText">The prompt text (1-255 characters).</param>
+        /// <param name="Type">The prompt category (1-255 characters).</param>
+        /// <param name="CollectionId">Optional collection to add the prompt to. Must be owned by the current user.</param>
+        /// <param name="Public">Whether other users can see and use the prompt. Defaults to private.</param>
         public record CreatePromptDto(
             [Required, StringLength(MaxTextLength, MinimumLength = 1)] string PromptText,
             [Required, StringLength(MaxTextLength, MinimumLength = 1)] string Type,
             int? CollectionId = null,
             bool Public = false);
 
+        /// <summary>Response body after creating a prompt.</summary>
+        /// <param name="Prompt">The created prompt.</param>
+        /// <param name="CollectionId">The collection the prompt was added to, if any.</param>
         public record CreatePromptResponse(Prompt Prompt, int? CollectionId);
 
+        /// <summary>Request body for changing a prompt's visibility.</summary>
+        /// <param name="Public">Whether the prompt is visible to other users.</param>
         public record VisibilityDto(bool Public);
 
+        /// <summary>Request body for replacing a prompt.</summary>
+        /// <param name="PromptText">The new prompt text (1-255 characters).</param>
+        /// <param name="Type">The new prompt category (1-255 characters).</param>
+        /// <param name="Public">Whether other users can see and use the prompt. Defaults to private.</param>
         public record UpdatePromptDto(
             [Required, StringLength(MaxTextLength, MinimumLength = 1)] string PromptText,
             [Required, StringLength(MaxTextLength, MinimumLength = 1)] string Type,

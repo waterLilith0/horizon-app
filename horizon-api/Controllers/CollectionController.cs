@@ -20,12 +20,21 @@ namespace horizon_api.Controllers
         private const int MaxNameLength = 255;
         private int CurrentUserId => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
+        /// <summary>Request body for creating a collection.</summary>
+        /// <param name="CollectionName">The collection name (1-255 characters).</param>
+        /// <param name="Public">Whether other users can see the collection. Defaults to private.</param>
         public record CollectionCreateDto(
             [Required, StringLength(MaxNameLength, MinimumLength = 1)] string CollectionName,
             bool Public = false);
 
+        /// <summary>Request body for changing a collection's visibility.</summary>
+        /// <param name="Public">Whether the collection is visible to other users.</param>
+        /// <param name="IncludePrompts">Also apply the visibility to the current user's prompts in the collection.</param>
         public record CollectionVisibilityDto(bool Public, bool IncludePrompts = false);
 
+        /// <summary>Request body for updating a collection.</summary>
+        /// <param name="Name">The new collection name (1-255 characters).</param>
+        /// <param name="Public">Whether other users can see the collection. Defaults to private.</param>
         public record UpdateCollectionDto(
             [Required, StringLength(MaxNameLength, MinimumLength = 1)] string Name,
             bool Public = false);

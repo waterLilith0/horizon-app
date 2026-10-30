@@ -28,39 +28,68 @@ namespace horizon_api.Controllers
         IEmailSender emailSender,
         IOptions<EmailOptions> emailOptions) : ControllerBase
     {
+        /// <summary>Request body for logging in.</summary>
+        /// <param name="UserName">The account's user name.</param>
+        /// <param name="Password">The account's password.</param>
         public record LoginRequest(
             [Required, StringLength(30, MinimumLength = 1)] string UserName,
             [Required, StringLength(128, MinimumLength = 8)] string Password);
 
+        /// <summary>Request body for registering a new account.</summary>
+        /// <param name="Email">The email address the verification link is sent to (up to 255 characters).</param>
+        /// <param name="UserName">The desired user name (3-30 characters).</param>
+        /// <param name="Password">The desired password (8-128 characters).</param>
         public record RegisterRequest(
             [Required, EmailAddress, StringLength(255)] string Email,
             [Required, StringLength(30, MinimumLength = 3)] string UserName,
             [Required, StringLength(128, MinimumLength = 8)] string Password);
 
+        /// <summary>Request body for changing the password of the logged in user.</summary>
+        /// <param name="CurrentPassword">The current password.</param>
+        /// <param name="NewPassword">The new password (8-128 characters). Must differ from the current password.</param>
         public record ChangePasswordRequest(
             [Required, StringLength(128, MinimumLength = 8)] string CurrentPassword,
             [Required, StringLength(128, MinimumLength = 8)] string NewPassword);
 
+        /// <summary>Request body for verifying an email address.</summary>
+        /// <param name="Token">The verification token from the emailed link.</param>
         public record VerifyEmailRequest(
             [Required, StringLength(100, MinimumLength = 20)] string Token);
 
+        /// <summary>Request body for resending the verification email.</summary>
+        /// <param name="Email">The email address of the account.</param>
         public record ResendVerificationRequest(
             [Required, EmailAddress, StringLength(255)] string Email);
 
+        /// <summary>Request body for requesting a password reset email.</summary>
+        /// <param name="Email">The email address of the account.</param>
         public record ForgotPasswordRequest(
             [Required, EmailAddress, StringLength(255)] string Email);
 
+        /// <summary>Request body for resetting a forgotten password.</summary>
+        /// <param name="Token">The reset token from the emailed link.</param>
+        /// <param name="NewPassword">The new password (8-128 characters).</param>
         public record ResetPasswordRequest(
             [Required, StringLength(100, MinimumLength = 20)] string Token,
             [Required, StringLength(128, MinimumLength = 8)] string NewPassword);
 
+        /// <summary>The public profile of a user.</summary>
         public class UserProfile
         {
-            public long UserId { get; set; }
-            public string UserName { get; set; } = "";
-            public DateTime CreationDate { get; set; }
-            public bool Dev { get; set; }
-            public string Email { get; set; } = "";
+            /// <summary>The user ID.</summary>
+            public required long UserId { get; set; }
+
+            /// <summary>The user name.</summary>
+            public required string UserName { get; set; } = "";
+
+            /// <summary>When the account was created.</summary>
+            public required DateTime CreationDate { get; set; }
+
+            /// <summary>Whether the user is a developer account.</summary>
+            public required bool Dev { get; set; }
+
+            /// <summary>The user's email address.</summary>
+            public required string Email { get; set; } = "";
         }
 
         /// <summary>Check username availability</summary>
