@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Mvc;
 using MySqlConnector;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
-using System.ComponentModel.DataAnnotations;
 
 namespace horizon_api.Controllers
 {
@@ -24,6 +23,8 @@ namespace horizon_api.Controllers
         public record CollectionCreateDto(
             [Required, StringLength(MaxNameLength, MinimumLength = 1)] string CollectionName,
             bool Public = false);
+
+        public record CollectionVisibilityDto(bool Public, bool IncludePrompts = false);
 
         public record UpdateCollectionDto(
             [Required, StringLength(MaxNameLength, MinimumLength = 1)] string Name,
@@ -129,15 +130,16 @@ namespace horizon_api.Controllers
 
         /// <summary>List Collection</summary>
         /// <remarks>Returns collections owned by the current user, or public collections.</remarks>
+        /// <param name="scope">all (default), owned, or others (public collections of other users).</param>
         /// <response code="200">The list of collections.</response>
         [HttpGet]
         [ProducesResponseType<IReadOnlyList<Collection>>(StatusCodes.Status200OK)]
-        public async Task<ActionResult<IReadOnlyList<Collection>>> GetAllCollections(CancellationToken cancellationToken)
+        public async Task<ActionResult<IReadOnlyList<Collection>>> GetAllCollections([FromQuery] ListScope scope, CancellationToken cancellationToken)
         {
             logger.LogDebug("GetAllCollections method called in CollectionController.");
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
             var sql = sqlQueryStore.Get("GetAllCollections");
-            var command = new CommandDefinition(sql, new { userId = CurrentUserId }, cancellationToken: cancellationToken);
+            var command = new CommandDefinition(sql, new { userId = CurrentUserId, scope = scope.ToString().ToLowerInvariant() }, cancellationToken: cancellationToken);
             var allCollections = (await connection.QueryAsync<Collection>(command)).AsList();
             logger.LogInformation("Retrieved {count} collections", allCollections.Count);
             return Ok(allCollections);
@@ -176,28 +178,29 @@ namespace horizon_api.Controllers
             return Ok(updatedCollection);
         }
 
-        /// <summary>Publish a collection</summary>
-        /// <remarks>Makes a collection owned by the current user public, optionally including the current user's prompts within it.</remarks>
+        /// <summary>Set collection visibility</summary>
+        /// <remarks>Publishes or unpublishes a collection owned by the current user, optionally applying the same visibility to the current user's prompts within it.</remarks>
         /// <param name="collectionId">The collection ID.</param>
-        /// <param name="includePrompts">Also publish the current user's prompts in the collection.</param>
-        /// <response code="200">The published collection.</response>
+        /// <param name="dto">The desired visibility.</param>
+        /// <response code="200">The updated collection.</response>
         /// <response code="404">Collection not found.</response>
-        [HttpPost("{collectionId:int:min(1)}/publish")]
+        [HttpPut("{collectionId:int:min(1)}/visibility")]
+        [Consumes("application/json")]
         [ProducesResponseType<Collection>(StatusCodes.Status200OK)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<Collection>> Publish([FromRoute] int collectionId, [FromQuery] bool includePrompts, CancellationToken cancellationToken)
+        public async Task<ActionResult<Collection>> SetVisibility([FromRoute] int collectionId, [FromBody] CollectionVisibilityDto dto, CancellationToken cancellationToken)
         {
-            logger.LogDebug("Publish action called for collection: {collectionId}", collectionId);
+            logger.LogDebug("SetVisibility action called for collection: {collectionId}", collectionId);
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
             await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
-            var parameters = new { collectionId, userId = CurrentUserId };
+            var parameters = new { collectionId, @public = dto.Public, userId = CurrentUserId };
 
             var collection = await connection.QuerySingleOrDefaultAsync<Collection>(new CommandDefinition(
-                sqlQueryStore.Get("PublishCollectionById"), parameters, transaction, cancellationToken: cancellationToken));
+                sqlQueryStore.Get("SetCollectionVisibility"), parameters, transaction, cancellationToken: cancellationToken));
 
             if (collection == null)
             {
-                logger.LogWarning("Failed to publish collection with ID: {collectionId}", collectionId);
+                logger.LogWarning("Failed to set visibility of collection with ID: {collectionId}", collectionId);
                 return Problem(
                     title: "Collection not found",
                     detail: $"Failed to find any collection with ID {collectionId}.",
@@ -205,14 +208,14 @@ namespace horizon_api.Controllers
                 );
             }
 
-            if (includePrompts)
+            if (dto.IncludePrompts)
             {
                 await connection.ExecuteAsync(new CommandDefinition(
-                    sqlQueryStore.Get("PublishPromptsInCollection"), parameters, transaction, cancellationToken: cancellationToken));
+                    sqlQueryStore.Get("SetPromptsVisibilityInCollection"), parameters, transaction, cancellationToken: cancellationToken));
             }
 
             await transaction.CommitAsync(cancellationToken);
-            logger.LogInformation("Successfully published collection with ID: {collectionId} (includePrompts: {includePrompts})", collectionId, includePrompts);
+            logger.LogInformation("Set collection {collectionId} visibility to public={public} (includePrompts: {includePrompts})", collectionId, dto.Public, dto.IncludePrompts);
             return Ok(collection);
         }
 

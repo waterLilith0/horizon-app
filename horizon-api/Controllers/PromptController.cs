@@ -27,6 +27,8 @@ namespace horizon_api.Controllers
 
         public record CreatePromptResponse(Prompt Prompt, int? CollectionId);
 
+        public record VisibilityDto(bool Public);
+
         public record UpdatePromptDto(
             [Required, StringLength(MaxTextLength, MinimumLength = 1)] string PromptText,
             [Required, StringLength(MaxTextLength, MinimumLength = 1)] string Type,
@@ -127,17 +129,18 @@ namespace horizon_api.Controllers
         /// <remarks>Returns the prompts available to the current user, optionally limited to a maximum number of results.</remarks>
         /// <param name="resultAmount">Maximum number of prompts to return (1-1000).</param>
         /// <response code="200">The list of prompts.</response>
+        /// <param name="scope">all (default), owned, or others (public prompts of other users).</param>
         /// <response code="400">Invalid result amount.</response>
         [HttpGet]
         [ProducesResponseType<IReadOnlyList<Prompt>>(StatusCodes.Status200OK)]
         [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<IReadOnlyList<Prompt>>> GetAllPrompts([FromQuery, Range(1, 1000)] int? resultAmount, CancellationToken cancellationToken)
+        public async Task<ActionResult<IReadOnlyList<Prompt>>> GetAllPrompts([FromQuery, Range(1, 1000)] int? resultAmount, [FromQuery] ListScope scope, CancellationToken cancellationToken)
         {
             logger.LogDebug("GetAllPrompts called (ResultAmount: {ResultAmount})", resultAmount);
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
             var sql = sqlQueryStore.Get("GetAll");
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            var command = new CommandDefinition(sql, new { resultAmount, userId }, cancellationToken: cancellationToken);
+            var command = new CommandDefinition(sql, new { resultAmount, userId, scope = scope.ToString().ToLowerInvariant() }, cancellationToken: cancellationToken);
             var allPrompts = (await connection.QueryAsync<Prompt>(command)).AsList();
 
             logger.LogInformation("Retrieved {Count} prompts", allPrompts.Count);
@@ -210,33 +213,35 @@ namespace horizon_api.Controllers
             return Ok(updatedPrompt);
         }
 
-        /// <summary>Publish a prompt</summary>
-        /// <remarks>Makes a prompt owned by the current user public.</remarks>
+        /// <summary>Set prompt visibility</summary>
+        /// <remarks>Publishes or unpublishes a prompt owned by the current user.</remarks>
         /// <param name="promptId">The prompt ID.</param>
-        /// <response code="200">The published prompt.</response>
+        /// <param name="dto">The desired visibility.</param>
+        /// <response code="200">The updated prompt.</response>
         /// <response code="404">Prompt not found.</response>
-        [HttpPost("{promptId:int:min(1)}/publish")]
+        [HttpPut("{promptId:int:min(1)}/visibility")]
+        [Consumes("application/json")]
         [ProducesResponseType<Prompt>(StatusCodes.Status200OK)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> Publish([FromRoute] int promptId, CancellationToken cancellationToken)
+        public async Task<IActionResult> SetVisibility([FromRoute] int promptId, [FromBody] VisibilityDto dto, CancellationToken cancellationToken)
         {
-            logger.LogDebug("Publish called for prompt {PromptId}", promptId);
+            logger.LogDebug("SetVisibility called for prompt {PromptId} (public: {Public})", promptId, dto.Public);
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
 
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            var command = new CommandDefinition(sqlQueryStore.Get("PublishById"), new { promptId, userId }, cancellationToken: cancellationToken);
+            var command = new CommandDefinition(sqlQueryStore.Get("SetVisibility"), new { promptId, @public = dto.Public, userId }, cancellationToken: cancellationToken);
             var prompt = await connection.QuerySingleOrDefaultAsync<Prompt>(command);
 
             if (prompt == null)
             {
-                logger.LogWarning("Prompt {PromptId} not found or not owned by the user; publish skipped", promptId);
+                logger.LogWarning("Prompt {PromptId} not found or not owned by the user; visibility unchanged", promptId);
                 return Problem(
                     title: "Prompt not found",
                     detail: $"Prompt with ID {promptId} not found.",
                     statusCode: StatusCodes.Status404NotFound
                 );
             }
-            logger.LogInformation("Published prompt {PromptId}", promptId);
+            logger.LogInformation("Set prompt {PromptId} visibility to public={Public}", promptId, dto.Public);
             return Ok(prompt);
         }
 

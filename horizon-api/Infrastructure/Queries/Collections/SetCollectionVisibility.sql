@@ -1,5 +1,5 @@
 UPDATE PromptCollections
-SET `public` = 1
+SET `public` = @public
 WHERE collectionId = @collectionId
   AND userId = @userId;
 

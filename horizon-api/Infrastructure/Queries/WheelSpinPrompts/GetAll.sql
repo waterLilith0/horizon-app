@@ -8,8 +8,9 @@ WITH OrderedPrompts AS (
 		p.`public` AS Public,
 		ROW_NUMBER() OVER (ORDER BY p.promptId) AS RowNumber
 	FROM WheelSpinPrompts p
-	WHERE p.userId = @userId
-	   OR p.`public` = 1
+	WHERE (@scope = 'all' AND (p.userId = @userId OR p.`public` = 1))
+	   OR (@scope = 'owned' AND p.userId = @userId)
+	   OR (@scope = 'others' AND p.userId <> @userId AND p.`public` = 1)
 )
 SELECT PromptId, PromptText, Type, CreationDate, UserId, Public
 FROM OrderedPrompts

@@ -1,5 +1,5 @@
 UPDATE WheelSpinPrompts
-SET `public` = 1
+SET `public` = @public
 WHERE promptId = @promptId
   AND userId = @userId;
 
