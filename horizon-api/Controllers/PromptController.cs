@@ -75,7 +75,7 @@ namespace horizon_api.Controllers
 
             if (promptDto.CollectionId is { } collectionId)
             {
-                var owns = await connection.ExecuteScalarAsync<int>(new CommandDefinition(
+                var owns = await connection.ExecuteScalarAsync<long>(new CommandDefinition(
                     sqlQueryStore.Get("GetCollectionOwnership"),
                     new { collectionId, userId },
                     cancellationToken: cancellationToken)) > 0;
