@@ -146,7 +146,7 @@ namespace horizon_api.Controllers
         }
 
         /// <summary>List prompts</summary>
-        /// <remarks>Returns a page of the prompts available to the current user, ordered by ID. Each prompt
+        /// <remarks>Returns a page of the prompts available to the current user, ordered by ID. Each prompt includes the owner's username.</remarks>
         /// <param name="page">Page number, starting at 1.</param>
         /// <param name="pageSize">Number of prompts per page (1-100).</param>
         /// <param name="scope">all (default), owned, or others (public prompts of other users).</param>
