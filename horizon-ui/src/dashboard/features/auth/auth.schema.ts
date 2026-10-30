@@ -76,3 +76,15 @@ export const loginSchema = z.object({
 });
 
 export type LoginData = z.output<typeof loginSchema>;
+
+export const forgotPasswordSchema = z.object({
+  email: emailSchema,
+});
+
+export type ForgotPasswordData = z.output<typeof forgotPasswordSchema>;
+
+export const resetPasswordSchema = z.object({
+  newPassword: passwordSchema,
+});
+
+export type ResetPasswordData = z.output<typeof resetPasswordSchema>;
