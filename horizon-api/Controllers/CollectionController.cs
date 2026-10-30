@@ -143,7 +143,7 @@ namespace horizon_api.Controllers
         }
 
         /// <summary>List Collection</summary>
-        /// <remarks>Returns a page of collections owned by the current user, or public collections, ordered by ID.</remarks>
+        /// <remarks>Returns a page of collections owned by the current user, or public collections, ordered by ID. Each collection
         /// <param name="page">Page number, starting at 1.</param>
         /// <param name="pageSize">Number of collections per page (1-100).</param>
         /// <param name="scope">all (default), owned, or others (public collections of other users).</param>

@@ -18,6 +18,10 @@
         /// <summary>The ID of the user who owns the prompt.</summary>
         public required long UserId { get; set; }
 
+        /// <summary>The username of the user who owns the prompt. Only set in list results.</summary>
+        [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+        public string? UserName { get; set; }
+
         /// <summary>Whether the prompt is visible to other users.</summary>
         public required bool Public { get; set; }
 

@@ -4,8 +4,10 @@ SELECT
 	p.type AS Type,
 	p.creationDate AS CreationDate,
 	p.userId AS UserId,
-	p.`public` AS Public
+	p.`public` AS Public,
+	u.userName AS UserName
 FROM WheelSpinPrompts p
+JOIN Users u ON u.userId = p.userId
 WHERE ((@scope = 'all' AND (p.userId = @userId OR p.`public` = 1))
    OR (@scope = 'owned' AND p.userId = @userId)
    OR (@scope = 'others' AND p.userId <> @userId AND p.`public` = 1))
