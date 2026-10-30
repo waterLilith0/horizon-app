@@ -36,7 +36,8 @@ export default function LoginForm({
         password,
       });
 
-      if (response.status !== 200) {
+      const status: number = response.status;
+      if (status !== 200) {
         setError(
           response.data.detail ?? response.data.title ?? "Login failed",
         );

@@ -47,7 +47,6 @@ export interface ProblemDetails {
   detail?: string | null;
   /** @nullable */
   instance?: string | null;
-  [key: string]: unknown;
 }
 
 export interface RegisterRequest {
@@ -85,9 +84,7 @@ export interface ValidationProblemDetails {
   detail?: string | null;
   /** @nullable */
   instance?: string | null;
-  /** @nullable */
   errors?: ValidationProblemDetailsErrors;
-  [key: string]: unknown;
 }
 
 export interface VerifyEmailRequest {
@@ -116,11 +113,6 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   }
   return result;
 };
-
-export type getApiAuthResponse200 = {
-  data: void
-  status: 200
-}
 
 export type getApiAuthResponse400 = {
   data: ValidationProblemDetails
@@ -355,19 +347,12 @@ export type postApiAuthLoginResponse403 = {
   status: 403
 }
 
-export type postApiAuthLoginResponse200 = {
-  data: void
-  status: 200
-}
-
-export type postApiAuthLoginResponseSuccess = (postApiAuthLoginResponse200) & {
-  headers: Headers;
-};
+;
 export type postApiAuthLoginResponseError = (postApiAuthLoginResponse400 | postApiAuthLoginResponse401 | postApiAuthLoginResponse403) & {
   headers: Headers;
 };
 
-export type postApiAuthLoginResponse = (postApiAuthLoginResponseSuccess | postApiAuthLoginResponseError)
+export type postApiAuthLoginResponse = (postApiAuthLoginResponseError)
 
 export const getPostApiAuthLoginUrl = () => {
 
@@ -457,11 +442,6 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
       > => {
       return useMutation(getPostApiAuthLoginMutationOptions(options), queryClient);
     }
-
-export type postApiAuthLogoutResponse204 = {
-  data: void
-  status: 204
-}
 
 export type postApiAuthLogoutResponse401 = {
   data: ProblemDetails
