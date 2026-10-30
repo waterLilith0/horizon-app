@@ -152,7 +152,7 @@ namespace horizon_api.Controllers
         /// <param name="scope">all (default), owned, or others (public prompts of other users).</param>
         /// <param name="includeCollectionIds">Also return the IDs of the collections each prompt belongs to.</param>
         /// <param name="userId">Only return prompts created by this user ID.</param>
-        /// <param name="search">Fulltext search on the prompt text.</param>
+        /// <param name="search">Partial match (contains) on the prompt text.</param>
         /// <response code="200">The page of prompts.</response>
         /// <response code="400">Invalid paging values.</response>
         [HttpGet]

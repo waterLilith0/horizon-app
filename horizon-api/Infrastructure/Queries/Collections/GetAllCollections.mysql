@@ -4,6 +4,6 @@ WHERE ((@scope = 'all' AND (c.userId = @userId OR c.`public` = 1))
    OR (@scope = 'owned' AND c.userId = @userId)
    OR (@scope = 'others' AND c.userId <> @userId AND c.`public` = 1))
   AND (@authorId IS NULL OR c.userId = @authorId)
-  AND (@search IS NULL OR MATCH(c.name) AGAINST (@search IN NATURAL LANGUAGE MODE))
+  AND (@search IS NULL OR c.name LIKE CONCAT('%', REPLACE(REPLACE(REPLACE(@search, '\\', '\\\\'), '%', '\\%'), '_', '\\_'), '%'))
 ORDER BY c.collectionId
 LIMIT @pageSize OFFSET @offset;

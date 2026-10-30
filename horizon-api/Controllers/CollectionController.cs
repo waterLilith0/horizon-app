@@ -148,7 +148,7 @@ namespace horizon_api.Controllers
         /// <param name="pageSize">Number of collections per page (1-100).</param>
         /// <param name="scope">all (default), owned, or others (public collections of other users).</param>
         /// <param name="userId">Only return collections created by this user ID.</param>
-        /// <param name="search">Fulltext search on the collection name.</param>
+        /// <param name="search">Partial match (contains) on the collection name.</param>
         /// <response code="200">The page of collections.</response>
         /// <response code="400">Invalid paging values.</response>
         [HttpGet]
