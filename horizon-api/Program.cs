@@ -1,10 +1,12 @@
 using Grafana.OpenTelemetry;
 using horizon_api.Infrastructure;
+using horizon_api.Infrastructure.Email;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Options;
 using MySqlConnector;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
@@ -12,7 +14,9 @@ using OpenTelemetry.Trace;
 using Scalar.AspNetCore;
 using Serilog;
 using Serilog.Enrichers.Span;
+using System.Net.Http.Headers;
 using System.Security.Claims;
+using System.Text;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.OpenApi;
@@ -219,6 +223,23 @@ namespace horizon_api
                 builder.Services.AddSingleton<IPasswordService, PasswordService>();
                 builder.Services.AddMySqlDataSource(connectionString!);
 
+                builder.Services
+                    .AddOptions<EmailOptions>()
+                    .Bind(builder.Configuration.GetSection(EmailOptions.SectionName))
+                    .Validate(o => !string.IsNullOrWhiteSpace(o.ApiKey)
+                          && !string.IsNullOrWhiteSpace(o.ApiSecret)
+                          && !string.IsNullOrWhiteSpace(o.FromAddress),
+                        "Email settings are incomplete.")
+                    .ValidateOnStart();
+
+                builder.Services.AddHttpClient<IEmailSender, MailjetEmailSender>((sp, client) =>
+                {
+                    var opts = sp.GetRequiredService<IOptions<EmailOptions>>().Value;
+                    client.BaseAddress = new Uri("https://api.mailjet.com/");
+                    client.Timeout = TimeSpan.FromSeconds(15);
+                    var token = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{opts.ApiKey}:{opts.ApiSecret}"));
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", token);
+                });
 
                 builder.Services.AddOpenApi("public", o => ConfigureOpenApi(o, "Horizon API", "v1.1.0"));
                 builder.Services.AddOpenApi("internal", o => ConfigureOpenApi(o, "Horizon Internal", "v1.0.0"));

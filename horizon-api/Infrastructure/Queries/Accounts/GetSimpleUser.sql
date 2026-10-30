@@ -1,2 +1,3 @@
-SELECT userId, userName, creationDate, dev, email
-FROM horizon.SimpleUser;
+SELECT *
+FROM SimpleUser
+WHERE userId = @userId;

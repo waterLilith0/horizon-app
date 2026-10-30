@@ -9,5 +9,6 @@
         public bool Dev { get; set; }
         public string Email { get; set; } = "";
         public byte PepperVersion { get; set; }
+        public bool EmailVerified { get; set; }
     }
 }

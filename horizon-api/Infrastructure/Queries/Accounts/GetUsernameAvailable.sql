@@ -1,3 +1,3 @@
 SELECT userId
-FROM horizon.Users
+FROM Users
 WHERE userName LIKE @userName;

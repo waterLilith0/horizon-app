@@ -1,3 +1,3 @@
-SELECT userId, userName, passwordHash, creationDate, dev, email, pepperVersion
-FROM horizon.Users
+SELECT *
+FROM Users
 WHERE userName = @userName;

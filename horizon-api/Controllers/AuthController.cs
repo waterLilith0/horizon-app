@@ -1,35 +1,55 @@
 ﻿using Dapper;
 using horizon_api.Infrastructure;
+using horizon_api.Infrastructure.Email;
 using horizon_api.Shared;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.Extensions.Options;
 using MySqlConnector;
 using System.ComponentModel.DataAnnotations;
+using System.Net;
 using System.Security.Claims;
 
 namespace horizon_api.Controllers
 {
     [ApiController]
     [ApiExplorerSettings(GroupName = "internal")]
+    [Authorize]
     [Route("api/[controller]")]
     [Produces("application/json")]
-    public class AuthController(SqlQueryStore sqlQueryStore, MySqlDataSource dataSource, ILogger<AuthController> logger, IPasswordService passGen) : ControllerBase
+    public class AuthController(
+        SqlQueryStore sqlQueryStore,
+        MySqlDataSource dataSource,
+        ILogger<AuthController> logger,
+        IPasswordService passGen,
+        IEmailSender emailSender,
+        IOptions<EmailOptions> emailOptions) : ControllerBase
     {
         public record LoginRequest(
-        [Required, StringLength(30, MinimumLength = 1)] string UserName,
-        [Required, StringLength(128, MinimumLength = 1)] string Password);
+            [Required, StringLength(30, MinimumLength = 1)] string UserName,
+            [Required, StringLength(128, MinimumLength = 8)] string Password);
 
         public record RegisterRequest(
             [Required, EmailAddress, StringLength(255)] string Email,
             [Required, StringLength(30, MinimumLength = 3)] string UserName,
             [Required, StringLength(128, MinimumLength = 8)] string Password);
 
+        public record ChangePasswordRequest(
+            [Required, StringLength(128, MinimumLength = 8)] string CurrentPassword,
+            [Required, StringLength(128, MinimumLength = 8)] string NewPassword);
+
+        public record VerifyEmailRequest(
+            [Required, StringLength(100, MinimumLength = 20)] string Token);
+
+        public record ResendVerificationRequest(
+            [Required, EmailAddress, StringLength(255)] string Email);
+
         public class UserProfile
         {
-            public int UserId { get; set; }
+            public long UserId { get; set; }
             public string UserName { get; set; } = "";
             public DateTime CreationDate { get; set; }
             public bool Dev { get; set; }
@@ -75,6 +95,7 @@ namespace horizon_api.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
         public async Task<IActionResult> Login([FromBody] LoginRequest req, CancellationToken cancellationToken)
         {
             logger.LogDebug("User login action called in AuthController");
@@ -92,10 +113,20 @@ namespace horizon_api.Controllers
             {
                 return Unauthorized();
             }
+
+            if (!user.EmailVerified)
+            {
+                logger.LogInformation("Login rejected: email not verified");
+                return Problem(
+                    title: "Email not verified",
+                    detail: "Verify your email address before signing in.",
+                    statusCode: StatusCodes.Status403Forbidden);
+            }
+
             if (passGen.NeedsRehash(user.PepperVersion))
             {
                 var upgraded = passGen.Hash(req.Password);
-                var updateSql = sqlQueryStore.Get("UpdatePepper");
+                var updateSql = sqlQueryStore.Get("PutUpdatePassword");
                 var updateCommand = new CommandDefinition(
                     updateSql,
                     new { passwordHash = upgraded.Hash, pepperVersion = upgraded.PepperVersion, userId = user.UserId },
@@ -104,9 +135,9 @@ namespace horizon_api.Controllers
             }
 
             var claims = new List<Claim> {
-                new(ClaimTypes.NameIdentifier, user.UserId.ToString()), 
-                new(ClaimTypes.Name, user.UserName), 
-                new(ClaimTypes.Role, user.Dev ? "Dev" : "User") 
+                new(ClaimTypes.NameIdentifier, user.UserId.ToString()),
+                new(ClaimTypes.Name, user.UserName),
+                new(ClaimTypes.Role, user.Dev ? "Dev" : "User")
             };
             var principal = new ClaimsPrincipal(
                 new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme));
@@ -117,7 +148,6 @@ namespace horizon_api.Controllers
 
         /// Log out of currently logged in account
         [HttpPost("logout")]
-        [Authorize]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> Logout()
@@ -128,20 +158,19 @@ namespace horizon_api.Controllers
 
         /// Check if you're logged in and if so, who is
         [HttpGet("me")]
-        [Authorize]
         [ProducesResponseType<UserProfile>(StatusCodes.Status200OK)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
         public async Task<ActionResult<UserProfile>> Me(CancellationToken cancellationToken)
         {
             var idClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!int.TryParse(idClaim, out var userId))
+            if (!long.TryParse(idClaim, out var userId))
             {
                 return Unauthorized();
             }
 
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
             var command = new CommandDefinition(
-                sqlQueryStore.Get("GetUserById"),
+                sqlQueryStore.Get("GetSimpleUser"),
                 new { userId },
                 cancellationToken: cancellationToken);
 
@@ -180,6 +209,7 @@ namespace horizon_api.Controllers
             try
             {
                 var profile = await connection.QuerySingleAsync<UserProfile>(command);
+                await SendVerificationEmailAsync(connection, profile.UserId, profile.Email, profile.UserName, cancellationToken);
                 logger.LogInformation("Successfully created a new user");
                 return StatusCode(StatusCodes.Status201Created, profile);
             }
@@ -190,6 +220,181 @@ namespace horizon_api.Controllers
                     title: "Account already exists",
                     detail: "The username or email is already registered.",
                     statusCode: StatusCodes.Status409Conflict);
+            }
+        }
+
+        [HttpPost("verify-email")]
+        [EnableRateLimiting("auth")]
+        [AllowAnonymous]
+        [Consumes("application/json")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailRequest req, CancellationToken cancellationToken)
+        {
+            logger.LogDebug("Verify email action called in AuthController");
+            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+
+            var updated = await connection.ExecuteAsync(new CommandDefinition(
+                sqlQueryStore.Get("PutVerifyEmail"),
+                new { tokenHash = SecureToken.Hash(req.Token) },
+                cancellationToken: cancellationToken));
+
+            if (updated == 0)
+            {
+                logger.LogInformation("Email verification rejected: invalid or expired token");
+                return Problem(
+                    title: "Invalid token",
+                    detail: "The verification link is invalid or has expired.",
+                    statusCode: StatusCodes.Status400BadRequest);
+            }
+
+            logger.LogInformation("Email verified");
+            return NoContent();
+        }
+
+        [HttpPost("resend-verification")]
+        [EnableRateLimiting("auth")]
+        [AllowAnonymous]
+        [Consumes("application/json")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> ResendVerification([FromBody] ResendVerificationRequest req, CancellationToken cancellationToken)
+        {
+            logger.LogDebug("Resend verification action called in AuthController");
+            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+
+            var user = await connection.QuerySingleOrDefaultAsync<User>(new CommandDefinition(
+                sqlQueryStore.Get("GetUserByEmail"),
+                new { email = req.Email },
+                cancellationToken: cancellationToken));
+
+            if (user is { EmailVerified: false })
+            {
+                await SendVerificationEmailAsync(connection, user.UserId, user.Email, user.UserName, cancellationToken);
+            }
+
+            return NoContent();
+        }
+
+        [HttpPut("password")]
+        [EnableRateLimiting("auth")]
+        [Consumes("application/json")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest req, CancellationToken cancellationToken)
+        {
+            logger.LogDebug("Change password action called in AuthController");
+
+            if (!long.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+            {
+                return Unauthorized();
+            }
+
+            if (req.CurrentPassword == req.NewPassword)
+            {
+                return Problem(
+                    title: "Invalid new password",
+                    detail: "The new password must be different from the current password.",
+                    statusCode: StatusCodes.Status400BadRequest);
+            }
+
+            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+
+            var user = await connection.QuerySingleOrDefaultAsync<User>(new CommandDefinition(
+                sqlQueryStore.Get("GetUserById"),
+                new { userId },
+                cancellationToken: cancellationToken));
+
+            if (user is null)
+            {
+                await HttpContext.SignOutAsync();
+                return Unauthorized();
+            }
+
+            if (!passGen.Verify(user.PasswordHash, user.PepperVersion, req.CurrentPassword))
+            {
+                logger.LogInformation("Password change rejected: current password incorrect");
+                return Problem(
+                    title: "Incorrect password",
+                    detail: "The current password is incorrect.",
+                    statusCode: StatusCodes.Status400BadRequest);
+            }
+
+            var hashed = passGen.Hash(req.NewPassword);
+            await connection.ExecuteAsync(new CommandDefinition(
+                sqlQueryStore.Get("PutUpdatePassword"),
+                new { passwordHash = hashed.Hash, pepperVersion = hashed.PepperVersion, userId },
+                cancellationToken: cancellationToken));
+
+            logger.LogInformation("Password changed for user {UserId}", userId);
+            return NoContent();
+        }
+
+        [HttpDelete]
+        [EnableRateLimiting("auth")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> DeleteUser(CancellationToken cancellationToken)
+        {
+            logger.LogDebug("User deletion action called in AuthController");
+
+            if (!long.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+            {
+                return Unauthorized();
+            }
+
+            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+            var command = new CommandDefinition(
+                sqlQueryStore.Get("DeleteUserById"),
+                new { userId },
+                cancellationToken: cancellationToken);
+
+            var deletedRows = await connection.ExecuteAsync(command);
+
+            if (deletedRows <= 0)
+            {
+                logger.LogInformation("Delete failed: user {UserId} not found", userId);
+                await HttpContext.SignOutAsync();
+                return Problem(
+                    title: "User not found",
+                    detail: "The user does not exist.",
+                    statusCode: StatusCodes.Status404NotFound);
+            }
+
+            await HttpContext.SignOutAsync();
+            logger.LogInformation("Successfully deleted user {UserId}", userId);
+            return NoContent();
+        }
+
+        private async Task SendVerificationEmailAsync(
+            MySqlConnection connection, long userId, string email, string userName, CancellationToken cancellationToken)
+        {
+            var (token, tokenHash) = SecureToken.Create();
+
+            await connection.ExecuteAsync(new CommandDefinition(
+                sqlQueryStore.Get("PutVerificationToken"),
+                new { userId, tokenHash },
+                cancellationToken: cancellationToken));
+
+            var options = emailOptions.Value;
+
+            try
+            {
+                await emailSender.SendTemplateAsync(
+                    email,
+                    options.Templates.Verification,
+                    new Dictionary<string, object?>
+                    {
+                        ["userName"] = WebUtility.HtmlEncode(userName),
+                        ["verificationLink"] = $"{options.VerificationUrl}?token={token}"
+                    },
+                    cancellationToken: cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to send verification email for user {UserId}", userId);
             }
         }
     }
