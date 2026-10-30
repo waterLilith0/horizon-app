@@ -1,9 +1,10 @@
 ﻿using Dapper;
 using horizon_api.Infrastructure;
 using horizon_api.Shared;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MySqlConnector;
-using Microsoft.AspNetCore.Authorization;
+using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using System.ComponentModel.DataAnnotations;
 
@@ -21,10 +22,12 @@ namespace horizon_api.Controllers
         private int CurrentUserId => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
         public record CollectionCreateDto(
-            [Required, StringLength(MaxNameLength, MinimumLength = 1)] string CollectionName);
+            [Required, StringLength(MaxNameLength, MinimumLength = 1)] string CollectionName,
+            bool Public = false);
 
         public record UpdateCollectionDto(
-            [Required, StringLength(MaxNameLength, MinimumLength = 1)] string Name);
+            [Required, StringLength(MaxNameLength, MinimumLength = 1)] string Name,
+            bool Public = false);
 
         private async Task<bool> OwnsCollection(MySqlConnection connection, int collectionId, CancellationToken ct)
         {
@@ -35,7 +38,20 @@ namespace horizon_api.Controllers
             return await connection.ExecuteScalarAsync<int>(command) > 0;
         }
 
-        /// Create a single collection
+        private async Task<bool> CanViewCollection(MySqlConnection connection, int collectionId, CancellationToken ct)
+        {
+            var command = new CommandDefinition(
+                sqlQueryStore.Get("GetCollectionById"),
+                new { collectionId, userId = CurrentUserId },
+                cancellationToken: ct);
+            return await connection.QuerySingleOrDefaultAsync<Collection>(command) != null;
+        }
+
+        /// <summary>Create a collection</summary>
+        /// <remarks>Creates a new collection owned by the current user. Set <c>public</c> to make it visible to other users.</remarks>
+        /// <response code="201">Collection created.</response>
+        /// <response code="400">Invalid request.</response>
+        /// <response code="500">Database failed to create the collection.</response>
         [HttpPost("create")]
         [Consumes("application/json")]
         [ProducesResponseType<Collection>(StatusCodes.Status201Created)]
@@ -49,7 +65,7 @@ namespace horizon_api.Controllers
 
             var collectionId = await connection.QuerySingleOrDefaultAsync<int?>(new CommandDefinition(
                 sqlQueryStore.Get("PostInsertCollection"),
-                new { name = creationDto.CollectionName },
+                new { name = creationDto.CollectionName, @public = creationDto.Public, userId = CurrentUserId },
                 transaction,
                 cancellationToken: cancellationToken));
 
@@ -71,12 +87,6 @@ namespace horizon_api.Controllers
                         statusCode: StatusCodes.Status500InternalServerError
                     );
             }
-            await connection.ExecuteAsync(new CommandDefinition(
-                sqlQueryStore.Get("PostInsertCollectionToUser"),
-                new { collectionId, userId = CurrentUserId },
-                transaction,
-                cancellationToken: cancellationToken));
-
             await transaction.CommitAsync(cancellationToken);
             logger.LogInformation("Successfully created a new collection with name: {collectionName}", creationDto);
 
@@ -88,7 +98,11 @@ namespace horizon_api.Controllers
             return CreatedAtAction(nameof(GetCollectionById), new { collectionId }, collection);
         }
 
-        /// Get a single collection
+        /// <summary>Get a collection</summary>
+        /// <remarks>Returns a collection owned by the current user, or a public collection.</remarks>
+        /// <param name="collectionId">The collection ID.</param>
+        /// <response code="200">The collection.</response>
+        /// <response code="404">Collection not found.</response>
         [HttpGet("{collectionId:int:min(1)}")]
         [ProducesResponseType<Collection>(StatusCodes.Status200OK)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
@@ -113,7 +127,9 @@ namespace horizon_api.Controllers
             return Ok(collection);
         }
 
-        /// Get all collections as an array
+        /// <summary>List Collection</summary>
+        /// <remarks>Returns collections owned by the current user, or public collections.</remarks>
+        /// <response code="200">The list of collections.</response>
         [HttpGet]
         [ProducesResponseType<IReadOnlyList<Collection>>(StatusCodes.Status200OK)]
         public async Task<ActionResult<IReadOnlyList<Collection>>> GetAllCollections(CancellationToken cancellationToken)
@@ -127,7 +143,13 @@ namespace horizon_api.Controllers
             return Ok(allCollections);
         }
 
-        /// Update call for a specific collection
+        /// <summary>Update a collection</summary>
+        /// <remarks>Renames a collection owned by the current user and sets its visibility. Omitting <c>public</c> makes the collection private.</remarks>
+        /// <param name="collectionId">The collection ID.</param>
+        /// <param name="dto">The new collection name and visibility.</param>
+        /// <response code="200">The updated collection.</response>
+        /// <response code="400">Invalid request.</response>
+        /// <response code="404">Collection not found.</response>
         [HttpPut("{collectionId:int:min(1)}")]
         [Consumes("application/json")]
         [ProducesResponseType<Collection>(StatusCodes.Status200OK)]
@@ -138,7 +160,7 @@ namespace horizon_api.Controllers
             logger.LogDebug("Edit action called for collection: {collectionId}", collectionId);
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
             var sql = sqlQueryStore.Get("PostUpdateCollectionById");
-            var command = new CommandDefinition(sql, new { collectionId, name = dto.Name, userId = CurrentUserId }, cancellationToken: cancellationToken);
+            var command = new CommandDefinition(sql, new { collectionId, name = dto.Name, @public = dto.Public, userId = CurrentUserId }, cancellationToken: cancellationToken);
             var updatedCollection = await connection.QuerySingleOrDefaultAsync<Collection>(command);
 
             if (updatedCollection == null)
@@ -154,7 +176,51 @@ namespace horizon_api.Controllers
             return Ok(updatedCollection);
         }
 
-        /// DeleteCollection a specific collection
+        /// <summary>Publish a collection</summary>
+        /// <remarks>Makes a collection owned by the current user public, optionally including the current user's prompts within it.</remarks>
+        /// <param name="collectionId">The collection ID.</param>
+        /// <param name="includePrompts">Also publish the current user's prompts in the collection.</param>
+        /// <response code="200">The published collection.</response>
+        /// <response code="404">Collection not found.</response>
+        [HttpPost("{collectionId:int:min(1)}/publish")]
+        [ProducesResponseType<Collection>(StatusCodes.Status200OK)]
+        [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<Collection>> Publish([FromRoute] int collectionId, [FromQuery] bool includePrompts, CancellationToken cancellationToken)
+        {
+            logger.LogDebug("Publish action called for collection: {collectionId}", collectionId);
+            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+            await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+            var parameters = new { collectionId, userId = CurrentUserId };
+
+            var collection = await connection.QuerySingleOrDefaultAsync<Collection>(new CommandDefinition(
+                sqlQueryStore.Get("PublishCollectionById"), parameters, transaction, cancellationToken: cancellationToken));
+
+            if (collection == null)
+            {
+                logger.LogWarning("Failed to publish collection with ID: {collectionId}", collectionId);
+                return Problem(
+                    title: "Collection not found",
+                    detail: $"Failed to find any collection with ID {collectionId}.",
+                    statusCode: StatusCodes.Status404NotFound
+                );
+            }
+
+            if (includePrompts)
+            {
+                await connection.ExecuteAsync(new CommandDefinition(
+                    sqlQueryStore.Get("PublishPromptsInCollection"), parameters, transaction, cancellationToken: cancellationToken));
+            }
+
+            await transaction.CommitAsync(cancellationToken);
+            logger.LogInformation("Successfully published collection with ID: {collectionId} (includePrompts: {includePrompts})", collectionId, includePrompts);
+            return Ok(collection);
+        }
+
+        /// <summary>Delete a collection</summary>
+        /// <remarks>Deletes a specific collection owned by the current user.</remarks>
+        /// <param name="collectionId">The collection ID.</param>
+        /// <response code="204">Collection deleted.</response>
+        /// <response code="404">Collection not found.</response>
         [HttpDelete("{collectionId:int:min(1)}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
@@ -179,7 +245,14 @@ namespace horizon_api.Controllers
             return NoContent();
         }
 
-        /// Link a prompt to a collection
+        /// <summary>Link a prompt</summary>
+        /// <remarks>Adds a prompt to a collection and returns the ID of the new link.</remarks>
+        /// <param name="collectionId">The collection ID.</param>
+        /// <param name="promptId">The prompt ID.</param>
+        /// <response code="200">The ID of the new link.</response>
+        /// <response code="404">Collection or prompt not found.</response>
+        /// <response code="409">Prompt is already in the collection.</response>
+        /// <response code="500">Database failed to create the link.</response>
         [HttpPost("{collectionId:int:min(1)}/prompts/{promptId:int:min(1)}")]
         [ProducesResponseType<int>(StatusCodes.Status200OK)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
@@ -198,7 +271,7 @@ namespace horizon_api.Controllers
             }
             var sql = sqlQueryStore.Get("PostInsertConnection");
 
-            var command = new CommandDefinition(sql, new { promptId, collectionId }, cancellationToken: cancellationToken);
+            var command = new CommandDefinition(sql, new { promptId, collectionId, userId = CurrentUserId }, cancellationToken: cancellationToken);
             int? entryId;
             try
             {
@@ -210,20 +283,11 @@ namespace horizon_api.Controllers
                     detail: $"Prompt {promptId} is already in collection {collectionId}.",
                     statusCode: StatusCodes.Status409Conflict);
             }
-            catch (MySqlException ex) when (ex.ErrorCode == MySqlErrorCode.NoReferencedRow2)
+            if (entryId == null)
             {
                 return Problem(title: "Prompt not found",
                     detail: $"Prompt with ID {promptId} not found.",
                     statusCode: StatusCodes.Status404NotFound);
-            }
-            if (entryId == null)
-            {
-                logger.LogError("Database returned no result when trying to connect Prompt {promptId} to Collection {collectionId}", promptId, collectionId);
-                return Problem(
-                        title: "Database Error",
-                        detail: "The insert statement executed, but no ID was returned.",
-                        statusCode: StatusCodes.Status500InternalServerError
-                    );
             }
             else if (entryId <= 0)
             {
@@ -239,7 +303,12 @@ namespace horizon_api.Controllers
             return Ok(entryId);
         }
 
-        /// Unlink a prompt from a collection
+        /// <summary>Unlink a prompt</summary>
+        /// <remarks>Removes a prompt from a collection.</remarks>
+        /// <param name="collectionId">The collection ID.</param>
+        /// <param name="promptId">The prompt ID.</param>
+        /// <response code="204">Prompt unlinked.</response>
+        /// <response code="404">Collection or link not found.</response>
         [HttpDelete("{collectionId:int:min(1)}/prompts/{promptId:int:min(1)}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
@@ -271,7 +340,11 @@ namespace horizon_api.Controllers
             return NoContent();
         }
 
-        /// Get all prompts in a specific collection
+        /// <summary>List prompts in a collection</summary>
+        /// <remarks>Returns the prompts in a collection owned by the current user, or in a public collection.</remarks>
+        /// <param name="collectionId">The collection ID.</param>
+        /// <response code="200">The prompts in the collection.</response>
+        /// <response code="404">Collection not found.</response>
         [HttpGet("all/{collectionId:int:min(1)}")]
         [ProducesResponseType<IReadOnlyList<Prompt>>(StatusCodes.Status200OK)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
@@ -279,7 +352,7 @@ namespace horizon_api.Controllers
         {
             logger.LogDebug("GetAllPrompts in specific collection action called in CollectionController.");
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
-            if (!await OwnsCollection(connection, collectionId, cancellationToken))
+            if (!await CanViewCollection(connection, collectionId, cancellationToken))
             {
                 return Problem(
                     title: "Collection not found",
@@ -287,9 +360,8 @@ namespace horizon_api.Controllers
                     statusCode: StatusCodes.Status404NotFound);
             }
             var sql = sqlQueryStore.Get("GetAllFromCollection");
-            var command = new CommandDefinition(sql, new { collectionId }, cancellationToken: cancellationToken);
+            var command = new CommandDefinition(sql, new { collectionId, userId = CurrentUserId }, cancellationToken: cancellationToken);
             var allPrompts = await connection.QueryAsync<Prompt>(command);
-
             logger.LogInformation("Successfully retrieved all Prompts");
             return Ok(allPrompts);
         }

@@ -1,3 +1,3 @@
 SELECT COUNT(1) 
-FROM CollectionToUser
+FROM PromptCollections
 WHERE collectionId = @collectionId AND userId = @userId;

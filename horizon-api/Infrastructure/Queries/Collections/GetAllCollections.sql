@@ -1,4 +1,4 @@
-﻿SELECT c.* 
+SELECT c.* 
 FROM PromptCollections c
-JOIN CollectionToUser cu ON cu.collectionId = c.collectionId
-WHERE cu.userId = @userId;
+WHERE c.userId = @userId
+   OR c.`public` = 1;

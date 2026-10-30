@@ -6,5 +6,7 @@
         public required string PromptText { get; set; }
         public required string Type { get; set; }
         public DateTime CreationDate { get; set; }
+        public int UserId { get; set; }
+        public bool Public { get; set; }
     }
 }

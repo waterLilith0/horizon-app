@@ -1,8 +1,10 @@
-﻿UPDATE PromptCollections c
-JOIN CollectionToUser cu ON cu.collectionId = c.collectionId
-SET c.name = @name
-WHERE c.collectionId = @collectionId 
-AND cu.userId = @userId;
+UPDATE PromptCollections
+SET name = @name,
+	`public` = @public
+WHERE collectionId = @collectionId
+  AND userId = @userId;
 
-SELECT c.* FROM PromptCollections c
-WHERE c.collectionId = @collectionId;
+SELECT *
+FROM PromptCollections
+WHERE collectionId = @collectionId
+  AND userId = @userId;

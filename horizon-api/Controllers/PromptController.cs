@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MySqlConnector;
 using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
 
 namespace horizon_api.Controllers
 {
@@ -21,97 +22,143 @@ namespace horizon_api.Controllers
         public record CreatePromptDto(
             [Required, StringLength(MaxTextLength, MinimumLength = 1)] string PromptText,
             [Required, StringLength(MaxTextLength, MinimumLength = 1)] string Type,
-            int? CollectionId = null);
+            int? CollectionId = null,
+            bool Public = false);
 
         public record CreatePromptResponse(Prompt Prompt, int? CollectionId);
 
         public record UpdatePromptDto(
             [Required, StringLength(MaxTextLength, MinimumLength = 1)] string PromptText,
-            [Required, StringLength(MaxTextLength, MinimumLength = 1)] string Type);
+            [Required, StringLength(MaxTextLength, MinimumLength = 1)] string Type,
+            bool Public = false);
 
-        /// Create a new prompt; optionally insert it into a collection immediately
+        /// <summary>Create a prompt</summary>
+        /// <remarks>Creates a new prompt owned by the current user. If a collection ID is provided, the prompt is also added to that collection. Set <c>public</c> to make it visible to other users.</remarks>
+        /// <response code="201">Prompt created.</response>
+        /// <response code="400">Invalid request.</response>
+        /// <response code="404">Collection not found.</response>
+        /// <response code="500">Database failed to create the prompt.</response>
         [HttpPost]
         [Consumes("application/json")]
         [ProducesResponseType<CreatePromptResponse>(StatusCodes.Status201Created)]
         [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status500InternalServerError)]
+        [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<CreatePromptResponse>> PostCreate([FromBody] CreatePromptDto promptDto, CancellationToken cancellationToken)
         {
             logger.LogDebug("Create action called in PromptController with: {@PromptDto}", promptDto);
 
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
-            var sql = sqlQueryStore.Get("PostInsert");
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-            var command = new CommandDefinition(sql, new { promptDto.PromptText, promptDto.Type, promptDto.CollectionId }, cancellationToken: cancellationToken);
+            if (promptDto.CollectionId is { } collectionId)
+            {
+                var owns = await connection.ExecuteScalarAsync<int>(new CommandDefinition(
+                    sqlQueryStore.Get("GetCollectionOwnership"),
+                    new { collectionId, userId },
+                    cancellationToken: cancellationToken)) > 0;
+
+                if (!owns)
+                {
+                    return Problem(
+                        title: "Collection not found",
+                        detail: $"Collection with ID {collectionId} not found.",
+                        statusCode: StatusCodes.Status404NotFound);
+                }
+            }
+
+            await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+            var sql = sqlQueryStore.Get("PostInsert");
+            var command = new CommandDefinition(
+                sql,
+                new { promptDto.PromptText, promptDto.Type, promptDto.CollectionId, promptDto.Public, UserId = userId },
+                transaction,
+                cancellationToken: cancellationToken);
 
             var createdPrompt = await connection.QuerySingleOrDefaultAsync<Prompt>(command);
             if (createdPrompt == null)
             {
+                // The transaction rolls back on dispose.
                 logger.LogError("Database returned no result when creating prompt with text: {PromptText}", promptDto.PromptText);
                 return Problem(
                     title: "Database Error",
                     detail: "The insert statement executed, but no prompt record was returned.",
-                    statusCode: StatusCodes.Status500InternalServerError
-                );
+                    statusCode: StatusCodes.Status500InternalServerError);
             }
+
+            await transaction.CommitAsync(cancellationToken);
             var response = new CreatePromptResponse(createdPrompt, promptDto.CollectionId);
 
             logger.LogInformation("Successfully created a new prompt with ID {PromptId}", createdPrompt.PromptId);
             return CreatedAtAction(nameof(GetPrompt), new { promptId = createdPrompt.PromptId }, response);
         }
 
-        /// Get a specific allPrompts
+        /// <summary>Get a prompt</summary>
+        /// <remarks>Returns a prompt owned by the current user, or a public prompt.</remarks>
+        /// <param name="promptId">The prompt ID.</param>
+        /// <response code="200">The prompt.</response>
+        /// <response code="404">Prompt not found.</response>
         [HttpGet("{promptId:int:min(1)}")]
         [ProducesResponseType<Prompt>(StatusCodes.Status200OK)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<Prompt>> GetPrompt([FromRoute, Required] int promptId, CancellationToken cancellationToken)
         {
-            logger.LogDebug("GetPromptById method called in PromptController for allPrompts {prompt}", promptId);
+            logger.LogDebug("GetPrompt called for prompt {PromptId}", promptId);
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
-            var sql = sqlQueryStore.Get("GetById");
-            var command = new CommandDefinition(sql, new { promptId }, cancellationToken: cancellationToken);
+            var sql = sqlQueryStore.Get("GetById"); 
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var command = new CommandDefinition(sql, new { promptId, userId }, cancellationToken: cancellationToken);
             var prompt = await connection.QuerySingleOrDefaultAsync<Prompt>(command);
 
             if (prompt == null)
             {
-                logger.LogWarning("No allPrompts found with ID {prompt}", promptId);
+                logger.LogWarning("No accessible prompt found with ID {PromptId}", promptId);
                 return Problem(
                         title: "ID not found",
                         detail: $"Prompt with ID {promptId} not found.",
                         statusCode: StatusCodes.Status404NotFound
                     );
             }
-            logger.LogInformation("Successfully retrieved allPrompts with ID {prompt}", promptId);
+            logger.LogInformation("Retrieved prompt {PromptId}", promptId);
             return Ok(prompt);
         }
 
-        /// Get all prompts, optionally filtered by amount
+        /// <summary>List prompts</summary>
+        /// <remarks>Returns the prompts available to the current user, optionally limited to a maximum number of results.</remarks>
+        /// <param name="resultAmount">Maximum number of prompts to return (1-1000).</param>
+        /// <response code="200">The list of prompts.</response>
+        /// <response code="400">Invalid result amount.</response>
         [HttpGet]
         [ProducesResponseType<IReadOnlyList<Prompt>>(StatusCodes.Status200OK)]
         [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<IReadOnlyList<Prompt>>> GetAllPrompts([FromQuery, Range(1, 1000)] int? resultAmount, CancellationToken cancellationToken)
         {
-            logger.LogDebug("GetAllPrompts action called in PromptController.");
+            logger.LogDebug("GetAllPrompts called (ResultAmount: {ResultAmount})", resultAmount);
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
             var sql = sqlQueryStore.Get("GetAll");
-            var command = new CommandDefinition(sql, new { resultAmount },cancellationToken: cancellationToken);
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var command = new CommandDefinition(sql, new { resultAmount, userId }, cancellationToken: cancellationToken);
             var allPrompts = (await connection.QueryAsync<Prompt>(command)).AsList();
 
-            logger.LogInformation("Successfully retrieved all Prompts");
+            logger.LogInformation("Retrieved {Count} prompts", allPrompts.Count);
             return Ok(allPrompts);
         }
 
-        /// Get a random rowsAffected; optionally from a specific collection
+        /// <summary>Get a random prompt</summary>
+        /// <remarks>Returns a random prompt available to the current user, optionally picked from a specific collection.</remarks>
+        /// <param name="collectionId">Only pick from this collection.</param>
+        /// <response code="200">A random prompt.</response>
+        /// <response code="404">No prompts available.</response>
         [HttpGet("random")]
         [ProducesResponseType<Prompt>(StatusCodes.Status200OK)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<Prompt>> GetRandomPrompt([FromQuery] int? collectionId, CancellationToken cancellationToken)
         {
-            logger.LogDebug("GetRandomPrompt action called in PromptController");
+            logger.LogDebug("GetRandomPrompt called (CollectionId: {CollectionId})", collectionId);
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
 
             var sql = sqlQueryStore.Get("GetRandomPrompt");
-            var command = new CommandDefinition(sql, new { collectionId }, cancellationToken: cancellationToken);
+            var command = new CommandDefinition(sql, new { collectionId, userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!) }, cancellationToken: cancellationToken);
 
             var prompt = await connection.QuerySingleOrDefaultAsync<Prompt>(command);
 
@@ -125,11 +172,17 @@ namespace horizon_api.Controllers
                 );
             }
 
-            logger.LogInformation("Successfully retrieved random rowsAffected with ID {PromptId}", prompt.PromptId);
+            logger.LogInformation("Retrieved random prompt {PromptId}", prompt.PromptId);
             return Ok(prompt);
         }
 
-        /// Update/edit old prompt
+        /// <summary>Update a prompt</summary>
+        /// <remarks>Replaces the text, type and visibility of a prompt owned by the current user. Omitting <c>public</c> makes the prompt private.</remarks>
+        /// <param name="promptId">The prompt ID.</param>
+        /// <param name="promptDto">The new prompt text, type and visibility.</param>
+        /// <response code="200">The updated prompt.</response>
+        /// <response code="400">Invalid request.</response>
+        /// <response code="404">Prompt not found.</response>
         [HttpPut("{promptId:int:min(1)}")]
         [Consumes("application/json")]
         [ProducesResponseType<Prompt>(StatusCodes.Status200OK)]
@@ -137,49 +190,84 @@ namespace horizon_api.Controllers
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> PostEdit([FromRoute] int promptId, [FromBody] UpdatePromptDto promptDto, CancellationToken cancellationToken)
         {
-            logger.LogDebug("Edit action called for Prompt {prompt}", promptId);
+            logger.LogDebug("Edit called for prompt {PromptId}", promptId);
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
 
             var sql = sqlQueryStore.Get("PostUpdateById");
-            var command = new CommandDefinition(sql, new { promptId, promptDto.PromptText, promptDto.Type }, cancellationToken: cancellationToken);
+            var command = new CommandDefinition(sql, new { promptId, promptDto.PromptText, promptDto.Type, promptDto.Public, userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!) }, cancellationToken: cancellationToken);
             var updatedPrompt = await connection.QuerySingleOrDefaultAsync<Prompt>(command);
 
             if (updatedPrompt == null)
             {
-                logger.LogWarning("Couldn't find old rowsAffected with id {oldId} to update", promptId);
+                logger.LogWarning("Prompt {PromptId} not found or not owned by the user; update skipped", promptId);
                 return Problem(
-                    title: "Not Found",
-                    detail: $"Couldn't find rowsAffected with id {promptId}",
+                    title: "Prompt not found",
+                    detail: $"Prompt with ID {promptId} not found.",
                     statusCode: StatusCodes.Status404NotFound
                 );
             }
-            logger.LogInformation("Succesfully edited item with id {prompt}", promptId);
+            logger.LogInformation("Edited prompt {PromptId}", promptId);
             return Ok(updatedPrompt);
         }
 
-        /// Deletes a specific prompt
+        /// <summary>Publish a prompt</summary>
+        /// <remarks>Makes a prompt owned by the current user public.</remarks>
+        /// <param name="promptId">The prompt ID.</param>
+        /// <response code="200">The published prompt.</response>
+        /// <response code="404">Prompt not found.</response>
+        [HttpPost("{promptId:int:min(1)}/publish")]
+        [ProducesResponseType<Prompt>(StatusCodes.Status200OK)]
+        [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Publish([FromRoute] int promptId, CancellationToken cancellationToken)
+        {
+            logger.LogDebug("Publish called for prompt {PromptId}", promptId);
+            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var command = new CommandDefinition(sqlQueryStore.Get("PublishById"), new { promptId, userId }, cancellationToken: cancellationToken);
+            var prompt = await connection.QuerySingleOrDefaultAsync<Prompt>(command);
+
+            if (prompt == null)
+            {
+                logger.LogWarning("Prompt {PromptId} not found or not owned by the user; publish skipped", promptId);
+                return Problem(
+                    title: "Prompt not found",
+                    detail: $"Prompt with ID {promptId} not found.",
+                    statusCode: StatusCodes.Status404NotFound
+                );
+            }
+            logger.LogInformation("Published prompt {PromptId}", promptId);
+            return Ok(prompt);
+        }
+
+        /// <summary>Delete a prompt</summary>
+        /// <remarks>Deletes a prompt owned by the current user.</remarks>
+        /// <param name="promptId">The prompt ID.</param>
+        /// <response code="204">Prompt deleted.</response>
+        /// <response code="404">Prompt not found.</response>
         [HttpDelete("{promptId:int:min(1)}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Delete([FromRoute] int promptId, CancellationToken cancellationToken)
         {
-            logger.LogDebug("Delete action called for Prompt {prompt}", promptId);
+            logger.LogDebug("Delete called for prompt {PromptId}", promptId);
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
 
             var sql = sqlQueryStore.Get("DeleteById");
-            var command = new CommandDefinition(sql, new { promptId }, cancellationToken: cancellationToken);
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var command = new CommandDefinition(sql, new { promptId, userId }, cancellationToken: cancellationToken);
             var rowsAffected = await connection.ExecuteAsync(command);
 
             if (rowsAffected == 0)
             {
-                logger.LogWarning("Failed to delete prompt with ID: {prompt}", promptId);
+                logger.LogWarning("Prompt {PromptId} not found or not owned by the user; delete skipped", promptId);
                 return Problem(
                     title: "Prompt not found",
-                    detail: $"Failed to find any prompt with ID {promptId}.",
+                    detail: $"Prompt with ID {promptId} not found.",
                     statusCode: StatusCodes.Status404NotFound
                 );
             }
-            logger.LogInformation("Succesfully deleted prompt with id {prompt}", promptId);
+            logger.LogInformation("Deleted prompt {PromptId}", promptId);
             return NoContent();
         }
     }

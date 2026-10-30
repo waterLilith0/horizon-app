@@ -1,12 +1,17 @@
-﻿UPDATE WheelSpinPrompts
+UPDATE WheelSpinPrompts
 SET promptText = @PromptText,
-    type = @Type
-WHERE promptId = @promptId;
+	type = @Type,
+	`public` = @Public
+WHERE promptId = @promptId
+  AND userId = @userId;
 
 SELECT
-    promptId AS PromptId,
-    promptText AS PromptText,
-    type AS Type,
-    creationDate AS CreationDate
+	promptId AS PromptId,
+	promptText AS PromptText,
+	type AS Type,
+	creationDate AS CreationDate,
+	userId AS UserId,
+	`public` AS Public
 FROM WheelSpinPrompts
-WHERE promptId = @promptId;
+WHERE promptId = @promptId
+  AND userId = @userId;

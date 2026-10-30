@@ -1,5 +1,5 @@
-﻿INSERT INTO WheelSpinPrompts (promptText, type)
-VALUES (@PromptText, @Type);
+INSERT INTO WheelSpinPrompts (promptText, type, `public`, userId)
+VALUES (@PromptText, @Type, @Public, @UserId);
 
 SET @newPromptId = LAST_INSERT_ID();
 
@@ -8,9 +8,11 @@ SELECT @CollectionId, @newPromptId
 WHERE @CollectionId IS NOT NULL;
 
 SELECT
-    promptId AS PromptId,
-    promptText AS PromptText,
-    type AS Type,
-    creationDate AS CreationDate
+	promptId AS PromptId,
+	promptText AS PromptText,
+	type AS Type,
+	creationDate AS CreationDate,
+	userId AS UserId,
+	`public` AS Public
 FROM WheelSpinPrompts
 WHERE promptId = @newPromptId;

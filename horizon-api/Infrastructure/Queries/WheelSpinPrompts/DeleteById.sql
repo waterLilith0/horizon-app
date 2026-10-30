@@ -1,2 +1,3 @@
 ﻿DELETE FROM WheelSpinPrompts
-WHERE promptId = @promptId;
+WHERE promptId = @promptId
+  AND userId = @userId;
