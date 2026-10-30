@@ -6,7 +6,7 @@ export const CollectionNameSchema = z
   .min(1, "Name is required")
   .max(50, "Name must be 50 characters or fewer");
 
-const CollectionSchema = z.object({
+export const CollectionSchema = z.object({
   collectionId: z.int(),
   name: CollectionNameSchema,
   creationDate: z.date(),

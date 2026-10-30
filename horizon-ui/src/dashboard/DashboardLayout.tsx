@@ -1,30 +1,38 @@
 import { useApplyTheme } from "@/shared/theme/useResolvedTheme";
 import { Outlet } from "react-router";
 import { SidebarProvider } from "@/components/ui/sidebar";
-
-import AccountDropdown from "@/dashboard/features/account/AccountDropdown";
 import Footer from "@/shared/Footer";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { UploadProvider } from "@/components/global-upload";
+import { localAdapter } from "@uploadcn/core";
 
 const queryClient = new QueryClient();
+const uploadAdapter = localAdapter();
 
-function DashboardLayout() {
+export default function DashboardLayout() {
   useApplyTheme();
+
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="flex flex-col text-base">
-        <AccountDropdown />
-        <SidebarProvider>
-          <main className="flex flex-col bg-secondary items-center grow">
-            <div className="flex flex-col items-center bg-primary w-[80%] p-2 overflow-hidden">
-              <Outlet />
-            </div>
-          </main>
+      <UploadProvider
+        persist
+        adapter={uploadAdapter}
+        accept={"application/json"}
+        maxSize={20_000_000}
+        maxFiles={5}
+      >
+        <SidebarProvider
+          style={
+            {
+              "--sidebar-width": "30rem",
+              "--sidebar-width-mobile": "2rem",
+            } as React.CSSProperties
+          }
+        >
+          <Outlet />
         </SidebarProvider>
-        <Footer />
-      </div>
+      </UploadProvider>
+      <Footer />
     </QueryClientProvider>
   );
 }
-
-export default DashboardLayout;

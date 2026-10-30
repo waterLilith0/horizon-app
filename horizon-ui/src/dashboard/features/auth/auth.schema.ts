@@ -24,22 +24,22 @@ const passwordSchema = z
   .min(8, "Must be at least 8 characters")
   .max(128, "Must be at most 128 characters")
   .refine((value) => zxcvbn(value).score >= 2, {
-    message: "Password is too weak. Avoid common words or patterns.",
+    message: "Password is too basic bitch. Avoid common words or patterns.",
   });
 
 export const changePasswordSchema = z
   .object({
-    currentPassword: z.string().min(1, "Please enter your current password"),
+    currentPassword: z.string().min(1, "Current password pls!"),
     newPassword: passwordSchema,
   })
   .refine((data) => data.newPassword !== data.currentPassword, {
-    message: "New password must be different from your current password",
+    message: "B...But it's the same as before???",
     path: ["newPassword"],
   });
 
 // type ChangePasswordData = z.infer<typeof changePasswordSchema>;
 
-const emailSchema = z.email({ error: "Invalid email address" });
+const emailSchema = z.email({ error: "Nahh that's not an email" });
 
 export const usernameSchema = z
   .string()
@@ -51,7 +51,7 @@ export const usernameSchema = z
   )
   .transform((val) => val.toLowerCase())
   .refine((val) => !RESERVED_USERNAMES.has(val), {
-    message: "This username is reserved.",
+    message: "Nyo that's ours!",
   })
   .refine((val) => !OFFENSIVE_TERMS.some((term) => val.includes(term)), {
     message: "This username contains prohibited terms.",

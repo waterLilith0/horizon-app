@@ -15,7 +15,7 @@ type Mode = "login" | "register" | "registered";
 const TITLES: Record<Mode, string> = {
   login: "Log in",
   register: "Create an account",
-  registered: "Check your inbox",
+  registered: "Thamkiesss",
 };
 
 export default function LoginRegisterDialog({
@@ -26,7 +26,6 @@ export default function LoginRegisterDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const [mode, setMode] = useState<Mode>("login");
-  const [registeredEmail, setRegisteredEmail] = useState("");
 
   function handleOpenChange(next: boolean) {
     if (!next) setMode("login");
@@ -39,10 +38,7 @@ export default function LoginRegisterDialog({
         <DialogHeader>
           <DialogTitle>{TITLES[mode]}</DialogTitle>
           {mode === "registered" && (
-            <DialogDescription>
-              We sent a confirmation link to {registeredEmail}. Open it to
-              finish signing up.
-            </DialogDescription>
+            <DialogDescription>Welcome in uwu</DialogDescription>
           )}
         </DialogHeader>
 
@@ -50,7 +46,7 @@ export default function LoginRegisterDialog({
           <>
             <LoginForm onLoggedIn={() => handleOpenChange(false)} />
             <Button variant="link" onClick={() => setMode("register")}>
-              No account yet? Register
+              No account yet? Register &gt;w&gt;
             </Button>
           </>
         )}
@@ -58,13 +54,12 @@ export default function LoginRegisterDialog({
         {mode === "register" && (
           <>
             <RegisterForm
-              onRegistered={(email) => {
-                setRegisteredEmail(email);
+              onRegistered={() => {
                 setMode("registered");
               }}
             />
             <Button variant="link" onClick={() => setMode("login")}>
-              Already have an account? Log in
+              U have an account after all??? click me
             </Button>
           </>
         )}

@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useForm } from "@tanstack/react-form";
-import { changePasswordSchema } from "../auth/validationSchema";
+import { changePasswordSchema } from "../auth/auth.schema";
 
 export default function PasswordChange() {
   const passwordForm = useForm({

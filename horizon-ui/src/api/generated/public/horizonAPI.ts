@@ -72,9 +72,12 @@ export interface ProblemDetails {
      */
   status?: number | string | null;
   /** @nullable */
+  status?: number | null;
+  /** @nullable */
   detail?: string | null;
   /** @nullable */
   instance?: string | null;
+  [key: string]: unknown;
 }
 
 export interface UpdateCollectionDto {
@@ -99,10 +102,14 @@ export interface ValidationProblemDetails {
      */
   status?: number | string | null;
   /** @nullable */
+  status?: number | null;
+  /** @nullable */
   detail?: string | null;
   /** @nullable */
   instance?: string | null;
+  /** @nullable */
   errors?: ValidationProblemDetailsErrors;
+  [key: string]: unknown;
 }
 
 export type GetApiPromptParams = {
@@ -135,6 +142,127 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   }
   return result;
 };
+
+export type getApiCollectionCheckstatusResponse200 = {
+  data: string
+  status: 200
+}
+
+export type getApiCollectionCheckstatusResponse401 = {
+  data: ProblemDetails
+  status: 401
+}
+
+export type getApiCollectionCheckstatusResponseSuccess = (getApiCollectionCheckstatusResponse200) & {
+  headers: Headers;
+};
+export type getApiCollectionCheckstatusResponseError = (getApiCollectionCheckstatusResponse401) & {
+  headers: Headers;
+};
+
+export type getApiCollectionCheckstatusResponse = (getApiCollectionCheckstatusResponseSuccess | getApiCollectionCheckstatusResponseError)
+
+export const getGetApiCollectionCheckstatusUrl = () => {
+
+
+
+
+  return `/api/Collection/checkstatus`
+}
+
+export const getApiCollectionCheckstatus = async ( options?: RequestInit): Promise<getApiCollectionCheckstatusResponse> => {
+
+  const res = await fetch(getGetApiCollectionCheckstatusUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: getApiCollectionCheckstatusResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as getApiCollectionCheckstatusResponse
+}
+
+
+
+
+
+export const getGetApiCollectionCheckstatusQueryKey = () => {
+    return [
+    `/api/Collection/checkstatus`
+    ] as const;
+    }
+
+
+export const getGetApiCollectionCheckstatusQueryOptions = <TData = Awaited<ReturnType<typeof getApiCollectionCheckstatus>>, TError = ProblemDetails>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiCollectionCheckstatus>>, TError, TData>>, fetch?: RequestInit}
+) => {
+
+const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetApiCollectionCheckstatusQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiCollectionCheckstatus>>> = ({ signal }) => getApiCollectionCheckstatus({ signal, ...fetchOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getApiCollectionCheckstatus>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetApiCollectionCheckstatusQueryResult = NonNullable<Awaited<ReturnType<typeof getApiCollectionCheckstatus>>>
+export type GetApiCollectionCheckstatusQueryError = ProblemDetails
+
+
+export function useGetApiCollectionCheckstatus<TData = Awaited<ReturnType<typeof getApiCollectionCheckstatus>>, TError = ProblemDetails>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiCollectionCheckstatus>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getApiCollectionCheckstatus>>,
+          TError,
+          Awaited<ReturnType<typeof getApiCollectionCheckstatus>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetApiCollectionCheckstatus<TData = Awaited<ReturnType<typeof getApiCollectionCheckstatus>>, TError = ProblemDetails>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiCollectionCheckstatus>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getApiCollectionCheckstatus>>,
+          TError,
+          Awaited<ReturnType<typeof getApiCollectionCheckstatus>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetApiCollectionCheckstatus<TData = Awaited<ReturnType<typeof getApiCollectionCheckstatus>>, TError = ProblemDetails>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiCollectionCheckstatus>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetApiCollectionCheckstatus<TData = Awaited<ReturnType<typeof getApiCollectionCheckstatus>>, TError = ProblemDetails>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiCollectionCheckstatus>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetApiCollectionCheckstatusQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export type postApiCollectionCreateResponse201 = {
   data: Collection
@@ -499,6 +627,11 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
       return useMutation(getPutApiCollectionCollectionIdMutationOptions(options), queryClient);
     }
 
+export type deleteApiCollectionCollectionIdResponse204 = {
+  data: void
+  status: 204
+}
+
 export type deleteApiCollectionCollectionIdResponse401 = {
   data: ProblemDetails
   status: 401
@@ -823,6 +956,11 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
       return useMutation(getPostApiCollectionCollectionIdPromptsPromptIdMutationOptions(options), queryClient);
     }
 
+export type deleteApiCollectionCollectionIdPromptsPromptIdResponse204 = {
+  data: void
+  status: 204
+}
+
 export type deleteApiCollectionCollectionIdPromptsPromptIdResponse401 = {
   data: ProblemDetails
   status: 401
@@ -1031,6 +1169,127 @@ export function useGetApiCollectionAllCollectionId<TData = Awaited<ReturnType<ty
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetApiCollectionAllCollectionIdQueryOptions(collectionId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export type getApiPromptCheckstatusResponse200 = {
+  data: string
+  status: 200
+}
+
+export type getApiPromptCheckstatusResponse401 = {
+  data: ProblemDetails
+  status: 401
+}
+
+export type getApiPromptCheckstatusResponseSuccess = (getApiPromptCheckstatusResponse200) & {
+  headers: Headers;
+};
+export type getApiPromptCheckstatusResponseError = (getApiPromptCheckstatusResponse401) & {
+  headers: Headers;
+};
+
+export type getApiPromptCheckstatusResponse = (getApiPromptCheckstatusResponseSuccess | getApiPromptCheckstatusResponseError)
+
+export const getGetApiPromptCheckstatusUrl = () => {
+
+
+
+
+  return `/api/Prompt/checkstatus`
+}
+
+export const getApiPromptCheckstatus = async ( options?: RequestInit): Promise<getApiPromptCheckstatusResponse> => {
+
+  const res = await fetch(getGetApiPromptCheckstatusUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: getApiPromptCheckstatusResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as getApiPromptCheckstatusResponse
+}
+
+
+
+
+
+export const getGetApiPromptCheckstatusQueryKey = () => {
+    return [
+    `/api/Prompt/checkstatus`
+    ] as const;
+    }
+
+
+export const getGetApiPromptCheckstatusQueryOptions = <TData = Awaited<ReturnType<typeof getApiPromptCheckstatus>>, TError = ProblemDetails>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiPromptCheckstatus>>, TError, TData>>, fetch?: RequestInit}
+) => {
+
+const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetApiPromptCheckstatusQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiPromptCheckstatus>>> = ({ signal }) => getApiPromptCheckstatus({ signal, ...fetchOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getApiPromptCheckstatus>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetApiPromptCheckstatusQueryResult = NonNullable<Awaited<ReturnType<typeof getApiPromptCheckstatus>>>
+export type GetApiPromptCheckstatusQueryError = ProblemDetails
+
+
+export function useGetApiPromptCheckstatus<TData = Awaited<ReturnType<typeof getApiPromptCheckstatus>>, TError = ProblemDetails>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiPromptCheckstatus>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getApiPromptCheckstatus>>,
+          TError,
+          Awaited<ReturnType<typeof getApiPromptCheckstatus>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetApiPromptCheckstatus<TData = Awaited<ReturnType<typeof getApiPromptCheckstatus>>, TError = ProblemDetails>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiPromptCheckstatus>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getApiPromptCheckstatus>>,
+          TError,
+          Awaited<ReturnType<typeof getApiPromptCheckstatus>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetApiPromptCheckstatus<TData = Awaited<ReturnType<typeof getApiPromptCheckstatus>>, TError = ProblemDetails>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiPromptCheckstatus>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetApiPromptCheckstatus<TData = Awaited<ReturnType<typeof getApiPromptCheckstatus>>, TError = ProblemDetails>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiPromptCheckstatus>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetApiPromptCheckstatusQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -1538,6 +1797,11 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
       > => {
       return useMutation(getPutApiPromptPromptIdMutationOptions(options), queryClient);
     }
+
+export type deleteApiPromptPromptIdResponse204 = {
+  data: void
+  status: 204
+}
 
 export type deleteApiPromptPromptIdResponse401 = {
   data: ProblemDetails

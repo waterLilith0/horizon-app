@@ -10,6 +10,16 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
   const uploadSourcemaps = !!env.FARO_API_KEY;
   return {
+    server: {
+      proxy: {
+        "/api": {
+          target: "https://dev.waterlilith.space",
+          changeOrigin: true,
+          secure: true,
+          cookieDomainRewrite: "localhost", // so session cookies stick locally
+        },
+      },
+    },
     define: {
       __APP_VERSION__: JSON.stringify(pkg.version),
     },

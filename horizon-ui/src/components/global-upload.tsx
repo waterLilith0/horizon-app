@@ -1,11 +1,11 @@
-"use client";
+"use client"
 
-import * as React from "react";
+import * as React from "react"
 import {
   type UploadAdapter,
   type UploadPersistence,
   createIndexedDBPersistence,
-} from "@uploadcn/core";
+} from "@uploadcn/core"
 import {
   Upload as UploadPrimitive,
   type UseUploaderOptions,
@@ -15,28 +15,27 @@ import {
   useUploadProgress,
   useUploader,
   useWindowDrop,
-} from "@uploadcn/react";
-import { cn } from "cn";
-import { NativeButton, UploadProgress, UploadQueue } from "@/components/upload";
+} from "@uploadcn/react"
+import { cn } from "cn"
 import {
-  RiUploadCloud2Line,
-  RiWifiOffLine,
-  RiArrowDownSLine,
-  RiCloseLine,
-} from "@remixicon/react";
+  NativeButton,
+  UploadProgress,
+  UploadQueue,
+} from "@/components/ui/upload"
+import { RiUploadCloud2Line, RiWifiOffLine, RiArrowDownSLine, RiCloseLine } from "@remixicon/react"
 
 interface UploadProviderProps<TResult> extends Partial<
   UseUploaderOptions<TResult>
 > {
-  adapter?: UploadAdapter<TResult>;
+  adapter?: UploadAdapter<TResult>
   /**
    * Keep uploads across reloads in IndexedDB and resume them. `true` uses the
    * default store; pass your own `UploadPersistence` to customize.
    */
-  persist?: boolean | UploadPersistence;
+  persist?: boolean | UploadPersistence
   /** Warn before leaving the page while uploads run. Default `true`. */
-  guard?: boolean;
-  children: React.ReactNode;
+  guard?: boolean
+  children: React.ReactNode
 }
 
 /**
@@ -57,27 +56,27 @@ function UploadProvider<TResult = unknown>({
       ? createIndexedDBPersistence()
       : persist === false
         ? undefined
-        : persist,
-  );
+        : persist
+  )
   const uploader = useUploader<TResult>({
     adapter,
     persistence,
     restore: !!persistence,
     ...options,
-  });
-  useUploadGuard(uploader, { enabled: guard });
+  })
+  useUploadGuard(uploader, { enabled: guard })
   return (
     <UploadPrimitive.Root uploader={uploader} className="contents">
       {children}
     </UploadPrimitive.Root>
-  );
+  )
 }
 
 interface GlobalDropzoneProps {
-  title?: React.ReactNode;
-  description?: React.ReactNode;
-  disabled?: boolean;
-  className?: string;
+  title?: React.ReactNode
+  description?: React.ReactNode
+  disabled?: boolean
+  className?: string
 }
 
 /** A full-window overlay that appears when files are dragged over the page. */
@@ -87,19 +86,19 @@ function GlobalDropzone({
   disabled = false,
   className,
 }: GlobalDropzoneProps) {
-  const { addFiles, disabled: uploadDisabled } = useUploadContext();
+  const { addFiles, disabled: uploadDisabled } = useUploadContext()
   const { isDragging } = useWindowDrop({
     onDrop: addFiles,
     enabled: !disabled && !uploadDisabled,
-  });
-  if (!isDragging) return null;
+  })
+  if (!isDragging) return null
   return (
     <div
       data-slot="global-dropzone"
       aria-hidden
       className={cn(
         "pointer-events-none fixed inset-0 z-50 flex animate-in items-center justify-center bg-background/80 p-6 backdrop-blur-sm duration-150 fade-in-0 motion-reduce:animate-none",
-        className,
+        className
       )}
     >
       <div className="flex size-full max-h-128 max-w-3xl animate-in flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-primary/60 text-center duration-200 zoom-in-95 motion-reduce:animate-none">
@@ -110,32 +109,32 @@ function GlobalDropzone({
         <p className="text-sm text-muted-foreground">{description}</p>
       </div>
     </div>
-  );
+  )
 }
 
 /** A collapsible panel showing every upload in the app, like a cloud drive. */
 function UploadQueuePanel({ className }: { className?: string }) {
-  const { uploader } = useUploadContext();
-  const summary = useUploadProgress(uploader);
-  const online = useNetworkStatus();
-  const [collapsed, setCollapsed] = React.useState(false);
-  const [dismissed, setDismissed] = React.useState(false);
-  const panelId = React.useId();
+  const { uploader } = useUploadContext()
+  const summary = useUploadProgress(uploader)
+  const online = useNetworkStatus()
+  const [collapsed, setCollapsed] = React.useState(false)
+  const [dismissed, setDismissed] = React.useState(false)
+  const panelId = React.useId()
 
   // A new upload brings the panel back.
-  const [lastTotal, setLastTotal] = React.useState(summary.total);
+  const [lastTotal, setLastTotal] = React.useState(summary.total)
   if (summary.total !== lastTotal) {
-    setLastTotal(summary.total);
-    if (summary.total > lastTotal) setDismissed(false);
+    setLastTotal(summary.total)
+    if (summary.total > lastTotal) setDismissed(false)
   }
 
-  if (summary.total === 0 || dismissed) return null;
+  if (summary.total === 0 || dismissed) return null
 
   const title = summary.isUploading
     ? `Uploading ${summary.counts.uploading + summary.counts.queued} file${summary.counts.uploading + summary.counts.queued === 1 ? "" : "s"}`
     : summary.counts.paused > 0
       ? `${summary.counts.paused} paused`
-      : `${summary.counts.success} upload${summary.counts.success === 1 ? "" : "s"} complete`;
+      : `${summary.counts.success} upload${summary.counts.success === 1 ? "" : "s"} complete`
 
   return (
     <section
@@ -143,17 +142,14 @@ function UploadQueuePanel({ className }: { className?: string }) {
       data-slot="upload-queue-panel"
       className={cn(
         "fixed inset-x-4 bottom-4 z-40 flex animate-in flex-col overflow-hidden rounded-xl border bg-popover text-popover-foreground shadow-lg duration-200 fade-in-0 slide-in-from-bottom-4 motion-reduce:animate-none sm:inset-x-auto sm:right-4 sm:w-96",
-        className,
+        className
       )}
     >
       <header className="flex items-center gap-2 border-b px-3 py-2">
         <div className="flex min-w-0 flex-1 flex-col gap-1.5">
           <div className="flex items-center gap-2 text-sm font-medium">
             {!online ? (
-              <RiWifiOffLine
-                className="size-3.5 text-muted-foreground"
-                aria-label="Offline"
-              />
+              <RiWifiOffLine className="size-3.5 text-muted-foreground" aria-label="Offline" />
             ) : null}
             <span className="truncate">{title}</span>
             {summary.isUploading ? (
@@ -172,9 +168,7 @@ function UploadQueuePanel({ className }: { className?: string }) {
           aria-controls={panelId}
           onClick={() => setCollapsed((value) => !value)}
         >
-          <RiArrowDownSLine
-            className={cn("transition-transform", collapsed && "rotate-180")}
-          />
+          <RiArrowDownSLine className={cn("transition-transform", collapsed && "rotate-180")} />
         </NativeButton>
         {summary.isUploading ? null : (
           <NativeButton
@@ -183,7 +177,8 @@ function UploadQueuePanel({ className }: { className?: string }) {
             aria-label="Close uploads"
             onClick={() => setDismissed(true)}
           >
-            <RiCloseLine />
+            <RiCloseLine
+            />
           </NativeButton>
         )}
       </header>
@@ -195,7 +190,7 @@ function UploadQueuePanel({ className }: { className?: string }) {
         <UploadQueue variant="default" size="sm" />
       </div>
     </section>
-  );
+  )
 }
 
 export {
@@ -203,4 +198,4 @@ export {
   UploadProvider,
   UploadQueuePanel,
   type UploadProviderProps,
-};
+}

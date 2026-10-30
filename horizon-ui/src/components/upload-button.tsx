@@ -1,17 +1,17 @@
-"use client";
+"use client"
 
-import * as React from "react";
+import * as React from "react"
 import {
   type UploadAdapter,
   type Uploader,
   type UploadItem as UploadItemData,
   type ValidationOptions,
-} from "@uploadcn/core";
+} from "@uploadcn/core"
 import {
   useUploadContext,
   useUploadProgress,
   type UploadRootProps,
-} from "@uploadcn/react";
+} from "@uploadcn/react"
 import {
   Upload,
   UploadItem,
@@ -24,22 +24,22 @@ import {
   UploadList,
   UploadSpinner,
   UploadTrigger,
-} from "@/components/upload";
-import { RiUploadLine, RiCheckboxCircleFill } from "@remixicon/react";
+} from "@/components/ui/upload"
+import { RiUploadLine, RiCheckboxCircleFill } from "@remixicon/react"
 
 interface UploadButtonProps<TResult> extends Pick<
   ValidationOptions,
   "accept" | "maxSize" | "maxFiles"
 > {
-  adapter?: UploadAdapter<TResult>;
+  adapter?: UploadAdapter<TResult>
   /** Use an uploader you created with `useUploader` instead of options. */
-  uploader?: Uploader<TResult>;
-  multiple?: boolean;
-  children?: React.ReactNode;
+  uploader?: Uploader<TResult>
+  multiple?: boolean
+  children?: React.ReactNode
   /** Show the uploaded files under the button. Default `true`. */
-  showQueue?: boolean;
-  onSuccess?: (item: UploadItemData<TResult>) => void;
-  className?: string;
+  showQueue?: boolean
+  onSuccess?: (item: UploadItemData<TResult>) => void
+  className?: string
 }
 
 /** A single button that uploads and reports progress inline. */
@@ -82,19 +82,19 @@ function UploadButton<TResult = unknown>({
         </UploadList>
       ) : null}
     </Upload>
-  );
+  )
 }
 
 function UploadButtonStatus() {
-  const { uploader } = useUploadContext();
-  const summary = useUploadProgress(uploader);
+  const { uploader } = useUploadContext()
+  const summary = useUploadProgress(uploader)
   if (summary.isUploading) {
     return (
       <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground tabular-nums">
         <UploadSpinner />
         {Math.round(summary.percent)}%
       </span>
-    );
+    )
   }
   if (summary.isComplete) {
     return (
@@ -102,9 +102,9 @@ function UploadButtonStatus() {
         <RiCheckboxCircleFill className="size-4 text-foreground" aria-hidden />
         Done
       </span>
-    );
+    )
   }
-  return null;
+  return null
 }
 
-export { UploadButton, type UploadButtonProps };
+export { UploadButton, type UploadButtonProps }
