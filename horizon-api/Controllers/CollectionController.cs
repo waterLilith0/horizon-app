@@ -115,11 +115,12 @@ namespace horizon_api.Controllers
         }
 
         /// <summary>Get a collection</summary>
-        /// <remarks>Returns a collection owned by the current user, or a public collection.</remarks>
+        /// <remarks>Returns a collection owned by the current user, or a public collection. Works without logging in for public collections.</remarks>
         /// <param name="collectionId">The collection ID.</param>
         /// <response code="200">The collection.</response>
         /// <response code="404">Collection not found.</response>
         [HttpGet("{collectionId:long:min(1)}")]
+        [AllowAnonymous]
         [ProducesResponseType<Collection>(StatusCodes.Status200OK)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<Collection>> GetCollectionById([FromRoute] long collectionId, CancellationToken cancellationToken)
@@ -145,15 +146,16 @@ namespace horizon_api.Controllers
 
         /// <summary>List Collection</summary>
         /// <remarks>Returns a page of collections owned by the current user, or public collections, ordered by ID. 
-        /// Each collection includes the author's username.</remarks>
+        /// Each collection includes the author's username. Works without logging in, in which case only public collections are returned.</remarks>
         /// <param name="page">Page number, starting at 1.</param>
         /// <param name="pageSize">Number of collections per page (1-100).</param>
-        /// <param name="scope">all (default), owned, or others (public collections of other users).</param>
+        /// <param name="scope">all (default), owned, or others (public collections of other users). Without logging in, only public collections exist for you, so owned returns nothing.</param>
         /// <param name="userId">Only return collections created by this user ID.</param>
         /// <param name="search">Partial match (contains) on the collection name.</param>
         /// <response code="200">The page of collections.</response>
         /// <response code="400">Invalid paging values.</response>
         [HttpGet]
+        [AllowAnonymous]
         [ProducesResponseType<IReadOnlyList<Collection>>(StatusCodes.Status200OK)]
         [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<IReadOnlyList<Collection>>> GetAllCollections(

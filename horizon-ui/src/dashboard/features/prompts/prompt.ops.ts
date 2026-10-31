@@ -4,13 +4,14 @@ import type { LocalPrompt } from "./prompt.schema";
 
 export function addPrompt(
   library: Library,
-  prompt: Pick<LocalPrompt, "promptText" | "type" | "collectionId">,
+  prompt: Pick<LocalPrompt, "promptText" | "type" | "collectionIds">,
 ): Library {
   const created: LocalPrompt = {
     ...prompt,
     id: crypto.randomUUID(),
     public: false,
     creationDate: new Date().toISOString(),
+    syncedCollectionIds: [],
   };
   return { ...library, prompts: [...library.prompts, created] };
 }
@@ -28,17 +29,26 @@ export function updatePrompt(
   };
 }
 
-// Membership is compared against the server separately, so a move is not an
-// edit. Without a collection the prompt stands on its own.
-export function movePrompt(
+// Membership is compared against the server separately, so joining or leaving
+// a collection is not an edit.
+export function setMembership(
   library: Library,
-  id: string,
-  collectionId: string | undefined,
+  ids: string[],
+  collectionId: string,
+  member: boolean,
 ): Library {
   return {
     ...library,
     prompts: library.prompts.map((prompt) =>
-      prompt.id === id ? { ...prompt, collectionId } : prompt,
+      ids.includes(prompt.id) &&
+      prompt.collectionIds.includes(collectionId) !== member
+        ? {
+            ...prompt,
+            collectionIds: member
+              ? [...prompt.collectionIds, collectionId]
+              : prompt.collectionIds.filter((id) => id !== collectionId),
+          }
+        : prompt,
     ),
   };
 }

@@ -16,9 +16,10 @@ import { exclusive, type LibraryAccess } from "./sync.access";
 import {
   applyCollectionState,
   applyPromptState,
+  applySyncedMembership,
   dequeueDeletion,
   queueServerCopy,
-  serverCollectionOf,
+  serverCollectionsOf,
 } from "./sync.state";
 
 // Local state only changes from what the server confirms, so every upload
@@ -43,29 +44,11 @@ async function pushCollection(collection: LocalCollection, isPublic: boolean) {
   return { serverId: collection.serverId, public: updated.public };
 }
 
-async function relink(
-  promptId: number,
-  from: number | undefined,
-  to: number | undefined,
-) {
-  if (from === to) return;
-  if (from !== undefined) {
-    okOrMissing(
-      await deleteApiCollectionCollectionIdPromptsPromptId(from, promptId),
-    );
-  }
-  if (to !== undefined) {
-    const res = await postApiCollectionCollectionIdPromptsPromptId(
-      to,
-      promptId,
-    );
-    if (res.status !== 409) ok(res);
-  }
-}
-
+// A new prompt can be created in one collection right away, the others are
+// joined afterwards.
 async function pushPrompt(
   prompt: LocalPrompt,
-  collectionServerId: number | undefined,
+  firstCollection: number | undefined,
   isPublic: boolean,
 ) {
   if (prompt.serverId === undefined) {
@@ -73,14 +56,15 @@ async function pushPrompt(
       await postApiPrompt({
         promptText: prompt.promptText,
         type: prompt.type,
-        collectionId: collectionServerId,
+        collectionId: firstCollection,
         public: isPublic,
       }),
     );
     return {
       serverId: Number(created.promptId),
       public: created.public,
-      syncedCollectionId: collectionServerId,
+      syncedCollectionIds:
+        firstCollection === undefined ? [] : [firstCollection],
     };
   }
   // The update also carries any pending local edit to the text or type.
@@ -91,12 +75,41 @@ async function pushPrompt(
       public: isPublic,
     }),
   );
-  await relink(prompt.serverId, prompt.syncedCollectionId, collectionServerId);
-  return {
-    serverId: prompt.serverId,
-    public: updated.public,
-    syncedCollectionId: collectionServerId,
-  };
+  return { serverId: prompt.serverId, public: updated.public };
+}
+
+// Leaves and joins collections until the server has the prompt where the
+// library does. Each confirmed change is kept, so a failure part-way is
+// continued by the next sync.
+async function syncMembership(access: LibraryAccess, id: string) {
+  const library = access.get();
+  const prompt = library.prompts.find((p) => p.id === id);
+  if (prompt?.serverId === undefined) return;
+
+  const wanted = serverCollectionsOf(library, prompt);
+  for (const collectionId of prompt.syncedCollectionIds) {
+    if (wanted.includes(collectionId)) continue;
+    okOrMissing(
+      await deleteApiCollectionCollectionIdPromptsPromptId(
+        collectionId,
+        prompt.serverId,
+      ),
+    );
+    access.update((current) =>
+      applySyncedMembership(current, id, collectionId, false),
+    );
+  }
+  for (const collectionId of wanted) {
+    if (prompt.syncedCollectionIds.includes(collectionId)) continue;
+    const res = await postApiCollectionCollectionIdPromptsPromptId(
+      collectionId,
+      prompt.serverId,
+    );
+    if (res.status !== 409) ok(res);
+    access.update((current) =>
+      applySyncedMembership(current, id, collectionId, true),
+    );
+  }
 }
 
 // An item deleted while its first upload was under way had no server id to
@@ -137,7 +150,7 @@ export async function uploadCollection(
   }
 }
 
-// Uploads a prompt as it is now: its text, its collection, its visibility.
+// Uploads a prompt as it is now: its text, its collections, its visibility.
 export async function uploadPrompt(
   access: LibraryAccess,
   id: string,
@@ -149,7 +162,7 @@ export async function uploadPrompt(
 
   const state = await pushPrompt(
     prompt,
-    serverCollectionOf(library, prompt),
+    serverCollectionsOf(library, prompt).at(0),
     isPublic ?? prompt.public,
   );
   access.update((current) => applyPromptState(current, id, state, prompt));
@@ -160,7 +173,9 @@ export async function uploadPrompt(
     await discardServerCopy(access, "promptIds", state.serverId, (serverId) =>
       deleteApiPromptPromptId(serverId),
     );
+    return;
   }
+  await syncMembership(access, id);
 }
 
 export const setPromptPublished = (

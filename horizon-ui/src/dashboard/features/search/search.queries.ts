@@ -1,18 +1,45 @@
 import {
   getApiCollection,
   getApiCollectionAllCollectionId,
+  getApiLibraryVersionPublic,
   getApiPrompt,
   ListScope,
   type GetApiPromptParams,
 } from "@/api/generated/public/horizonAPI";
 import { ok } from "@/api/http";
+import { PUBLIC_POLL_MS } from "@/api/polling";
 import {
   queryOptions,
   useInfiniteQuery,
   useQuery,
+  useQueryClient,
 } from "@tanstack/react-query";
 
 const PAGE_SIZE = 20;
+
+// What the public lists were at the last check.
+let lastPublicVersion: string | undefined;
+
+// Checks now and then whether anything public changed, and has everything
+// found refreshed when it did. The query only schedules the check: it pauses
+// while the tab is hidden, and catches up on return.
+export function useRefreshOnPublicChange() {
+  const queryClient = useQueryClient();
+  useQuery({
+    queryKey: ["public-version"],
+    queryFn: async ({ signal }) => {
+      const { version } = ok(await getApiLibraryVersionPublic({ signal }));
+      if (lastPublicVersion !== undefined && lastPublicVersion !== version) {
+        void queryClient.invalidateQueries({ queryKey: ["search"] });
+      }
+      lastPublicVersion = version;
+      return version;
+    },
+    staleTime: PUBLIC_POLL_MS,
+    refetchInterval: PUBLIC_POLL_MS,
+    retry: false,
+  });
+}
 
 export type SearchFilter = Pick<GetApiPromptParams, "search" | "userId">;
 type PageParams = Pick<

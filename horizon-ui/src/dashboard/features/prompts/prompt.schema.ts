@@ -9,15 +9,16 @@ export type LocalPrompt = Pick<ApiPrompt, "promptText" | "type" | "public"> &
   Synced & {
     id: string;
     creationDate: ApiPrompt["creationDate"];
-    collectionId?: string;
-    syncedCollectionId?: number;
+    // A prompt can be in any number of collections, and in none.
+    collectionIds: string[];
+    // The server ids of the collections it was in as of the last sync.
+    syncedCollectionIds: number[];
   };
 
-// What the server confirms about a prompt after an upload.
-export type PromptState = Pick<
-  LocalPrompt,
-  "serverId" | "public" | "syncedCollectionId"
->;
+// What the server confirms about a prompt after an upload. Its collections
+// are only part of it when the upload decided them.
+export type PromptState = Pick<LocalPrompt, "serverId" | "public"> &
+  Partial<Pick<LocalPrompt, "syncedCollectionIds">>;
 
 export const PromptTextSchema = z
   .string()
@@ -31,7 +32,7 @@ export const LocalPromptSchema = z.object({
   type: z.string().trim().min(1).max(FIELD_MAX),
   public: z.boolean(),
   creationDate: z.string(),
-  collectionId: z.string().optional(),
-  syncedCollectionId: z.number().int().optional(),
+  collectionIds: z.array(z.string()),
+  syncedCollectionIds: z.array(z.number().int()),
   ...syncedShape,
 }) satisfies z.ZodType<LocalPrompt>;

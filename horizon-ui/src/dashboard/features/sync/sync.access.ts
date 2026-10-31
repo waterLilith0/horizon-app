@@ -12,6 +12,8 @@ type Update = (change: (library: Library) => Library) => void;
 // Once the account changes, an access is dead: queued actions stop and answers
 // that arrive late are dropped, as their ids belong to the previous account.
 export interface LibraryAccess {
+  // Who the actions are for.
+  account: UserProfile["userId"] | undefined;
   get: () => Library;
   update: Update;
 }
@@ -33,6 +35,7 @@ export function useLibraryAccess(): LibraryAccess {
   }
 
   return {
+    account: userId,
     get: () => {
       assertSameAccount();
       return store.get(libraryAtom);

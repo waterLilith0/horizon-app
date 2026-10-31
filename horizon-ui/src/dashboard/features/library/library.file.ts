@@ -2,6 +2,7 @@ import type { LocalCollection } from "../collections/collection.schema";
 import type { LocalPrompt } from "../prompts/prompt.schema";
 import {
   LibraryFileSchema,
+  upgradePrompts,
   type Library,
   type LibraryFile,
 } from "./library.schema";
@@ -17,7 +18,9 @@ export function collectionToFile(
 ): LibraryFile {
   return toFile(
     [collection],
-    library.prompts.filter((p) => p.collectionId === collection.id),
+    library.prompts
+      .filter((p) => p.collectionIds.includes(collection.id))
+      .map((p) => ({ ...p, collectionIds: [collection.id] })),
   );
 }
 
@@ -25,7 +28,7 @@ export function collectionToFile(
 export function promptsToFile(prompts: LocalPrompt[]): LibraryFile {
   return toFile(
     [],
-    prompts.map((p) => ({ ...p, collectionId: undefined })),
+    prompts.map((p) => ({ ...p, collectionIds: [] })),
   );
 }
 
@@ -36,7 +39,7 @@ export function parseLibraryFile(text: string): LibraryFile {
   } catch {
     throw new Error("This file is not valid JSON.");
   }
-  const result = LibraryFileSchema.safeParse(json);
+  const result = LibraryFileSchema.safeParse(upgradePrompts(json));
   if (!result.success) {
     const [issue] = result.error.issues;
     const where = issue?.path.length ? `${issue.path.join(".")}: ` : "";

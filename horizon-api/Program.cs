@@ -158,7 +158,7 @@ namespace horizon_api
                         {
                             return RateLimitPartition.GetFixedWindowLimiter($"user:{userId}", _ => new FixedWindowRateLimiterOptions
                             {
-                                PermitLimit = 300,
+                                PermitLimit = 600,
                                 Window = TimeSpan.FromMinutes(1),
                                 QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
                                 QueueLimit = 15,
@@ -168,7 +168,7 @@ namespace horizon_api
 
                         return RateLimitPartition.GetFixedWindowLimiter($"ip:{ClientIp(ctx)}", _ => new FixedWindowRateLimiterOptions
                         {
-                            PermitLimit = 60,
+                            PermitLimit = 150,
                             Window = TimeSpan.FromMinutes(1),
                             QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
                             QueueLimit = 5,
@@ -239,6 +239,7 @@ namespace horizon_api
                     });
                 builder.Services.AddAuthorization();
                 builder.Services.AddControllers();
+                builder.Services.AddMemoryCache();
                 builder.Services.AddSingleton<SqlQueryStore>();
                 builder.Services.AddSingleton<IPasswordService, PasswordService>();
                 builder.Services.AddMySqlDataSource(connectionString!);

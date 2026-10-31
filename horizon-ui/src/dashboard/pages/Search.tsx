@@ -4,6 +4,7 @@ import { RiCloseLine, RiSearchLine } from "@remixicon/react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { Author } from "../features/search/search.author";
+import { useRefreshOnPublicChange } from "../features/search/search.queries";
 import {
   CollectionResults,
   PromptResults,
@@ -13,6 +14,7 @@ import Page from "../layout/Page";
 const KINDS = ["collections", "prompts"] as const;
 
 export default function Search() {
+  useRefreshOnPublicChange();
   const [kind, setKind] = useState<(typeof KINDS)[number]>("collections");
   // What is typed is only searched for once submitted.
   const [draft, setDraft] = useState("");

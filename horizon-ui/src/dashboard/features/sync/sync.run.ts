@@ -5,20 +5,23 @@ import {
 import { okOrMissing } from "@/api/http";
 import type { Library } from "../library/library.schema";
 import { exclusive, type LibraryAccess } from "./sync.access";
-import { dequeueDeletion, serverCollectionOf } from "./sync.state";
+import { dequeueDeletion, membershipDiffers } from "./sync.state";
+import { pullLibrary } from "./sync.pull";
 import { uploadCollection, uploadPrompt } from "./sync.upload";
 
 const collectionsToCreate = (library: Library) =>
   library.collections.filter((c) => c.serverId === undefined);
 
-// Prompts that differ from the server: not uploaded yet, edited, or in a
-// different collection than the server has them in.
+// Prompts that differ from the server: not uploaded yet, edited, or in other
+// collections than the server has them in. One the server lost has nothing to
+// update, until the user decides what happens to it.
 const promptsToPush = (library: Library) =>
   library.prompts.filter(
     (p) =>
-      p.serverId === undefined ||
-      p.dirty === true ||
-      serverCollectionOf(library, p) !== p.syncedCollectionId,
+      !p.missing &&
+      (p.serverId === undefined ||
+        p.dirty === true ||
+        membershipDiffers(library, p)),
   );
 
 export function countPendingChanges(library: Library): number {
@@ -32,36 +35,28 @@ export function countPendingChanges(library: Library): number {
 
 const deleteOnServer = {
   promptIds: (id: number) => deleteApiPromptPromptId(id),
-  collectionIds: (id: number) =>
-    deleteApiCollectionCollectionId(id, { deletePrompts: true }),
+  collectionIds: (id: number) => deleteApiCollectionCollectionId(id),
 };
-
-// Uploads what differs from the server until nothing is left, since the library
-// can change while uploads are under way. Collections go first, so prompts can
-// join them as they are uploaded.
-async function pushPending(access: LibraryAccess) {
-  for (let library = access.get(); ; library = access.get()) {
-    const collections = collectionsToCreate(library);
-    const prompts = promptsToPush(library);
-    if (collections.length + prompts.length === 0) return;
-    for (const { id } of collections) await uploadCollection(access, id);
-    for (const { id } of prompts) await uploadPrompt(access, id);
-  }
-}
 
 // Brings the server in line with the library. New items arrive private, as
 // publishing is a separate step.
 export function syncLibrary(access: LibraryAccess) {
   return exclusive(async () => {
-    await pushPending(access);
+    // Collections first, so prompts can join them as they are uploaded.
+    for (const { id } of collectionsToCreate(access.get())) {
+      await uploadCollection(access, id);
+    }
+    for (const { id } of promptsToPush(access.get())) {
+      await uploadPrompt(access, id);
+    }
+    // Deleting a collection never deletes its prompts on the server, so each
+    // prompt that is meant to go is deleted on its own.
     for (const kind of ["promptIds", "collectionIds"] as const) {
       for (const id of access.get().deleted[kind]) {
-        // A prompt moved out of a collection has to leave it first, or
-        // deleting the collection would delete the prompt too.
-        if (kind === "collectionIds") await pushPending(access);
         okOrMissing(await deleteOnServer[kind](id));
         access.update((current) => dequeueDeletion(current, kind, id));
       }
     }
+    await pullLibrary(access);
   });
 }

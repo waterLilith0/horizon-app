@@ -30,32 +30,62 @@ export const LibrarySchema = z.object({
 }) satisfies z.ZodType<Library>;
 
 // What leaves the app and comes back in: no server ids, visibility or sync
-// state, so an import always starts private and unsynced. A prompt either
-// belongs to a collection in the same file, or has none and joins whichever
-// collection it is imported into.
+// state, so an import always starts private and unsynced. A prompt belongs to
+// the collections in the same file that it lists. One that lists none joins
+// whichever collection it is imported into.
 export const LibraryFileSchema = z
   .object({
     version: z.literal(1),
     collections: z.array(
-      LocalCollectionSchema.omit({ public: true, serverId: true, dirty: true }),
+      LocalCollectionSchema.omit({
+        public: true,
+        serverId: true,
+        dirty: true,
+        missing: true,
+      }),
     ),
     prompts: z.array(
       LocalPromptSchema.omit({
         public: true,
         serverId: true,
         dirty: true,
-        syncedCollectionId: true,
+        missing: true,
+        syncedCollectionIds: true,
       }),
     ),
   })
   .refine(
     (file) => {
       const ids = new Set(file.collections.map((c) => c.id));
-      return file.prompts.every(
-        (p) => p.collectionId === undefined || ids.has(p.collectionId),
+      return file.prompts.every((p) =>
+        p.collectionIds.every((id) => ids.has(id)),
       );
     },
     { message: "A prompt belongs to a collection that is not in the file." },
   );
 
 export type LibraryFile = z.infer<typeof LibraryFileSchema>;
+
+// Libraries and files from when a prompt could be in one collection only.
+export function upgradePrompts(json: unknown): unknown {
+  if (typeof json !== "object" || json === null) return json;
+  const { prompts, ...rest } = json as Record<string, unknown>;
+  return {
+    ...rest,
+    prompts: Array.isArray(prompts) ? prompts.map(upgradePrompt) : prompts,
+  };
+}
+
+function upgradePrompt(prompt: unknown) {
+  if (typeof prompt !== "object" || prompt === null) return prompt;
+  const { collectionId, syncedCollectionId, ...rest } = prompt as Record<
+    string,
+    unknown
+  >;
+  return {
+    collectionIds: collectionId === undefined ? [] : [collectionId],
+    syncedCollectionIds:
+      syncedCollectionId === undefined ? [] : [syncedCollectionId],
+    ...rest,
+  };
+}

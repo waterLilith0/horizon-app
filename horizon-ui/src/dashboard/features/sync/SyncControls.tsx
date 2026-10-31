@@ -15,6 +15,7 @@ export default function SyncControls() {
   const setLibrary = useSetAtom(libraryAtom);
   const { changes, running, error, sync } = useLibrarySync(
     linked?.auto === true,
+    linked?.userId,
   );
 
   if (userId === undefined) return null;

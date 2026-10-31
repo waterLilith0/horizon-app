@@ -10,9 +10,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Field, FieldLabel } from "@/components/ui/field";
+import { withId } from "@/shared/format";
 import type { LocalCollection } from "../collections/collection.schema";
 import PublishButton from "../sync/PublishButton";
-import MovePromptMenu from "./MovePromptMenu";
+import PromptCollectionsMenu from "./PromptCollectionsMenu";
 import { PROMPT_TYPES, type LocalPrompt } from "./prompt.schema";
 import PromptTextCell from "./PromptTextCell";
 import type { PromptTableFeatures } from "./PromptTable";
@@ -20,7 +21,7 @@ import type { PromptTableFeatures } from "./PromptTable";
 interface PromptColumnHandlers {
   updateText: (id: string, text: string) => void;
   updateType: (id: string, type: LocalPrompt["type"]) => void;
-  movePrompt: (id: string, collectionId: string | undefined) => void;
+  toggleCollection: (id: string, collectionId: string, member: boolean) => void;
   publishPrompt: (prompt: LocalPrompt, isPublic: boolean) => Promise<void>;
   deletePrompt: (id: string) => void;
 }
@@ -35,7 +36,7 @@ export function createPromptColumns(
   {
     updateText,
     updateType,
-    movePrompt,
+    toggleCollection,
     publishPrompt,
     deletePrompt,
   }: PromptColumnHandlers,
@@ -105,10 +106,12 @@ export function createPromptColumns(
     ...(showCollection
       ? [
           columnHelper.display({
-            header: "Collection",
+            header: "Collections",
             cell: ({ row }) =>
-              collections.find((c) => c.id === row.original.collectionId)
-                ?.name ?? "—",
+              collections
+                .filter((c) => row.original.collectionIds.includes(c.id))
+                .map((c) => withId(c.name, c.serverId))
+                .join(", ") || "—",
           }),
         ]
       : []),
@@ -131,14 +134,16 @@ export function createPromptColumns(
       header: "Action",
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
-          <MovePromptMenu
-            label="Move to collection"
+          <PromptCollectionsMenu
+            label="Collections"
             iconOnly
-            collections={collections.filter(
-              (c) => c.id !== row.original.collectionId,
-            )}
-            canRemove={row.original.collectionId !== undefined}
-            onMove={(collectionId) => movePrompt(row.original.id, collectionId)}
+            collections={collections}
+            isMember={(collectionId) =>
+              row.original.collectionIds.includes(collectionId)
+            }
+            onToggle={(collectionId, member) =>
+              toggleCollection(row.original.id, collectionId, member)
+            }
           />
           <PublishButton
             iconOnly
