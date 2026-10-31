@@ -4,6 +4,15 @@ on:
   push:
     branches: [dev, staging, master]
 
+permissions:
+  contents: read
+
+# One deploy per branch at a time, so two quick pushes can't race to push the
+# same image tag. A running deploy is never cancelled, the next one waits.
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
 env:
   FRONTEND_IMAGE: ${{ secrets.DOCKER_USERNAME }}/horizonapp-frontend
   BACKEND_IMAGE: ${{ secrets.DOCKER_USERNAME }}/horizonapp-backend
