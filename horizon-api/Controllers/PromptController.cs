@@ -16,8 +16,8 @@ namespace horizon_api.Controllers
     [Produces("application/json")]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
     public class PromptController(
-        SqlQueryStore sqlQueryStore, 
-        MySqlDataSource dataSource, 
+        SqlQueryStore sqlQueryStore,
+        MySqlDataSource dataSource,
         ILogger<PromptController> logger) : ControllerBase
     {
         private const int MaxTextLength = 255;
@@ -65,7 +65,7 @@ namespace horizon_api.Controllers
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status500InternalServerError)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<CreatePromptResponse>> PostCreate(
-            [FromBody] CreatePromptDto promptDto, 
+            [FromBody] CreatePromptDto promptDto,
             CancellationToken cancellationToken)
         {
             logger.LogDebug("Create action called in PromptController with: {@PromptDto}", promptDto);
@@ -127,7 +127,7 @@ namespace horizon_api.Controllers
         {
             logger.LogDebug("GetPrompt called for prompt {PromptId}", promptId);
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
-            var sql = sqlQueryStore.Get("GetById"); 
+            var sql = sqlQueryStore.Get("GetById");
             var userId = long.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
             var command = new CommandDefinition(sql, new { promptId, userId }, cancellationToken: cancellationToken);
             var prompt = await connection.QuerySingleOrDefaultAsync<Prompt>(command);
@@ -160,10 +160,10 @@ namespace horizon_api.Controllers
         [ProducesResponseType<IReadOnlyList<Prompt>>(StatusCodes.Status200OK)]
         [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<IReadOnlyList<Prompt>>> GetAllPrompts(
-            [FromQuery, Range(1, int.MaxValue)] int page = 1, 
-            [FromQuery, Range(1, 100)] int pageSize = 50, 
-            [FromQuery] ListScope scope = ListScope.All, 
-            [FromQuery] bool includeCollectionIds = false, 
+            [FromQuery, Range(1, int.MaxValue)] int page = 1,
+            [FromQuery, Range(1, 100)] int pageSize = 50,
+            [FromQuery] ListScope scope = ListScope.All,
+            [FromQuery] bool includeCollectionIds = false,
             [FromQuery] long? userId = null,
             [FromQuery, StringLength(100)] string? search = null,
             CancellationToken cancellationToken = default)
@@ -172,13 +172,14 @@ namespace horizon_api.Controllers
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
             var sql = sqlQueryStore.Get("GetAll");
             var currentUserId = long.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            var command = new CommandDefinition(sql, new { 
-                pageSize, 
-                offset = (long)(page - 1) * pageSize, 
-                userId = currentUserId, 
+            var command = new CommandDefinition(sql, new
+            {
+                pageSize,
+                offset = (long)(page - 1) * pageSize,
+                userId = currentUserId,
                 authorId = userId,
                 search = string.IsNullOrWhiteSpace(search) ? null : search.Trim(),
-                scope = scope.ToString().ToLowerInvariant() 
+                scope = scope.ToString().ToLowerInvariant()
             }, cancellationToken: cancellationToken);
             var allPrompts = (await connection.QueryAsync<Prompt>(command)).AsList();
 
@@ -213,8 +214,9 @@ namespace horizon_api.Controllers
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
 
             var sql = sqlQueryStore.Get("GetRandomPrompt");
-            var command = new CommandDefinition(sql, new { 
-                collectionId, 
+            var command = new CommandDefinition(sql, new
+            {
+                collectionId,
                 userId = long.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!)
             }, cancellationToken: cancellationToken);
 
@@ -248,19 +250,20 @@ namespace horizon_api.Controllers
         [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> PostEdit(
-            [FromRoute] long promptId, 
-            [FromBody] UpdatePromptDto promptDto, 
+            [FromRoute] long promptId,
+            [FromBody] UpdatePromptDto promptDto,
             CancellationToken cancellationToken)
         {
             logger.LogDebug("Edit called for prompt {PromptId}", promptId);
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
 
             var sql = sqlQueryStore.Get("PostUpdateById");
-            var command = new CommandDefinition(sql, new { 
-                promptId, 
-                promptDto.PromptText, 
-                promptDto.Type, 
-                promptDto.Public, 
+            var command = new CommandDefinition(sql, new
+            {
+                promptId,
+                promptDto.PromptText,
+                promptDto.Type,
+                promptDto.Public,
                 userId = long.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!)
             }, cancellationToken: cancellationToken);
             var updatedPrompt = await connection.QuerySingleOrDefaultAsync<Prompt>(command);
@@ -291,18 +294,19 @@ namespace horizon_api.Controllers
         [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> SetVisibility(
-            [FromRoute] long promptId, 
-            [FromBody] VisibilityDto dto, 
+            [FromRoute] long promptId,
+            [FromBody] VisibilityDto dto,
             CancellationToken cancellationToken)
         {
             logger.LogDebug("SetVisibility called for prompt {PromptId} (public: {Public})", promptId, dto.Public);
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
 
             var userId = long.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            var command = new CommandDefinition(sqlQueryStore.Get("SetVisibility"), new { 
-                promptId, 
-                @public = dto.Public, 
-                userId 
+            var command = new CommandDefinition(sqlQueryStore.Get("SetVisibility"), new
+            {
+                promptId,
+                @public = dto.Public,
+                userId
             }, cancellationToken: cancellationToken);
             var prompt = await connection.QuerySingleOrDefaultAsync<Prompt>(command);
 

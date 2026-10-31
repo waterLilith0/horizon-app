@@ -1,4 +1,4 @@
-using Grafana.OpenTelemetry;
+﻿using Grafana.OpenTelemetry;
 using horizon_api.Infrastructure;
 using horizon_api.Infrastructure.Email;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -66,17 +66,17 @@ namespace horizon_api
 
         internal static void Main(string[] args)
         {
-        Log.Logger = new LoggerConfiguration()
-                .Enrich.FromLogContext()
-                .Enrich.WithSpan()
-                .WriteTo.Console(outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level}] {Message:lj}{Exception}{NewLine}")
-                .WriteTo.File("./logs/log-.log", rollingInterval: RollingInterval.Day)
-                .WriteTo.OpenTelemetry(options =>
-                {
-                    options.Endpoint = Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT") ?? "http://localhost:4317";
-                    options.Protocol = Serilog.Sinks.OpenTelemetry.OtlpProtocol.Grpc;
-                })
-                .CreateLogger();
+            Log.Logger = new LoggerConfiguration()
+                    .Enrich.FromLogContext()
+                    .Enrich.WithSpan()
+                    .WriteTo.Console(outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level}] {Message:lj}{Exception}{NewLine}")
+                    .WriteTo.File("./logs/log-.log", rollingInterval: RollingInterval.Day)
+                    .WriteTo.OpenTelemetry(options =>
+                    {
+                        options.Endpoint = Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT") ?? "http://localhost:4317";
+                        options.Protocol = Serilog.Sinks.OpenTelemetry.OtlpProtocol.Grpc;
+                    })
+                    .CreateLogger();
 
             Serilog.Debugging.SelfLog.Enable(Console.Error);
 
@@ -220,7 +220,7 @@ namespace horizon_api
                     });
                 builder.Services.AddAuthorization();
                 builder.Services.AddControllers();
-                builder.Services.AddSingleton<SqlQueryStore>(); 
+                builder.Services.AddSingleton<SqlQueryStore>();
                 builder.Services.AddSingleton<IPasswordService, PasswordService>();
                 builder.Services.AddMySqlDataSource(connectionString!);
 
@@ -242,18 +242,18 @@ namespace horizon_api
                     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", token);
                 });
 
-                builder.Services.AddOpenApi("public", o => 
-                    ConfigureOpenApi(o, 
-                    "Horizon API", 
-                    "v1.0.0", 
-                    "Create and share prompts, organise them into collections, and spin them on the wheel.", 
-                    ("Collection", "Named groups of prompts. Collections can be private or public."), 
+                builder.Services.AddOpenApi("public", o =>
+                    ConfigureOpenApi(o,
+                    "Horizon API",
+                    "v1.0.0",
+                    "Create and share prompts, organise them into collections, and spin them on the wheel.",
+                    ("Collection", "Named groups of prompts. Collections can be private or public."),
                     ("Prompt", "Prompts owned by a user. Public prompts can be used by other users.")));
-                builder.Services.AddOpenApi("internal", o => 
-                ConfigureOpenApi(o, 
-                    "Horizon Internal", 
-                    "v1.0.0", 
-                    "Account and session endpoints used by the Horizon app itself.", 
+                builder.Services.AddOpenApi("internal", o =>
+                ConfigureOpenApi(o,
+                    "Horizon Internal",
+                    "v1.0.0",
+                    "Account and session endpoints used by the Horizon app itself.",
                     ("Auth", "Registration, sign-in, email verification and password management.")
                     ));
 

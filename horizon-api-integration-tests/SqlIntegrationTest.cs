@@ -1,4 +1,4 @@
-using Dapper;
+﻿using Dapper;
 using FluentAssertions;
 using horizon_api.Infrastructure;
 using horizon_api.Shared;

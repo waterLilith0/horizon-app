@@ -1,4 +1,4 @@
-namespace horizon_api.Shared
+﻿namespace horizon_api.Shared
 {
     /// <summary>Which items a list endpoint returns for the current user.</summary>
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
