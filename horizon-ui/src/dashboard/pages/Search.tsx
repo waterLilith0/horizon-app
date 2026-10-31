@@ -3,7 +3,6 @@ import { Link } from "react-router";
 import { RiCloseLine, RiSearchLine } from "@remixicon/react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useCurrentUser } from "../features/auth/auth";
 import type { Author } from "../features/search/search.author";
 import {
   CollectionResults,
@@ -14,7 +13,6 @@ import Page from "../layout/Page";
 const KINDS = ["collections", "prompts"] as const;
 
 export default function Search() {
-  const { data: user, isPending } = useCurrentUser();
   const [kind, setKind] = useState<(typeof KINDS)[number]>("collections");
   // What is typed is only searched for once submitted.
   const [draft, setDraft] = useState("");
@@ -75,16 +73,7 @@ export default function Search() {
             </Button>
           )}
         </div>
-        {isPending ? (
-          <p>Loading…</p>
-        ) : user ? (
-          <Results filter={filter} onAuthor={setAuthor} />
-        ) : (
-          <p>
-            Log in from the menu to search what other users have published. Your
-            own library works without an account.
-          </p>
-        )}
+        <Results filter={filter} onAuthor={setAuthor} />
       </div>
     </Page>
   );
