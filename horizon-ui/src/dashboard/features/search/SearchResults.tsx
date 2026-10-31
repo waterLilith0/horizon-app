@@ -2,6 +2,7 @@ import { useState } from "react";
 import { RiArrowDownSLine, RiArrowUpSLine } from "@remixicon/react";
 import type { Collection, Prompt } from "@/api/generated/public/horizonAPI";
 import { Button } from "@/components/ui/button";
+import { withId } from "@/shared/format";
 import {
   Table,
   TableBody,
@@ -141,7 +142,9 @@ function CollectionResult({
   return (
     <li className="flex flex-col gap-2 rounded-md border p-2">
       <div className="flex items-center gap-2">
-        <span className="grow font-semibold">{collection.name}</span>
+        <span className="grow font-semibold">
+          {withId(collection.name, String(collection.collectionId))}
+        </span>
         <AuthorButton item={collection} onAuthor={onAuthor} />
         <Button
           type="button"

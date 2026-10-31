@@ -139,6 +139,14 @@ export interface CreatePromptResponse {
 }
 
 /**
+ * Response body for the library version.
+ */
+export interface LibraryVersionResponse {
+  /** An opaque value that changes whenever the user's prompts, collections or collection memberships change. */
+  version: string;
+}
+
+/**
  * Which items a list endpoint returns for the current user.
  */
 export type ListScope = typeof ListScope[keyof typeof ListScope];
@@ -235,7 +243,7 @@ export type GetApiCollectionParams = {
    * @pattern ^-?(?:0|[1-9]\d*)$
    */
   pageSize?: number | string;
-  /** all (default), owned, or others (public collections of other users). */
+  /** all (default), owned, or others (public collections of other users). Without logging in, only public collections exist for you, so owned returns nothing. */
   scope?: ListScope;
   /**
    * Only return collections created by this user ID.
@@ -466,7 +474,7 @@ export const getGetApiCollectionCollectionIdUrl = (collectionId: number,) => {
 }
 
 /**
- * Returns a collection owned by the current user, or a public collection.
+ * Returns a collection owned by the current user, or a public collection. Works without logging in for public collections.
  * @summary Get a collection
  */
 export const getApiCollectionCollectionId = async (collectionId: number, options?: RequestInit): Promise<getApiCollectionCollectionIdResponse> => {
@@ -841,7 +849,7 @@ export const getGetApiCollectionUrl = (params?: GetApiCollectionParams,) => {
 
 /**
  * Returns a page of collections owned by the current user, or public collections, ordered by ID.
- *     Each collection includes the author's username.
+ *     Each collection includes the author's username. Works without logging in, in which case only public collections are returned.
  * @summary List Collection
  */
 export const getApiCollection = async (params?: GetApiCollectionParams, options?: RequestInit): Promise<getApiCollectionResponse> => {
@@ -1404,6 +1412,264 @@ export function useGetApiCollectionAllCollectionId<TData = Awaited<ReturnType<ty
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetApiCollectionAllCollectionIdQueryOptions(collectionId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export type getApiLibraryVersionResponse200 = {
+  data: LibraryVersionResponse
+  status: 200
+}
+
+export type getApiLibraryVersionResponse401 = {
+  data: ProblemDetails
+  status: 401
+}
+
+export type getApiLibraryVersionResponseSuccess = (getApiLibraryVersionResponse200) & {
+  headers: Headers;
+};
+export type getApiLibraryVersionResponseError = (getApiLibraryVersionResponse401) & {
+  headers: Headers;
+};
+
+export type getApiLibraryVersionResponse = (getApiLibraryVersionResponseSuccess | getApiLibraryVersionResponseError)
+
+export const getGetApiLibraryVersionUrl = () => {
+
+
+
+
+  return `/api/Library/version`
+}
+
+/**
+ * Returns an opaque version of the current user's library (prompts, collections and which prompts are in which collection, including visibility).
+ *     Compare it with the previously stored value to see whether anything changed, instead of downloading the full lists. The value is cached per user for 1 second.
+ * @summary Get library version
+ */
+export const getApiLibraryVersion = async ( options?: RequestInit): Promise<getApiLibraryVersionResponse> => {
+
+  const res = await fetch(getGetApiLibraryVersionUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: getApiLibraryVersionResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as getApiLibraryVersionResponse
+}
+
+
+
+
+
+export const getGetApiLibraryVersionQueryKey = () => {
+    return [
+    `/api/Library/version`
+    ] as const;
+    }
+
+
+export const getGetApiLibraryVersionQueryOptions = <TData = Awaited<ReturnType<typeof getApiLibraryVersion>>, TError = ProblemDetails>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiLibraryVersion>>, TError, TData>>, fetch?: RequestInit}
+) => {
+
+const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetApiLibraryVersionQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiLibraryVersion>>> = ({ signal }) => getApiLibraryVersion({ signal, ...fetchOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getApiLibraryVersion>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetApiLibraryVersionQueryResult = NonNullable<Awaited<ReturnType<typeof getApiLibraryVersion>>>
+export type GetApiLibraryVersionQueryError = ProblemDetails
+
+
+export function useGetApiLibraryVersion<TData = Awaited<ReturnType<typeof getApiLibraryVersion>>, TError = ProblemDetails>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiLibraryVersion>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getApiLibraryVersion>>,
+          TError,
+          Awaited<ReturnType<typeof getApiLibraryVersion>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetApiLibraryVersion<TData = Awaited<ReturnType<typeof getApiLibraryVersion>>, TError = ProblemDetails>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiLibraryVersion>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getApiLibraryVersion>>,
+          TError,
+          Awaited<ReturnType<typeof getApiLibraryVersion>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetApiLibraryVersion<TData = Awaited<ReturnType<typeof getApiLibraryVersion>>, TError = ProblemDetails>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiLibraryVersion>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get library version
+ */
+
+export function useGetApiLibraryVersion<TData = Awaited<ReturnType<typeof getApiLibraryVersion>>, TError = ProblemDetails>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiLibraryVersion>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetApiLibraryVersionQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export type getApiLibraryVersionPublicResponse200 = {
+  data: LibraryVersionResponse
+  status: 200
+}
+
+export type getApiLibraryVersionPublicResponse401 = {
+  data: ProblemDetails
+  status: 401
+}
+
+export type getApiLibraryVersionPublicResponseSuccess = (getApiLibraryVersionPublicResponse200) & {
+  headers: Headers;
+};
+export type getApiLibraryVersionPublicResponseError = (getApiLibraryVersionPublicResponse401) & {
+  headers: Headers;
+};
+
+export type getApiLibraryVersionPublicResponse = (getApiLibraryVersionPublicResponseSuccess | getApiLibraryVersionPublicResponseError)
+
+export const getGetApiLibraryVersionPublicUrl = () => {
+
+
+
+
+  return `/api/Library/version/public`
+}
+
+/**
+ * Returns an opaque version of all public prompts, public collections and the links between them.
+ *     Works without logging in. The value is the same for everyone and is cached for a few seconds, so a change can take up to 3 seconds to show.
+ * @summary Get public library version
+ */
+export const getApiLibraryVersionPublic = async ( options?: RequestInit): Promise<getApiLibraryVersionPublicResponse> => {
+
+  const res = await fetch(getGetApiLibraryVersionPublicUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: getApiLibraryVersionPublicResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as getApiLibraryVersionPublicResponse
+}
+
+
+
+
+
+export const getGetApiLibraryVersionPublicQueryKey = () => {
+    return [
+    `/api/Library/version/public`
+    ] as const;
+    }
+
+
+export const getGetApiLibraryVersionPublicQueryOptions = <TData = Awaited<ReturnType<typeof getApiLibraryVersionPublic>>, TError = ProblemDetails>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiLibraryVersionPublic>>, TError, TData>>, fetch?: RequestInit}
+) => {
+
+const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetApiLibraryVersionPublicQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiLibraryVersionPublic>>> = ({ signal }) => getApiLibraryVersionPublic({ signal, ...fetchOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getApiLibraryVersionPublic>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetApiLibraryVersionPublicQueryResult = NonNullable<Awaited<ReturnType<typeof getApiLibraryVersionPublic>>>
+export type GetApiLibraryVersionPublicQueryError = ProblemDetails
+
+
+export function useGetApiLibraryVersionPublic<TData = Awaited<ReturnType<typeof getApiLibraryVersionPublic>>, TError = ProblemDetails>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiLibraryVersionPublic>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getApiLibraryVersionPublic>>,
+          TError,
+          Awaited<ReturnType<typeof getApiLibraryVersionPublic>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetApiLibraryVersionPublic<TData = Awaited<ReturnType<typeof getApiLibraryVersionPublic>>, TError = ProblemDetails>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiLibraryVersionPublic>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getApiLibraryVersionPublic>>,
+          TError,
+          Awaited<ReturnType<typeof getApiLibraryVersionPublic>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetApiLibraryVersionPublic<TData = Awaited<ReturnType<typeof getApiLibraryVersionPublic>>, TError = ProblemDetails>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiLibraryVersionPublic>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get public library version
+ */
+
+export function useGetApiLibraryVersionPublic<TData = Awaited<ReturnType<typeof getApiLibraryVersionPublic>>, TError = ProblemDetails>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiLibraryVersionPublic>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetApiLibraryVersionPublicQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

@@ -1,6 +1,10 @@
 import { useState } from "react";
 import { Link } from "react-router";
-import { RiDeleteBinLine, RiSearchLine } from "@remixicon/react";
+import {
+  RiDeleteBinLine,
+  RiErrorWarningLine,
+  RiSearchLine,
+} from "@remixicon/react";
 import { DeleteDialog } from "@/components/action-dialog";
 import {
   SidebarContent,
@@ -12,6 +16,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { withId } from "@/shared/format";
 import type { LocalCollection } from "./collection.schema";
 import CreateCollectionForm from "./CreateCollectionForm";
 
@@ -87,9 +92,18 @@ export default function CollectionSidebar({
                   aria-current={
                     collection.id === selectedId ? "true" : undefined
                   }
+                  className={
+                    collection.missing ? "text-destructive" : undefined
+                  }
+                  title={
+                    collection.missing
+                      ? "The server no longer has this collection"
+                      : undefined
+                  }
                   onClick={() => choose(() => onSelect(collection.id))}
                 >
-                  <span>{collection.name}</span>
+                  {collection.missing && <RiErrorWarningLine />}
+                  <span>{withId(collection.name, collection.serverId)}</span>
                 </SidebarMenuButton>
                 <SidebarMenuAction
                   className="hover:bg-destructive"
@@ -110,7 +124,7 @@ export default function CollectionSidebar({
       <DeleteDialog
         open={pendingDelete !== null}
         title="Delete collection?"
-        description={`“${pendingDelete?.name ?? ""}” and all of its prompts will be removed. This can't be undone.`}
+        description={`“${pendingDelete?.name ?? ""}” and the prompts that are in no other collection will be removed. This can't be undone.`}
         onConfirm={confirmDelete}
         onCancel={() => setPendingDelete(null)}
       />

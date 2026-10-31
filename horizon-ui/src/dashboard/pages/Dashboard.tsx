@@ -6,7 +6,7 @@ import { RiDeleteBinLine, RiDownloadLine } from "@remixicon/react";
 import { DeleteDialog } from "@/components/action-dialog";
 import { GlobalDropzone, UploadQueuePanel } from "@/components/global-upload";
 import { Button } from "@/components/ui/button";
-import { plural } from "@/shared/format";
+import { plural, withId } from "@/shared/format";
 import {
   addCollection,
   createCollection,
@@ -24,15 +24,16 @@ import {
 import { libraryAtom } from "../features/library/library.store";
 import { useLibraryImport } from "../features/library/useLibraryImport";
 import AddPromptForm from "../features/prompts/AddPromptForm";
-import MovePromptMenu from "../features/prompts/MovePromptMenu";
+import PromptCollectionsMenu from "../features/prompts/PromptCollectionsMenu";
 import { createPromptColumns } from "../features/prompts/prompt.columns";
 import {
   addPrompt,
   deletePrompt,
-  movePrompt,
+  setMembership,
   updatePrompt,
 } from "../features/prompts/prompt.ops";
 import PromptTable from "../features/prompts/PromptTable";
+import MissingOnServerNotice from "../features/sync/MissingOnServerNotice";
 import PublishButton from "../features/sync/PublishButton";
 import { useLibraryAccess } from "../features/sync/sync.access";
 import {
@@ -61,7 +62,7 @@ export default function Dashboard() {
       : (library.collections.find((c) => c.id === pickedId) ??
         library.collections[0]);
   const prompts = selected
-    ? library.prompts.filter((p) => p.collectionId === selected.id)
+    ? library.prompts.filter((p) => p.collectionIds.includes(selected.id))
     : library.prompts;
   const chosenPrompts = prompts.filter((p) => rowSelection[p.id]);
   const importer = useLibraryImport(selected?.id);
@@ -85,11 +86,9 @@ export default function Dashboard() {
   }
 
   // The bulk actions apply to the chosen prompts, then clear the selection.
-  function handleMoveChosen(collectionId: string | undefined) {
+  function handleToggleChosen(collectionId: string, member: boolean) {
     const ids = chosenPrompts.map((p) => p.id);
-    setLibrary((current) =>
-      ids.reduce((next, id) => movePrompt(next, id, collectionId), current),
-    );
+    setLibrary((current) => setMembership(current, ids, collectionId, member));
     setRowSelection({});
   }
 
@@ -118,8 +117,10 @@ export default function Dashboard() {
         setLibrary((current) => updatePrompt(current, id, { promptText })),
       updateType: (id, type) =>
         setLibrary((current) => updatePrompt(current, id, { type })),
-      movePrompt: (id, collectionId) =>
-        setLibrary((current) => movePrompt(current, id, collectionId)),
+      toggleCollection: (id, collectionId, member) =>
+        setLibrary((current) =>
+          setMembership(current, [id], collectionId, member),
+        ),
       publishPrompt: (prompt, isPublic) =>
         setPromptPublished(prompt.id, isPublic, access),
       deletePrompt: (id) => setLibrary((current) => deletePrompt(current, id)),
@@ -144,7 +145,7 @@ export default function Dashboard() {
     >
       <header className="flex w-full items-center justify-between p-2">
         <h1 className="text-xl font-semibold">
-          {selected?.name ?? "All prompts"}
+          {selected ? withId(selected.name, selected.serverId) : "All prompts"}
         </h1>
         {selected && (
           <PublishButton
@@ -158,6 +159,7 @@ export default function Dashboard() {
           />
         )}
       </header>
+      <MissingOnServerNotice />
       <p>table tags</p>
       <PromptTable
         columns={columns}
@@ -171,7 +173,7 @@ export default function Dashboard() {
             addPrompt(current, {
               promptText,
               type,
-              collectionId: selected?.id,
+              collectionIds: selected ? [selected.id] : [],
             }),
           )
         }
@@ -188,15 +190,15 @@ export default function Dashboard() {
         </Button>
         {chosenPrompts.length > 0 && (
           <>
-            <MovePromptMenu
-              label="Move prompts"
-              collections={library.collections.filter(
-                (c) => c.id !== selected?.id,
-              )}
-              canRemove={chosenPrompts.some(
-                (p) => p.collectionId !== undefined,
-              )}
-              onMove={handleMoveChosen}
+            <PromptCollectionsMenu
+              label="Collections"
+              collections={library.collections}
+              isMember={(collectionId) =>
+                chosenPrompts.every((p) =>
+                  p.collectionIds.includes(collectionId),
+                )
+              }
+              onToggle={handleToggleChosen}
             />
             <Button
               variant="secondary"

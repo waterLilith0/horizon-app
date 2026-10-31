@@ -75,6 +75,16 @@ export default function PromptTable({
               <TableRow
                 key={row.id}
                 data-state={row.getIsSelected() && "selected"}
+                className={
+                  row.original.missing
+                    ? "bg-destructive/10 text-destructive"
+                    : undefined
+                }
+                title={
+                  row.original.missing
+                    ? "The server no longer has this prompt"
+                    : undefined
+                }
               >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell

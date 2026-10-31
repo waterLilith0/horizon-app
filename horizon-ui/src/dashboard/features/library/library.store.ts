@@ -1,5 +1,10 @@
 import { atomWithStorage, createJSONStorage } from "jotai/utils";
-import { EMPTY_LIBRARY, LibrarySchema, type Library } from "./library.schema";
+import {
+  EMPTY_LIBRARY,
+  LibrarySchema,
+  upgradePrompts,
+  type Library,
+} from "./library.schema";
 
 const storage = createJSONStorage<Library>(() => localStorage);
 
@@ -12,7 +17,7 @@ export const libraryAtom = atomWithStorage<Library>(
     // Stored data can be outdated or edited by hand, so it is checked on load.
     getItem: (key, initialValue) => {
       const result = LibrarySchema.safeParse(
-        storage.getItem(key, initialValue),
+        upgradePrompts(storage.getItem(key, initialValue)),
       );
       return result.success ? result.data : initialValue;
     },

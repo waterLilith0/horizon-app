@@ -1,32 +1,33 @@
-import { RiFolderTransferLine } from "@remixicon/react";
+import { RiFolderAddLine } from "@remixicon/react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuGroup,
-  DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { withId } from "@/shared/format";
 import type { LocalCollection } from "../collections/collection.schema";
 
-interface MovePromptMenuProps {
+interface PromptCollectionsMenuProps {
   label: string;
   iconOnly?: boolean;
-  // The collections the prompts can move to.
   collections: LocalCollection[];
-  // Whether leaving a collection, to stand alone, is on offer.
-  canRemove: boolean;
-  onMove: (collectionId: string | undefined) => void;
+  // Whether every prompt this menu is for is in the collection.
+  isMember: (collectionId: string) => boolean;
+  onToggle: (collectionId: string, member: boolean) => void;
 }
 
-export default function MovePromptMenu({
+// A prompt can be in any collection, so each one is switched on or off.
+export default function PromptCollectionsMenu({
   label,
   iconOnly = false,
   collections,
-  canRemove,
-  onMove,
-}: MovePromptMenuProps) {
-  if (collections.length === 0 && !canRemove) return null;
+  isMember,
+  onToggle,
+}: PromptCollectionsMenuProps) {
+  if (collections.length === 0) return null;
 
   return (
     <DropdownMenu>
@@ -40,24 +41,20 @@ export default function MovePromptMenu({
           />
         }
       >
-        <RiFolderTransferLine />
+        <RiFolderAddLine />
         {!iconOnly && label}
       </DropdownMenuTrigger>
       <DropdownMenuContent>
         <DropdownMenuGroup>
           {collections.map((collection) => (
-            <DropdownMenuItem
+            <DropdownMenuCheckboxItem
               key={collection.id}
-              onClick={() => onMove(collection.id)}
+              checked={isMember(collection.id)}
+              onCheckedChange={(member) => onToggle(collection.id, member)}
             >
-              {collection.name}
-            </DropdownMenuItem>
+              {withId(collection.name, collection.serverId)}
+            </DropdownMenuCheckboxItem>
           ))}
-          {canRemove && (
-            <DropdownMenuItem onClick={() => onMove(undefined)}>
-              No collection
-            </DropdownMenuItem>
-          )}
         </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>

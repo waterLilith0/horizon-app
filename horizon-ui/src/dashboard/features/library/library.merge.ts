@@ -12,7 +12,7 @@ export interface Duplicates {
 
 // What an import would double up, as ids from the file: collections by name,
 // and prompts without a collection by text and type within the collection
-// they are imported into.
+// they are imported into, or among those in no collection.
 export function findDuplicates(
   library: Library,
   file: LibraryFile,
@@ -21,7 +21,11 @@ export function findDuplicates(
   const names = new Set(library.collections.map((c) => key(c.name)));
   const prompts = new Set(
     library.prompts
-      .filter((p) => p.collectionId === targetId)
+      .filter((p) =>
+        targetId === undefined
+          ? p.collectionIds.length === 0
+          : p.collectionIds.includes(targetId),
+      )
       .map((p) => key(p.promptText, p.type)),
   );
   return {
@@ -31,7 +35,7 @@ export function findDuplicates(
     prompts: file.prompts
       .filter(
         (p) =>
-          p.collectionId === undefined &&
+          p.collectionIds.length === 0 &&
           prompts.has(key(p.promptText, p.type)),
       )
       .map((p) => p.id),
@@ -40,7 +44,7 @@ export function findDuplicates(
 
 // Everything is added under fresh ids, so an import can never clash with
 // existing items. Prompts without a collection join the target. Skipping a
-// collection skips its prompts too.
+// collection skips the prompts that are in no other collection of the file.
 export function mergeLibrary(
   library: Library,
   file: LibraryFile,
@@ -66,16 +70,23 @@ export function mergeLibrary(
       (p) =>
         !skippedPrompts.has(p.id) &&
         !(
-          p.collectionId !== undefined && skippedCollections.has(p.collectionId)
+          p.collectionIds.length > 0 &&
+          p.collectionIds.every((id) => skippedCollections.has(id))
         ),
     )
-    .map((p): LocalPrompt => ({
-      ...p,
-      id: crypto.randomUUID(),
-      collectionId:
-        p.collectionId === undefined ? targetId : newIds.get(p.collectionId),
-      public: false,
-    }));
+    .map((p): LocalPrompt => {
+      const joined = p.collectionIds.flatMap((id) => newIds.get(id) ?? []);
+      return {
+        ...p,
+        id: crypto.randomUUID(),
+        collectionIds:
+          p.collectionIds.length === 0 && targetId !== undefined
+            ? [targetId]
+            : joined,
+        syncedCollectionIds: [],
+        public: false,
+      };
+    });
 
   return {
     ...library,

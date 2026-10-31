@@ -20,7 +20,7 @@ function publicCollectionToFile(collection: Collection, prompts: Prompt[]) {
       promptText: p.promptText,
       type: p.type,
       creationDate: p.creationDate,
-      collectionId: id,
+      collectionIds: [id],
     })),
   } satisfies LibraryFile;
 }
@@ -36,7 +36,7 @@ export function useSaveToLibrary() {
         addPrompt(current, {
           promptText: prompt.promptText,
           type: prompt.type,
-          collectionId: undefined,
+          collectionIds: [],
         }),
       ),
     saveCollection: async (collection: Collection) => {
