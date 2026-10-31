@@ -47,6 +47,5 @@ jobs:
       - name: Check formatting
         run: npm run format:check
 
-      # Without FARO_API_KEY the build skips the sourcemap upload, so it needs no secrets.
       - name: Build
         run: npm run build

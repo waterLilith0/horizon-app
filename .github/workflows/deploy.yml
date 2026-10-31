@@ -47,8 +47,11 @@ jobs:
         with:
           context: .
           file: ./horizon-ui/Dockerfile
-          secrets: |
-            faro_api_key=${{ secrets.FARO_API_KEY }}
+          # Baked into the static bundle and visible to every visitor, so none of these are secrets.
+          build-args: |
+            VITE_FARO_ENABLED=true
+            VITE_FARO_URL=https://faro.waterlilith.space/collect
+            VITE_APP_ENV=${{ github.ref_name == 'master' && 'production' || github.ref_name }}
           platforms: linux/arm64
           push: true
           tags: ${{ env.FRONTEND_IMAGE }}:${{ github.ref_name == 'master' && 'prod' || github.ref_name }}
