@@ -23,7 +23,7 @@ namespace horizon_api.Infrastructure
 
             foreach (var queryDir in queryDirs)
             {
-                foreach (var file in Directory.GetFiles(queryDir, "*.sql"))
+                foreach (var file in Directory.GetFiles(queryDir, "*.mysql"))
                 {
                     temp[Path.GetFileNameWithoutExtension(file)] = File.ReadAllText(file);
                 }

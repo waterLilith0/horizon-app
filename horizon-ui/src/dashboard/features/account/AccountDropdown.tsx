@@ -1,27 +1,31 @@
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+} from "@/components/ui/sidebar";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { useState } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import AccountDialog from "./AccountDialog";
 import {
   currentUserQueryKey,
   useCurrentUser,
-} from "@/dashboard/features/auth/use-current-user";
-import { logout } from "@/dashboard/features/auth/auth";
+} from "@/dashboard/features/auth/auth";
 import LoginRegisterDialog from "../auth/LoginRegisterDialog";
-import ThemeMenu from "@/dashboard/ThemeMenu";
+import ThemeMenu from "./ThemeMenu";
 import { useQueryClient } from "@tanstack/react-query";
+import { usePostApiAuthLogout } from "@/api/generated/internal/horizonInternal";
 
 export default function AccountDropdown() {
   const [accountShown, setAccountShown] = useState(false);
   const [loginShown, setLoginShown] = useState(false);
   const { data: user, isPending } = useCurrentUser();
   const queryClient = useQueryClient();
+  const { mutateAsync: logout } = usePostApiAuthLogout();
 
   async function handleLogout() {
     await logout();
@@ -31,44 +35,57 @@ export default function AccountDropdown() {
 
   return (
     <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <button
-            type="button"
+      <Collapsible>
+        <SidebarMenuItem className="flex w-full flex-row items-center">
+          <Avatar>
+            <AvatarFallback>
+              {user ? user.userName?.slice(0, 2).toUpperCase() : "?"}
+            </AvatarFallback>
+          </Avatar>
+          <CollapsibleTrigger
             aria-label="Account menu"
-            className="fixed right-2 top-2 z-10 rounded-full focus-visible:ring-2 focus-visible:ring-ring"
+            className="flex h-full w-full flex-row items-center ps-2 hover:underline hover:cursor-pointer"
           >
-            <Avatar>
-              <AvatarFallback>
-                {user ? user.username.slice(0, 2).toUpperCase() : "?"}
-              </AvatarFallback>
-            </Avatar>
-          </button>
-        </DropdownMenuTrigger>
-
-        <DropdownMenuContent>
-          <DropdownMenuGroup>
-            {user ? (
-              <>
-                <DropdownMenuItem onClick={() => setAccountShown(true)}>
-                  Account
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleLogout}>
-                  Log out
-                </DropdownMenuItem>
-              </>
-            ) : (
-              <DropdownMenuItem
-                disabled={isPending}
-                onClick={() => setLoginShown(true)}
-              >
-                Log In/Register
-              </DropdownMenuItem>
-            )}
-          </DropdownMenuGroup>
-          <ThemeMenu />
-        </DropdownMenuContent>
-      </DropdownMenu>
+            <p className="text-sm leading-none">
+              {user ? user.userName : "UserName"}
+            </p>
+          </CollapsibleTrigger>
+        </SidebarMenuItem>
+        <CollapsibleContent>
+          <SidebarMenuItem>
+            <SidebarMenuSub>
+              {user ? (
+                <>
+                  <SidebarMenuSubButton
+                    render={<button type="button" />}
+                    className="cursor-pointer"
+                    onClick={() => setAccountShown(true)}
+                  >
+                    Profile
+                  </SidebarMenuSubButton>
+                  <SidebarMenuSubButton
+                    render={<button type="button" />}
+                    className="cursor-pointer"
+                    onClick={() => void handleLogout()}
+                  >
+                    Log out
+                  </SidebarMenuSubButton>
+                </>
+              ) : (
+                <SidebarMenuSubButton
+                  render={<button type="button" />}
+                  className="cursor-pointer"
+                  isActive={isPending}
+                  onClick={() => setLoginShown(true)}
+                >
+                  Login/Register
+                </SidebarMenuSubButton>
+              )}
+              <ThemeMenu />
+            </SidebarMenuSub>
+          </SidebarMenuItem>
+        </CollapsibleContent>
+      </Collapsible>
 
       <AccountDialog open={accountShown} onOpenChange={setAccountShown} />
       <LoginRegisterDialog open={loginShown} onOpenChange={setLoginShown} />

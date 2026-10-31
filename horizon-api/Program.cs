@@ -1,9 +1,14 @@
+﻿using Dapper;
+using Microsoft.AspNetCore.Authentication;
 using Grafana.OpenTelemetry;
 using horizon_api.Infrastructure;
+using horizon_api.Infrastructure.Email;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.OpenApi;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Options;
 using MySqlConnector;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
@@ -11,26 +16,64 @@ using OpenTelemetry.Trace;
 using Scalar.AspNetCore;
 using Serilog;
 using Serilog.Enrichers.Span;
+using System.Net.Http.Headers;
 using System.Security.Claims;
+using System.Text;
 using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.OpenApi;
 
 namespace horizon_api
 {
     public class Program
     {
+        private const string CookieSchemeId = "cookieAuth";
+
+        private static void ConfigureOpenApi(OpenApiOptions options, string title, string version, string description, params (string Name, string Description)[] tags)
+        {
+            options.AddDocumentTransformer((document, context, ct) =>
+            {
+                document.Info = new() { Title = title, Version = version, Description = description };
+                document.Tags = new HashSet<OpenApiTag>(tags.Select(t => new OpenApiTag { Name = t.Name, Description = t.Description }));
+                document.Components ??= new();
+                document.Components.SecuritySchemes = new Dictionary<string, IOpenApiSecurityScheme>
+                {
+                    [CookieSchemeId] = new OpenApiSecurityScheme
+                    {
+                        Type = SecuritySchemeType.ApiKey,
+                        In = ParameterLocation.Cookie,
+                        Name = "horizon.auth",
+                        Description = "Session cookie issued by the login endpoint."
+                    }
+                };
+                return Task.CompletedTask;
+            });
+
+            // Mark only [Authorize] endpoints as secured (skips [AllowAnonymous])
+            options.AddOperationTransformer((operation, context, ct) =>
+            {
+                var metadata = context.Description.ActionDescriptor.EndpointMetadata;
+                if (metadata.OfType<IAuthorizeData>().Any() && !metadata.OfType<IAllowAnonymous>().Any())
+                {
+                    operation.Security ??= [];
+                    operation.Security.Add(new OpenApiSecurityRequirement
+                    {
+                        [new OpenApiSecuritySchemeReference(CookieSchemeId, context.Document)] = []
+                    });
+                }
+                return Task.CompletedTask;
+            });
+        }
+
+
         internal static void Main(string[] args)
         {
             Log.Logger = new LoggerConfiguration()
-                .Enrich.FromLogContext()
-                .Enrich.WithSpan()
-                .WriteTo.Console(outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level}] {Message:lj}{Exception}{NewLine}")
-                .WriteTo.File("./logs/log-.log", rollingInterval: RollingInterval.Day)
-                .WriteTo.OpenTelemetry(options =>
-                {
-                    options.Endpoint = Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT") ?? "http://localhost:4317";
-                    options.Protocol = Serilog.Sinks.OpenTelemetry.OtlpProtocol.Grpc;
-                })
-                .CreateLogger();
+                    .Enrich.FromLogContext()
+                    .Enrich.WithSpan()
+                    .WriteTo.Console(new Serilog.Formatting.Json.JsonFormatter(renderMessage: true))
+                    .WriteTo.File("./logs/log-.log", rollingInterval: RollingInterval.Day)
+                    .CreateLogger();
 
             Serilog.Debugging.SelfLog.Enable(Console.Error);
 
@@ -169,21 +212,69 @@ namespace horizon_api
                         o.Cookie.SecurePolicy = CookieSecurePolicy.Always;
                         o.Cookie.SameSite = SameSiteMode.Lax;
                         o.SlidingExpiration = true;
-                        o.Events.OnRedirectToLogin = ctx => { ctx.Response.StatusCode = 401; return Task.CompletedTask; };
+                        o.Events.OnValidatePrincipal = async ctx =>
+                        {
+                            var principal = ctx.Principal;
+                            var claimed = 0u;
+                            var valid = long.TryParse(principal?.FindFirstValue(ClaimTypes.NameIdentifier), out var userId)
+                                && uint.TryParse(principal!.FindFirstValue("sessionVersion") ?? "0", out claimed);
+                            if (valid)
+                            {
+                                var dataSource = ctx.HttpContext.RequestServices.GetRequiredService<MySqlDataSource>();
+                                var store = ctx.HttpContext.RequestServices.GetRequiredService<SqlQueryStore>();
+                                await using var connection = await dataSource.OpenConnectionAsync(ctx.HttpContext.RequestAborted);
+                                var current = await connection.QuerySingleOrDefaultAsync<uint?>(new CommandDefinition(
+                                    store.Get("GetSessionVersion"), new { userId }, cancellationToken: ctx.HttpContext.RequestAborted));
+                                valid = current == claimed;
+                            }
+
+                            if (!valid)
+                            {
+                                ctx.RejectPrincipal();
+                                await ctx.HttpContext.SignOutAsync();
+                            }
+                        };
+                        o.Events.OnRedirectToLogin =
                         o.Events.OnRedirectToAccessDenied = ctx => { ctx.Response.StatusCode = 403; return Task.CompletedTask; };
                     });
                 builder.Services.AddAuthorization();
                 builder.Services.AddControllers();
-                builder.Services.AddSingleton<SqlQueryStore>(); 
+                builder.Services.AddSingleton<SqlQueryStore>();
                 builder.Services.AddSingleton<IPasswordService, PasswordService>();
                 builder.Services.AddMySqlDataSource(connectionString!);
 
-                builder.Services.AddEndpointsApiExplorer();
-                builder.Services.AddSwaggerGen(c =>
+                builder.Services
+                    .AddOptions<EmailOptions>()
+                    .Bind(builder.Configuration.GetSection(EmailOptions.SectionName))
+                    .Validate(o => !string.IsNullOrWhiteSpace(o.ApiKey)
+                          && !string.IsNullOrWhiteSpace(o.ApiSecret)
+                          && !string.IsNullOrWhiteSpace(o.FromAddress),
+                        "Email settings are incomplete.")
+                    .ValidateOnStart();
+
+                builder.Services.AddHttpClient<IEmailSender, MailjetEmailSender>((sp, client) =>
                 {
-                    c.SwaggerDoc("public", new() { Title = "Horizon API", Version = "v1.1.0" });
-                    c.SwaggerDoc("internal", new() { Title = "Horizon Internal", Version = "v1.0.0" });
+                    var opts = sp.GetRequiredService<IOptions<EmailOptions>>().Value;
+                    client.BaseAddress = new Uri("https://api.mailjet.com/");
+                    client.Timeout = TimeSpan.FromSeconds(15);
+                    var token = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{opts.ApiKey}:{opts.ApiSecret}"));
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", token);
                 });
+
+                builder.Services.AddOpenApi("public", o =>
+                    ConfigureOpenApi(o,
+                    "Horizon API",
+                    "v1.0.0",
+                    "Create and share prompts, organise them into collections, and spin them on the wheel.",
+                    ("Collection", "Named groups of prompts. Collections can be private or public."),
+                    ("Prompt", "Prompts owned by a user. Public prompts can be used by other users.")));
+                builder.Services.AddOpenApi("internal", o =>
+                ConfigureOpenApi(o,
+                    "Horizon Internal",
+                    "v1.0.0",
+                    "Account and session endpoints used by the Horizon app itself.",
+                    ("Auth", "Registration, sign-in, email verification and password management.")
+                    ));
 
                 Log.Debug("DI configured");
 
@@ -207,7 +298,7 @@ namespace horizon_api
                     Predicate = check => check.Tags.Contains("ready")
                 }).DisableRateLimiting().AllowAnonymous();
 
-                // --------------------------------------------------------- // Swagger/Scalar
+                // --------------------------------------------------------- // Scalar
 
                 if (!app.Environment.IsDevelopment())
                 {
@@ -222,7 +313,7 @@ namespace horizon_api
                     });
                 }
 
-                app.UseSwagger(o => o.RouteTemplate = "api/openapi/{documentName}.json");
+                app.MapOpenApi("/api/openapi/{documentName}.json");
                 app.MapScalarApiReference("/api/scalar", options =>
                 {
                     options.WithTitle("Horizon API")

@@ -10,5 +10,7 @@
       "path": "../.github",
     },
   ],
-  "settings": {},
+  "settings": {
+    "powershell.cwd": "horizon-ui",
+  },
 }

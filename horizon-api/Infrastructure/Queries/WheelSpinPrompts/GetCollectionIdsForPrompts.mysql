@@ -1,0 +1,6 @@
+SELECT ptc.promptId AS PromptId, ptc.collectionId AS CollectionId
+FROM PromptToCollection ptc
+INNER JOIN PromptCollections c ON c.collectionId = ptc.collectionId
+WHERE ptc.promptId IN @promptIds
+  AND (c.userId = @userId OR c.`public` = 1)
+ORDER BY ptc.promptId, ptc.collectionId;

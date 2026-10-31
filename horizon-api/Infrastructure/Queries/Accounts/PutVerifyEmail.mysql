@@ -1,0 +1,8 @@
+UPDATE Users
+SET emailVerified = 1,
+    verificationTokenHash = NULL,
+    verificationPurpose = NULL,
+    verificationExpiresAt = NULL
+WHERE verificationTokenHash = @tokenHash
+  AND verificationPurpose = 'verify-email'
+  AND verificationExpiresAt > UTC_TIMESTAMP();
