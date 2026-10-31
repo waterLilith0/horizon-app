@@ -69,13 +69,8 @@ namespace horizon_api
             Log.Logger = new LoggerConfiguration()
                     .Enrich.FromLogContext()
                     .Enrich.WithSpan()
-                    .WriteTo.Console(outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level}] {Message:lj}{Exception}{NewLine}")
+                    .WriteTo.Console(new Serilog.Formatting.Json.JsonFormatter(renderMessage: true))
                     .WriteTo.File("./logs/log-.log", rollingInterval: RollingInterval.Day)
-                    .WriteTo.OpenTelemetry(options =>
-                    {
-                        options.Endpoint = Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT") ?? "http://localhost:4317";
-                        options.Protocol = Serilog.Sinks.OpenTelemetry.OtlpProtocol.Grpc;
-                    })
                     .CreateLogger();
 
             Serilog.Debugging.SelfLog.Enable(Console.Error);
