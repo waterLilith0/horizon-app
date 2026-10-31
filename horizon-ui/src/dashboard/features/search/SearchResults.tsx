@@ -10,7 +10,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ApiError } from "@/api/http";
 import CollectionPreview from "./CollectionPreview";
 import SaveButton from "./SaveButton";
 import { authorOf, type Author } from "./search.author";
@@ -46,9 +45,7 @@ function PagedStatus({
   if (query.error) {
     return (
       <p role="alert" className="text-destructive">
-        {query.error instanceof ApiError && query.error.status === 401
-          ? "Log in again to search."
-          : query.error.message}
+        {query.error.message}
       </p>
     );
   }

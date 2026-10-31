@@ -22,6 +22,10 @@ namespace horizon_api.Controllers
     {
         private const int MaxTextLength = 255;
 
+        // Anonymous callers get id 0, which matches no user, so queries return public rows only.
+        private long CurrentUserIdOrAnonymous =>
+            long.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : 0;
+
         /// <summary>Request body for creating a prompt.</summary>
         /// <param name="PromptText">The prompt text (1-255 characters).</param>
         /// <param name="Type">The prompt category (1-255 characters).</param>
@@ -147,16 +151,18 @@ namespace horizon_api.Controllers
 
         /// <summary>List prompts</summary>
         /// <remarks>Returns a page of the prompts available to the current user, ordered by ID. 
-        /// Each prompt includes the author's username.</remarks>
+        /// Each prompt includes the author's username. Works without logging in, in which case only public prompts are returned.</remarks>
         /// <param name="page">Page number, starting at 1.</param>
         /// <param name="pageSize">Number of prompts per page (1-100).</param>
-        /// <param name="scope">all (default), owned, or others (public prompts of other users).</param>
+        /// <param name="scope">all (default), owned, or others (public prompts of other users). 
+        /// Without logging in, only public prompts exist for you, so owned returns nothing.</param>
         /// <param name="includeCollectionIds">Also return the IDs of the collections each prompt belongs to.</param>
         /// <param name="userId">Only return prompts created by this user ID.</param>
         /// <param name="search">Partial match (contains) on the prompt text.</param>
         /// <response code="200">The page of prompts.</response>
         /// <response code="400">Invalid paging values.</response>
         [HttpGet]
+        [AllowAnonymous]
         [ProducesResponseType<IReadOnlyList<Prompt>>(StatusCodes.Status200OK)]
         [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<IReadOnlyList<Prompt>>> GetAllPrompts(
@@ -171,7 +177,7 @@ namespace horizon_api.Controllers
             logger.LogDebug("GetAllPrompts called (Page: {Page}, PageSize: {PageSize})", page, pageSize);
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
             var sql = sqlQueryStore.Get("GetAll");
-            var currentUserId = long.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var currentUserId = CurrentUserIdOrAnonymous;
             var command = new CommandDefinition(sql, new
             {
                 pageSize,
@@ -201,11 +207,13 @@ namespace horizon_api.Controllers
         }
 
         /// <summary>Get a random prompt</summary>
-        /// <remarks>Returns a random prompt available to the current user, optionally picked from a specific collection.</remarks>
+        /// <remarks>Returns a random prompt available to the current user, optionally picked from a specific collection. 
+        /// Works without logging in, in which case only public prompts and public collections are used.</remarks>
         /// <param name="collectionId">Only pick from this collection.</param>
         /// <response code="200">A random prompt.</response>
         /// <response code="404">No prompts available.</response>
         [HttpGet("random")]
+        [AllowAnonymous]
         [ProducesResponseType<Prompt>(StatusCodes.Status200OK)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<Prompt>> GetRandomPrompt([FromQuery] long? collectionId, CancellationToken cancellationToken)
@@ -217,7 +225,7 @@ namespace horizon_api.Controllers
             var command = new CommandDefinition(sql, new
             {
                 collectionId,
-                userId = long.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!)
+                userId = CurrentUserIdOrAnonymous
             }, cancellationToken: cancellationToken);
 
             var prompt = await connection.QuerySingleOrDefaultAsync<Prompt>(command);

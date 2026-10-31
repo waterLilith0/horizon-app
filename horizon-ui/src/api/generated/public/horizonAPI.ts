@@ -265,7 +265,10 @@ export type GetApiPromptParams = {
    * @pattern ^-?(?:0|[1-9]\d*)$
    */
   pageSize?: number | string;
-  /** all (default), owned, or others (public prompts of other users). */
+  /**
+   * all (default), owned, or others (public prompts of other users).
+   *     Without logging in, only public prompts exist for you, so owned returns nothing.
+   */
   scope?: ListScope;
   /** Also return the IDs of the collections each prompt belongs to. */
   includeCollectionIds?: boolean;
@@ -1313,7 +1316,7 @@ export const getGetApiCollectionAllCollectionIdUrl = (collectionId: number,) => 
 
 /**
  * Returns the prompts in a collection owned by the current user, or in a public collection.
- *     Each prompt includes the author's username.
+ *     Each prompt includes the author's username. Works without logging in for public collections.
  * @summary List prompts in a collection
  */
 export const getApiCollectionAllCollectionId = async (collectionId: number, options?: RequestInit): Promise<getApiCollectionAllCollectionIdResponse> => {
@@ -1585,7 +1588,7 @@ export const getGetApiPromptUrl = (params?: GetApiPromptParams,) => {
 
 /**
  * Returns a page of the prompts available to the current user, ordered by ID.
- *     Each prompt includes the author's username.
+ *     Each prompt includes the author's username. Works without logging in, in which case only public prompts are returned.
  * @summary List prompts
  */
 export const getApiPrompt = async (params?: GetApiPromptParams, options?: RequestInit): Promise<getApiPromptResponse> => {
@@ -2085,6 +2088,7 @@ export const getGetApiPromptRandomUrl = (params?: GetApiPromptRandomParams,) => 
 
 /**
  * Returns a random prompt available to the current user, optionally picked from a specific collection.
+ *     Works without logging in, in which case only public prompts and public collections are used.
  * @summary Get a random prompt
  */
 export const getApiPromptRandom = async (params?: GetApiPromptRandomParams, options?: RequestInit): Promise<getApiPromptRandomResponse> => {

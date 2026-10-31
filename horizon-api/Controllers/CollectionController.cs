@@ -21,7 +21,8 @@ namespace horizon_api.Controllers
         ILogger<CollectionController> logger) : ControllerBase
     {
         private const int MaxNameLength = 255;
-        private long CurrentUserId => long.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        // Anonymous callers get id 0, which matches no user, so only public collections are visible to them.
+        private long CurrentUserId => long.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : 0;
 
         /// <summary>Request body for creating a collection.</summary>
         /// <param name="CollectionName">The collection name (1-255 characters).</param>
@@ -419,12 +420,13 @@ namespace horizon_api.Controllers
         }
 
         /// <summary>List prompts in a collection</summary>
-        /// <remarks>Returns the prompts in a collection owned by the current user, or in a public collection. 
-        /// Each prompt includes the author's username.</remarks>
+        /// <remarks>Returns the prompts in a collection owned by the current user, or in a public collection.
+        /// Each prompt includes the author's username. Works without logging in for public collections.</remarks>
         /// <param name="collectionId">The collection ID.</param>
         /// <response code="200">The prompts in the collection.</response>
         /// <response code="404">Collection not found.</response>
         [HttpGet("all/{collectionId:long:min(1)}")]
+        [AllowAnonymous]
         [ProducesResponseType<IReadOnlyList<Prompt>>(StatusCodes.Status200OK)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<IReadOnlyList<Prompt>>> GetAllFromCollection([FromRoute] long collectionId, CancellationToken cancellationToken)
