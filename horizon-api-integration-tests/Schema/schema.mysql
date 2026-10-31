@@ -22,6 +22,8 @@ CREATE TABLE `Users` (
   `emailVerified` tinyint(1) NOT NULL DEFAULT '0',
   `verificationTokenHash` binary(32) DEFAULT NULL,
   `verificationExpiresAt` datetime DEFAULT NULL,
+  `verificationPurpose` varchar(16) DEFAULT NULL,
+  `sessionVersion` int unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (`userId`),
   UNIQUE KEY `Users_email_IDX` (`email`) USING BTREE,
   UNIQUE KEY `Users_userName_IDX` (`userName`) USING BTREE,

@@ -10,5 +10,6 @@
         public string Email { get; set; } = "";
         public byte PepperVersion { get; set; }
         public bool EmailVerified { get; set; }
+        public uint SessionVersion { get; set; }
     }
 }

@@ -188,7 +188,8 @@ namespace horizon_api.Controllers
             var claims = new List<Claim> {
                 new(ClaimTypes.NameIdentifier, user.UserId.ToString()),
                 new(ClaimTypes.Name, user.UserName),
-                new(ClaimTypes.Role, user.Dev ? "Dev" : "User")
+                new(ClaimTypes.Role, user.Dev ? "Dev" : "User"),
+                new("sessionVersion", user.SessionVersion.ToString())
             };
             var principal = new ClaimsPrincipal(
                 new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme));
@@ -534,6 +535,7 @@ namespace horizon_api.Controllers
             long userId,
             string email,
             long templateId,
+            string purpose,
             int validHours,
             Func<string, Dictionary<string, object?>> buildVariables,
             CancellationToken cancellationToken)
@@ -542,7 +544,7 @@ namespace horizon_api.Controllers
 
             await connection.ExecuteAsync(new CommandDefinition(
                 sqlQueryStore.Get("PutVerificationToken"),
-                new { userId, tokenHash, hours = validHours },
+                new { userId, tokenHash, purpose, hours = validHours },
                 cancellationToken: cancellationToken));
 
             try
@@ -559,7 +561,7 @@ namespace horizon_api.Controllers
             MySqlConnection connection, long userId, string email, string userName, CancellationToken cancellationToken)
         {
             var options = emailOptions.Value;
-            return SendTokenEmailAsync(connection, userId, email, options.Templates.Verification, 24,
+            return SendTokenEmailAsync(connection, userId, email, options.Templates.Verification, "verify-email", 24,
                 token => new()
                 {
                     ["userName"] = WebUtility.HtmlEncode(userName),
@@ -572,7 +574,7 @@ namespace horizon_api.Controllers
             MySqlConnection connection, long userId, string email, CancellationToken cancellationToken)
         {
             var options = emailOptions.Value;
-            return SendTokenEmailAsync(connection, userId, email, options.Templates.PasswordReset, 1,
+            return SendTokenEmailAsync(connection, userId, email, options.Templates.PasswordReset, "reset-password", 1,
                 token => new() { ["passwordChangeLink"] = $"{options.PasswordResetUrl}?token={token}" },
                 cancellationToken);
         }

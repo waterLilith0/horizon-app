@@ -1,4 +1,6 @@
-﻿using Grafana.OpenTelemetry;
+﻿using Dapper;
+using Microsoft.AspNetCore.Authentication;
+using Grafana.OpenTelemetry;
 using horizon_api.Infrastructure;
 using horizon_api.Infrastructure.Email;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -210,7 +212,29 @@ namespace horizon_api
                         o.Cookie.SecurePolicy = CookieSecurePolicy.Always;
                         o.Cookie.SameSite = SameSiteMode.Lax;
                         o.SlidingExpiration = true;
-                        o.Events.OnRedirectToLogin = ctx => { ctx.Response.StatusCode = 401; return Task.CompletedTask; };
+                        o.Events.OnValidatePrincipal = async ctx =>
+                        {
+                            var principal = ctx.Principal;
+                            var claimed = 0u;
+                            var valid = long.TryParse(principal?.FindFirstValue(ClaimTypes.NameIdentifier), out var userId)
+                                && uint.TryParse(principal!.FindFirstValue("sessionVersion") ?? "0", out claimed);
+                            if (valid)
+                            {
+                                var dataSource = ctx.HttpContext.RequestServices.GetRequiredService<MySqlDataSource>();
+                                var store = ctx.HttpContext.RequestServices.GetRequiredService<SqlQueryStore>();
+                                await using var connection = await dataSource.OpenConnectionAsync(ctx.HttpContext.RequestAborted);
+                                var current = await connection.QuerySingleOrDefaultAsync<uint?>(new CommandDefinition(
+                                    store.Get("GetSessionVersion"), new { userId }, cancellationToken: ctx.HttpContext.RequestAborted));
+                                valid = current == claimed;
+                            }
+
+                            if (!valid)
+                            {
+                                ctx.RejectPrincipal();
+                                await ctx.HttpContext.SignOutAsync();
+                            }
+                        };
+                        o.Events.OnRedirectToLogin =
                         o.Events.OnRedirectToAccessDenied = ctx => { ctx.Response.StatusCode = 403; return Task.CompletedTask; };
                     });
                 builder.Services.AddAuthorization();
