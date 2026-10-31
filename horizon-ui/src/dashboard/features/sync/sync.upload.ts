@@ -10,11 +10,14 @@ import {
 } from "@/api/generated/public/horizonAPI";
 import { ok, okOrMissing } from "@/api/http";
 import type { LocalCollection } from "../collections/collection.schema";
+import type { Library } from "../library/library.schema";
 import type { LocalPrompt } from "../prompts/prompt.schema";
 import { exclusive, type LibraryAccess } from "./sync.access";
 import {
   applyCollectionState,
   applyPromptState,
+  dequeueDeletion,
+  queueServerCopy,
   serverCollectionOf,
 } from "./sync.state";
 
@@ -97,7 +100,18 @@ async function pushPrompt(
 }
 
 // An item deleted while its first upload was under way had no server id to
-// queue a deletion for, so the uploads below remove its fresh server copy.
+// queue a deletion for. Its fresh server copy is queued, so a failed removal is
+// retried by the next sync, and then removed right away.
+async function discardServerCopy(
+  access: LibraryAccess,
+  kind: keyof Library["deleted"],
+  serverId: number,
+  remove: (serverId: number) => Promise<{ status: number }>,
+) {
+  access.update((current) => queueServerCopy(current, kind, serverId));
+  okOrMissing(await remove(serverId));
+  access.update((current) => dequeueDeletion(current, kind, serverId));
+}
 
 // Uploads a collection as it is now, with the given visibility or its own.
 export async function uploadCollection(
@@ -114,7 +128,12 @@ export async function uploadCollection(
     collection.serverId === undefined &&
     !access.get().collections.some((c) => c.id === id)
   ) {
-    okOrMissing(await deleteApiCollectionCollectionId(state.serverId));
+    await discardServerCopy(
+      access,
+      "collectionIds",
+      state.serverId,
+      (serverId) => deleteApiCollectionCollectionId(serverId),
+    );
   }
 }
 
@@ -138,7 +157,9 @@ export async function uploadPrompt(
     prompt.serverId === undefined &&
     !access.get().prompts.some((p) => p.id === id)
   ) {
-    okOrMissing(await deleteApiPromptPromptId(state.serverId));
+    await discardServerCopy(access, "promptIds", state.serverId, (serverId) =>
+      deleteApiPromptPromptId(serverId),
+    );
   }
 }
 

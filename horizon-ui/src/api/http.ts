@@ -29,13 +29,14 @@ export function okOrMissing(res: { status: number }): void {
 }
 
 // The auth endpoints answer a failure with problem details, and a success
-// without a body. Returns why it failed, or nothing when it didn't.
+// without a body. Returns why it failed, or nothing when it didn't. A failure
+// can come without a body too, so the status decides first.
 export function problemOf(
-  res: { data: unknown },
+  res: { status: number; data: unknown },
   fallback: string,
 ): string | undefined {
+  if (res.status >= 200 && res.status < 300) return undefined;
   const problem = res.data as
     { detail?: string | null; title?: string | null } | undefined;
-  if (!problem || Object.keys(problem).length === 0) return undefined;
-  return problem.detail ?? problem.title ?? fallback;
+  return problem?.detail ?? problem?.title ?? fallback;
 }

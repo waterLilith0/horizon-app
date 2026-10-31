@@ -22,6 +22,22 @@ export const markDirty = <T extends Synced>(item: T): T =>
 export const queueDeletion = (ids: number[], serverId: number | undefined) =>
   serverId === undefined ? ids : [...ids, serverId];
 
+// A server copy the library no longer has an item for, such as one deleted
+// while its first upload was under way. Queued until the server confirms.
+export function queueServerCopy(
+  library: Library,
+  kind: keyof Library["deleted"],
+  serverId: number,
+): Library {
+  return {
+    ...library,
+    deleted: {
+      ...library.deleted,
+      [kind]: queueDeletion(library.deleted[kind], serverId),
+    },
+  };
+}
+
 // The server has confirmed the deletion, so it no longer needs doing.
 export function dequeueDeletion(
   library: Library,
