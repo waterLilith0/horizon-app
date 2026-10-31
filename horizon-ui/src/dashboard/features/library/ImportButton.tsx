@@ -8,7 +8,7 @@ export default function ImportButton(
 ) {
   return (
     <UploadButton
-      className="[&_[data-slot=upload-trigger]]:bg-secondary [&_[data-slot=upload-trigger]]:text-secondary-foreground [&_[data-slot=upload-trigger]]:hover:bg-secondary/80"
+      className="**:data-[slot=upload-trigger]:bg-secondary **:data-[slot=upload-trigger]:text-secondary-foreground **:data-[slot=upload-trigger]:hover:bg-secondary/80"
       {...props}
     />
   );
