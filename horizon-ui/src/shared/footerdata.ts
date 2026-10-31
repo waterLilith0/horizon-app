@@ -7,7 +7,11 @@ export const footerRows = [
       },
       {
         url: "https://waterlilith.space",
-        text: "Blog",
+        text: "Blog & Portfolio",
+      },
+      {
+        url: "https://status.waterlilith.space",
+        text: "Status",
       },
     ],
   },
