@@ -9,14 +9,14 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { useState } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import AccountDialog from "./AccountDialog";
 import {
   currentUserQueryKey,
   useCurrentUser,
 } from "@/dashboard/features/auth/auth";
 import LoginRegisterDialog from "../auth/LoginRegisterDialog";
-import ThemeMenu from "@/dashboard/ThemeMenu";
+import ThemeMenu from "./ThemeMenu";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePostApiAuthLogout } from "@/api/generated/internal/horizonInternal";
 
@@ -38,14 +38,9 @@ export default function AccountDropdown() {
       <Collapsible>
         <SidebarMenuItem className="flex w-full flex-row items-center">
           <Avatar>
-            {isPending ?? <AvatarFallback>{"?"}</AvatarFallback>}
-            {user ? (
-              <AvatarImage>
-                {user.userName?.slice(0, 2).toUpperCase()}
-              </AvatarImage>
-            ) : (
-              <AvatarFallback>{"?"}</AvatarFallback>
-            )}
+            <AvatarFallback>
+              {user ? user.userName?.slice(0, 2).toUpperCase() : "?"}
+            </AvatarFallback>
           </Avatar>
           <CollapsibleTrigger
             aria-label="Account menu"
@@ -69,7 +64,7 @@ export default function AccountDropdown() {
                   </SidebarMenuSubButton>
                   <SidebarMenuSubButton
                     className="cursor-pointer"
-                    onClick={handleLogout}
+                    onClick={() => void handleLogout()}
                   >
                     Log out
                   </SidebarMenuSubButton>

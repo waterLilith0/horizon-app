@@ -14,10 +14,10 @@ type PolicyHeading = React.ReactElement<{
   children?: React.ReactNode;
 }>;
 
-type PolicySection = {
+interface PolicySection {
   heading: PolicyHeading;
   content: React.ReactNode[];
-};
+}
 
 function isPolicyHeading(node: React.ReactNode): node is PolicyHeading {
   return (

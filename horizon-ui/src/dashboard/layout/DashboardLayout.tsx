@@ -15,13 +15,13 @@ export default function DashboardLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <UploadProvider
-        persist
         adapter={uploadAdapter}
-        accept={"application/json"}
+        accept="application/json,.json"
         maxSize={20_000_000}
         maxFiles={5}
       >
         <SidebarProvider
+          defaultOpen={false}
           style={
             {
               "--sidebar-width": "30rem",

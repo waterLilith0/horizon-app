@@ -2,11 +2,6 @@ import { z } from "zod";
 import { zxcvbn } from "zxcvbn-ts";
 import blocklistJson from "horizon-blocklist";
 
-/**
- * horizon-blocklist has two kinds of lists:
- * - `reserved`: names that may not be used as a whole username (e.g. "admin", "i").
- * - every other key (`en`, `de`, ...): offensive terms that may not appear anywhere in it.
- */
 const blocklist = z
   .record(z.string(), z.array(z.string()))
   .parse(blocklistJson);
@@ -37,8 +32,6 @@ export const changePasswordSchema = z
     path: ["newPassword"],
   });
 
-// type ChangePasswordData = z.infer<typeof changePasswordSchema>;
-
 const emailSchema = z.email({ error: "Nahh that's not an email" });
 
 export const usernameSchema = z
@@ -68,23 +61,15 @@ export const registerSchema = z
     path: ["password"],
   });
 
-export type RegisterData = z.output<typeof registerSchema>;
-
 export const loginSchema = z.object({
   identifier: z.string().trim().min(1, "Enter your username or email"),
   password: z.string().min(1, "Enter your password"),
 });
 
-export type LoginData = z.output<typeof loginSchema>;
-
 export const forgotPasswordSchema = z.object({
   email: emailSchema,
 });
 
-export type ForgotPasswordData = z.output<typeof forgotPasswordSchema>;
-
 export const resetPasswordSchema = z.object({
   newPassword: passwordSchema,
 });
-
-export type ResetPasswordData = z.output<typeof resetPasswordSchema>;

@@ -8,7 +8,23 @@ import path from 'node:path'
 import tseslint from 'typescript-eslint'
 
 export default defineConfig(
-  { ignores: ['dist', 'dist-ssr', '.cache', 'node_modules'] },
+  // Vendored (shadcn, uploadcn) and generated (orval) files stay as their tools
+  // produce them.
+  {
+    ignores: [
+      'dist',
+      'dist-ssr',
+      '.cache',
+      'node_modules',
+      'src/api/generated',
+      'src/components/ui',
+      'src/components/upload.tsx',
+      'src/components/upload-button.tsx',
+      'src/components/global-upload.tsx',
+      'src/hooks/use-mobile.ts',
+      'src/lib/utils.ts',
+    ],
+  },
   {
     files: ['**/*.{ts,tsx}'],
     extends: [

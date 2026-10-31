@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/field";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { useCurrentUser } from "../auth/auth";
+import AutoSyncSetting from "../sync/AutoSyncSetting";
 
 export default function AccountDialog({
   open,
@@ -53,7 +54,10 @@ export default function AccountDialog({
             </TableBody>
           </Table>
         </FieldSet>
-        {/* <FieldSeparator>Settings</FieldSeparator> */}
+        <FieldSeparator>Settings</FieldSeparator>
+        <FieldSet>
+          <AutoSyncSetting />
+        </FieldSet>
         {/* <FieldSet>
           <PasswordChange />
           <ApiAccess />

@@ -2,7 +2,7 @@ import { useSidebar } from "@/components/ui/sidebar";
 import { RiMenuLine } from "@remixicon/react";
 import { cn } from "cn";
 
-export default function CustomSidebarTrigger() {
+export default function SidebarTrigger() {
   const { toggleSidebar } = useSidebar();
   const { open } = useSidebar();
 

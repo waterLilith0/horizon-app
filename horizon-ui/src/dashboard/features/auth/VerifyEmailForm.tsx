@@ -1,8 +1,7 @@
 import { useState } from "react";
-import { useForm } from "@tanstack/react-form";
 import { postApiAuthVerifyEmail } from "@/api/generated/internal/horizonInternal";
-import { Button } from "@/components/ui/button";
-import { Field, FieldError, FieldGroup } from "@/components/ui/field";
+import { problemOf } from "@/api/http";
+import { useAppForm } from "@/components/form";
 
 export default function VerifyEmailForm({
   token,
@@ -13,56 +12,25 @@ export default function VerifyEmailForm({
 }) {
   const [error, setError] = useState<string>();
 
-  const form = useForm({
+  const form = useAppForm({
     defaultValues: {},
     onSubmit: async () => {
-      setError(undefined);
-      const res = await postApiAuthVerifyEmail({ token });
-
-      // Orval always returns { data, status, headers }
-      // Success is 204 No Content
-      if (res.status === 204) {
-        onVerified();
-        return;
-      }
-
-      // Error case
-      const errorMsg =
-        (res.data as any).detail ??
-        (res.data as any).title ??
-        "Verification failed";
-      setError(errorMsg);
+      const message = problemOf(
+        await postApiAuthVerifyEmail({ token }),
+        "Verification failed",
+      );
+      setError(message);
+      if (!message) onVerified();
     },
   });
 
   return (
-    <form
-      noValidate
-      onSubmit={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        void form.handleSubmit();
-      }}
-    >
-      <FieldGroup>
+    <form.AppForm>
+      <form.AuthForm submit="Verify Email" pending="Verifying…" error={error}>
         <p className="text-sm text-muted-foreground mb-4">
           Verifying your email address...
         </p>
-
-        {error && (
-          <Field data-invalid>
-            <FieldError errors={[{ message: error }]} />
-          </Field>
-        )}
-
-        <form.Subscribe selector={(state) => state.isSubmitting}>
-          {(isSubmitting) => (
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Verifying…" : "Verify Email"}
-            </Button>
-          )}
-        </form.Subscribe>
-      </FieldGroup>
-    </form>
+      </form.AuthForm>
+    </form.AppForm>
   );
 }

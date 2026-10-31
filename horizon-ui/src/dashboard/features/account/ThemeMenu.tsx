@@ -1,5 +1,5 @@
 import { useAtom } from "jotai";
-import { themeAtom } from "../shared/theme/configAtoms";
+import { themeAtom } from "@/shared/theme/configAtoms";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -7,7 +7,7 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { THEMES, themeSchema } from "../shared/theme/useResolvedTheme";
+import { THEMES, themeSchema } from "@/shared/theme/useResolvedTheme";
 import { SidebarMenuSubButton } from "@/components/ui/sidebar";
 
 export default function ThemeMenu() {

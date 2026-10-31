@@ -38,10 +38,15 @@ export interface Collection {
   /** When the collection was created. */
   creationDate: string;
   /**
-     * The ID of the user who owns the collection.
+     * The ID of the user who created the collection (its author).
      * @pattern ^-?(?:0|[1-9]\d*)$
      */
   userId: number | string;
+  /**
+     * The username of the collection's author. Only set in list results.
+     * @nullable
+     */
+  userName?: string | null;
   /** Whether the collection is visible to other users. */
   public: boolean;
 }
@@ -100,12 +105,23 @@ export interface Prompt {
   /** When the prompt was created. */
   creationDate: string;
   /**
-     * The ID of the user who owns the prompt.
+     * The ID of the user who created the prompt (its author).
      * @pattern ^-?(?:0|[1-9]\d*)$
      */
   userId: number | string;
+  /**
+     * The username of the prompt's author. Only set in list results.
+     * @nullable
+     */
+  userName?: string | null;
   /** Whether the prompt is visible to other users. */
   public: boolean;
+  /**
+     * IDs of the collections the prompt belongs to. Only set when requested.
+     * @nullable
+     * @items.pattern ^-?(?:0|[1-9]\d*)$
+     */
+  collectionIds?: (number | string)[] | null;
 }
 
 /**
@@ -125,7 +141,14 @@ export interface CreatePromptResponse {
 /**
  * Which items a list endpoint returns for the current user.
  */
-export type ListScope = number;
+export type ListScope = typeof ListScope[keyof typeof ListScope];
+
+
+export const ListScope = {
+  All: 'All',
+  Owned: 'Owned',
+  Others: 'Others',
+} as const;
 
 export interface ProblemDetails {
   /** @nullable */
@@ -194,23 +217,70 @@ export interface VisibilityDto {
 
 export type GetApiCollectionParams = {
 /**
+ * Page number, starting at 1.
+ * @minimum 1
+ * @maximum 2147483647
+ * @pattern ^-?(?:0|[1-9]\d*)$
+ */
+page?: number | string;
+/**
+ * Number of collections per page (1-100).
+ * @minimum 1
+ * @maximum 100
+ * @pattern ^-?(?:0|[1-9]\d*)$
+ */
+pageSize?: number | string;
+/**
  * all (default), owned, or others (public collections of other users).
  */
 scope?: ListScope;
+/**
+ * Only return collections created by this user ID.
+ * @pattern ^-?(?:0|[1-9]\d*)$
+ */
+userId?: number | string;
+/**
+ * Partial match (contains) on the collection name.
+ * @minLength 0
+ * @maxLength 100
+ */
+search?: string;
 };
 
 export type GetApiPromptParams = {
 /**
- * Maximum number of prompts to return (1-1000).
+ * Page number, starting at 1.
  * @minimum 1
- * @maximum 1000
+ * @maximum 2147483647
  * @pattern ^-?(?:0|[1-9]\d*)$
  */
-resultAmount?: number | string;
+page?: number | string;
+/**
+ * Number of prompts per page (1-100).
+ * @minimum 1
+ * @maximum 100
+ * @pattern ^-?(?:0|[1-9]\d*)$
+ */
+pageSize?: number | string;
 /**
  * all (default), owned, or others (public prompts of other users).
  */
 scope?: ListScope;
+/**
+ * Also return the IDs of the collections each prompt belongs to.
+ */
+includeCollectionIds?: boolean;
+/**
+ * Only return prompts created by this user ID.
+ * @pattern ^-?(?:0|[1-9]\d*)$
+ */
+userId?: number | string;
+/**
+ * Partial match (contains) on the prompt text.
+ * @minLength 0
+ * @maxLength 100
+ */
+search?: string;
 };
 
 export type GetApiPromptRandomParams = {
@@ -724,6 +794,11 @@ export type getApiCollectionResponse200 = {
   status: 200
 }
 
+export type getApiCollectionResponse400 = {
+  data: ValidationProblemDetails
+  status: 400
+}
+
 export type getApiCollectionResponse401 = {
   data: ProblemDetails
   status: 401
@@ -732,7 +807,7 @@ export type getApiCollectionResponse401 = {
 export type getApiCollectionResponseSuccess = (getApiCollectionResponse200) & {
   headers: Headers;
 };
-export type getApiCollectionResponseError = (getApiCollectionResponse401) & {
+export type getApiCollectionResponseError = (getApiCollectionResponse400 | getApiCollectionResponse401) & {
   headers: Headers;
 };
 
@@ -754,7 +829,8 @@ export const getGetApiCollectionUrl = (params?: GetApiCollectionParams,) => {
 }
 
 /**
- * Returns collections owned by the current user, or public collections.
+ * Returns a page of collections owned by the current user, or public collections, ordered by ID.
+ *     Each collection includes the author's username.
  * @summary List Collection
  */
 export const getApiCollection = async (params?: GetApiCollectionParams, options?: RequestInit): Promise<getApiCollectionResponse> => {
@@ -786,7 +862,7 @@ export const getGetApiCollectionQueryKey = (params?: GetApiCollectionParams,) =>
     }
 
 
-export const getGetApiCollectionQueryOptions = <TData = Awaited<ReturnType<typeof getApiCollection>>, TError = ProblemDetails>(params?: GetApiCollectionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiCollection>>, TError, TData>>, fetch?: RequestInit}
+export const getGetApiCollectionQueryOptions = <TData = Awaited<ReturnType<typeof getApiCollection>>, TError = ValidationProblemDetails | ProblemDetails>(params?: GetApiCollectionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiCollection>>, TError, TData>>, fetch?: RequestInit}
 ) => {
 
 const {query: queryOptions, fetch: fetchOptions} = options ?? {};
@@ -805,10 +881,10 @@ const {query: queryOptions, fetch: fetchOptions} = options ?? {};
 }
 
 export type GetApiCollectionQueryResult = NonNullable<Awaited<ReturnType<typeof getApiCollection>>>
-export type GetApiCollectionQueryError = ProblemDetails
+export type GetApiCollectionQueryError = ValidationProblemDetails | ProblemDetails
 
 
-export function useGetApiCollection<TData = Awaited<ReturnType<typeof getApiCollection>>, TError = ProblemDetails>(
+export function useGetApiCollection<TData = Awaited<ReturnType<typeof getApiCollection>>, TError = ValidationProblemDetails | ProblemDetails>(
  params: undefined |  GetApiCollectionParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiCollection>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getApiCollection>>,
@@ -818,7 +894,7 @@ export function useGetApiCollection<TData = Awaited<ReturnType<typeof getApiColl
       >, fetch?: RequestInit}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetApiCollection<TData = Awaited<ReturnType<typeof getApiCollection>>, TError = ProblemDetails>(
+export function useGetApiCollection<TData = Awaited<ReturnType<typeof getApiCollection>>, TError = ValidationProblemDetails | ProblemDetails>(
  params?: GetApiCollectionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiCollection>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getApiCollection>>,
@@ -828,7 +904,7 @@ export function useGetApiCollection<TData = Awaited<ReturnType<typeof getApiColl
       >, fetch?: RequestInit}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetApiCollection<TData = Awaited<ReturnType<typeof getApiCollection>>, TError = ProblemDetails>(
+export function useGetApiCollection<TData = Awaited<ReturnType<typeof getApiCollection>>, TError = ValidationProblemDetails | ProblemDetails>(
  params?: GetApiCollectionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiCollection>>, TError, TData>>, fetch?: RequestInit}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -836,7 +912,7 @@ export function useGetApiCollection<TData = Awaited<ReturnType<typeof getApiColl
  * @summary List Collection
  */
 
-export function useGetApiCollection<TData = Awaited<ReturnType<typeof getApiCollection>>, TError = ProblemDetails>(
+export function useGetApiCollection<TData = Awaited<ReturnType<typeof getApiCollection>>, TError = ValidationProblemDetails | ProblemDetails>(
  params?: GetApiCollectionParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getApiCollection>>, TError, TData>>, fetch?: RequestInit}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -887,7 +963,8 @@ export const getPutApiCollectionCollectionIdVisibilityUrl = (collectionId: numbe
 }
 
 /**
- * Publishes or unpublishes a collection owned by the current user, optionally applying the same visibility to the current user's prompts within it.
+ * Publishes or unpublishes a collection owned by the current user,
+ *     optionally applying the same visibility to the current user's prompts within it.
  * @summary Set collection visibility
  */
 export const putApiCollectionCollectionIdVisibility = async (collectionId: number,
@@ -1228,6 +1305,7 @@ export const getGetApiCollectionAllCollectionIdUrl = (collectionId: number,) => 
 
 /**
  * Returns the prompts in a collection owned by the current user, or in a public collection.
+ *     Each prompt includes the author's username.
  * @summary List prompts in a collection
  */
 export const getApiCollectionAllCollectionId = async (collectionId: number, options?: RequestInit): Promise<getApiCollectionAllCollectionIdResponse> => {
@@ -1370,7 +1448,8 @@ export const getPostApiPromptUrl = () => {
 }
 
 /**
- * Creates a new prompt owned by the current user. If a collection ID is provided, the prompt is also added to that collection. Set `public` to make it visible to other users.
+ * Creates a new prompt owned by the current user. If a collection ID is provided,
+ *     the prompt is also added to that collection. Set `public` to make it visible to other users.
  * @summary Create a prompt
  */
 export const postApiPrompt = async (createPromptDto: CreatePromptDto, options?: RequestInit): Promise<postApiPromptResponse> => {
@@ -1497,7 +1576,8 @@ export const getGetApiPromptUrl = (params?: GetApiPromptParams,) => {
 }
 
 /**
- * Returns the prompts available to the current user, optionally limited to a maximum number of results.
+ * Returns a page of the prompts available to the current user, ordered by ID.
+ *     Each prompt includes the author's username.
  * @summary List prompts
  */
 export const getApiPrompt = async (params?: GetApiPromptParams, options?: RequestInit): Promise<getApiPromptResponse> => {
@@ -1768,7 +1848,8 @@ export const getPutApiPromptPromptIdUrl = (promptId: number,) => {
 }
 
 /**
- * Replaces the text, type and visibility of a prompt owned by the current user. Omitting `public` makes the prompt private.
+ * Replaces the text, type and visibility of a prompt owned by the current user.
+ *     Omitting `public` makes the prompt private.
  * @summary Update a prompt
  */
 export const putApiPromptPromptId = async (promptId: number,
@@ -2100,6 +2181,11 @@ export type putApiPromptPromptIdVisibilityResponse200 = {
   status: 200
 }
 
+export type putApiPromptPromptIdVisibilityResponse400 = {
+  data: ValidationProblemDetails
+  status: 400
+}
+
 export type putApiPromptPromptIdVisibilityResponse401 = {
   data: ProblemDetails
   status: 401
@@ -2113,7 +2199,7 @@ export type putApiPromptPromptIdVisibilityResponse404 = {
 export type putApiPromptPromptIdVisibilityResponseSuccess = (putApiPromptPromptIdVisibilityResponse200) & {
   headers: Headers;
 };
-export type putApiPromptPromptIdVisibilityResponseError = (putApiPromptPromptIdVisibilityResponse401 | putApiPromptPromptIdVisibilityResponse404) & {
+export type putApiPromptPromptIdVisibilityResponseError = (putApiPromptPromptIdVisibilityResponse400 | putApiPromptPromptIdVisibilityResponse401 | putApiPromptPromptIdVisibilityResponse404) & {
   headers: Headers;
 };
 
@@ -2170,7 +2256,7 @@ const res = await fetch(getPutApiPromptPromptIdVisibilityUrl(promptId),
 
 export const getPutApiPromptPromptIdVisibilityMutationKey = () => ['putApiPromptPromptIdVisibility'] as const;
 
-export const getPutApiPromptPromptIdVisibilityMutationOptions = <TError = ProblemDetails,
+export const getPutApiPromptPromptIdVisibilityMutationOptions = <TError = ValidationProblemDetails | ProblemDetails,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putApiPromptPromptIdVisibility>>, TError,PutApiPromptPromptIdVisibilityMutationVariables, TContext>, fetch?: RequestInit}
 ): UseMutationOptions<Awaited<ReturnType<typeof putApiPromptPromptIdVisibility>>, TError,PutApiPromptPromptIdVisibilityMutationVariables, TContext> => {
 
@@ -2199,13 +2285,13 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
 
     export type PutApiPromptPromptIdVisibilityMutationResult = NonNullable<Awaited<ReturnType<typeof putApiPromptPromptIdVisibility>>>
     export type PutApiPromptPromptIdVisibilityMutationBody = VisibilityDto
-    export type PutApiPromptPromptIdVisibilityMutationError = ProblemDetails
+    export type PutApiPromptPromptIdVisibilityMutationError = ValidationProblemDetails | ProblemDetails
     export type PutApiPromptPromptIdVisibilityMutationVariables = {promptId: number;data: VisibilityDto}
 
     /**
  * @summary Set prompt visibility
  */
-export const usePutApiPromptPromptIdVisibility = <TError = ProblemDetails,
+export const usePutApiPromptPromptIdVisibility = <TError = ValidationProblemDetails | ProblemDetails,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putApiPromptPromptIdVisibility>>, TError,PutApiPromptPromptIdVisibilityMutationVariables, TContext>, fetch?: RequestInit}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof putApiPromptPromptIdVisibility>>,

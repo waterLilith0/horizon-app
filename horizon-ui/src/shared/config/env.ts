@@ -6,7 +6,7 @@ export const env = {
     import.meta.env.DEV && import.meta.env.VITE_ENABLE_MOCKS === "true",
   faro: {
     enabled: import.meta.env.VITE_FARO_ENABLED === "true",
-    url: import.meta.env.VITE_FARO_URL,
+    url: import.meta.env.VITE_FARO_URL as string,
     app: { name: "horizon-ui", version: __APP_VERSION__, environment: mode },
   },
 };

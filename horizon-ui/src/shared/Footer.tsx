@@ -10,7 +10,7 @@ export default function Footer() {
             <ul key={i} className="flex flex-wrap gap-x-5 gap-y-1">
               {row.links.map((link) => (
                 <li key={link.url}>
-                  {link.url.substring(0, 4) === "http" ? (
+                  {link.url.startsWith("http") ? (
                     <a
                       href={link.url}
                       target="_blank"

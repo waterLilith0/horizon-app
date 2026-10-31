@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
-import { useEffect, useRef, useState } from "react";
+import { useValidatedInput } from "@/shared/useValidatedInput";
 import { PromptTextSchema } from "./prompt.schema";
 
 export default function PromptTextCell({
@@ -7,34 +8,23 @@ export default function PromptTextCell({
   value,
   onSave,
 }: {
-  id: number;
+  id: string;
   value: string;
-  onSave: (id: number, text: string) => void;
+  onSave: (id: string, text: string) => void;
 }) {
-  const [draft, setDraft] = useState(value);
+  const draft = useValidatedInput(PromptTextSchema, value);
   const [isEditing, setIsEditing] = useState(false);
-  const [error, setError] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
   const inputId = `prompt-text-${id}`;
 
-  useEffect(() => {
-    if (isEditing) inputRef.current?.focus();
-  }, [isEditing]);
-
-  useEffect(() => {
-    if (!isEditing) setDraft(value);
-  }, [isEditing, value]);
+  function startEditing() {
+    draft.reset(value);
+    setIsEditing(true);
+  }
 
   function save() {
-    const result = PromptTextSchema.safeParse(draft);
-
-    if (!result.success) {
-      setError(result.error.issues[0]?.message ?? "Invalid prompt text");
-      return;
-    }
-
-    if (result.data !== value) onSave(id, result.data);
-    setError("");
+    const valid = draft.validate();
+    if (valid === undefined) return;
+    if (valid !== value) onSave(id, valid);
     setIsEditing(false);
   }
 
@@ -48,38 +38,24 @@ export default function PromptTextCell({
       {isEditing ? (
         <>
           <Input
-            ref={inputRef}
+            autoFocus
             id={inputId}
-            value={draft}
-            onChange={(event) => {
-              setDraft(event.currentTarget.value);
-              setError("");
-            }}
+            value={draft.value}
+            onChange={(event) => draft.change(event.currentTarget.value)}
             onKeyDown={(event) => {
-              if (event.key === "Escape") {
-                setDraft(value);
-                setError("");
-                setIsEditing(false);
-              }
+              if (event.key === "Escape") setIsEditing(false);
             }}
-            aria-invalid={Boolean(error)}
-            aria-describedby={error ? `${inputId}-error` : undefined}
+            aria-invalid={Boolean(draft.error)}
+            aria-describedby={draft.error ? `${inputId}-error` : undefined}
           />
-          {error && (
+          {draft.error && (
             <p id={`${inputId}-error`} role="alert">
-              {error}
+              {draft.error}
             </p>
           )}
         </>
       ) : (
-        <button
-          type="button"
-          className="text-left"
-          onClick={() => {
-            setDraft(value);
-            setIsEditing(true);
-          }}
-        >
+        <button type="button" className="text-left" onClick={startEditing}>
           {value}
         </button>
       )}
