@@ -17,9 +17,11 @@ export default function ThemeMenu() {
     <DropdownMenu>
       <DropdownMenuTrigger
         className="rounded-md w-full"
-        nativeButton={false}
         render={
-          <SidebarMenuSubButton className="cursor-pointer">
+          <SidebarMenuSubButton
+            render={<button type="button" />}
+            className="cursor-pointer"
+          >
             Theme: {theme}
           </SidebarMenuSubButton>
         }

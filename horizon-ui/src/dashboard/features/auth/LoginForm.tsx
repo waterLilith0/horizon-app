@@ -10,18 +10,14 @@ export default function LoginForm({ onLoggedIn }: { onLoggedIn: () => void }) {
   const queryClient = useQueryClient();
 
   const form = useAppForm({
-    defaultValues: { identifier: "", password: "" },
+    defaultValues: { userName: "", password: "" },
     validators: {
       onChange: loginSchema,
       onSubmit: loginSchema,
     },
     onSubmit: async ({ value }) => {
       setError(undefined);
-      const { identifier, password } = loginSchema.parse(value);
-      const response = await postApiAuthLogin({
-        userName: identifier,
-        password,
-      });
+      const response = await postApiAuthLogin(loginSchema.parse(value));
 
       const status: number = response.status;
       if (status !== 200) {
@@ -37,10 +33,10 @@ export default function LoginForm({ onLoggedIn }: { onLoggedIn: () => void }) {
   return (
     <form.AppForm>
       <form.AuthForm submit="Log in" pending="Logging in…" error={error}>
-        <form.AppField name="identifier">
+        <form.AppField name="userName">
           {(field) => (
             <field.TextField
-              label="Username or email"
+              label="Username"
               autoComplete="username"
               autoCapitalize="none"
               spellCheck={false}

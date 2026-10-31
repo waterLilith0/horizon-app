@@ -1,7 +1,7 @@
 import z from "zod";
 import type { CollectionState } from "../collections/collection.schema";
 import type { Library } from "../library/library.schema";
-import type { PromptState } from "../prompts/prompt.schema";
+import type { LocalPrompt, PromptState } from "../prompts/prompt.schema";
 
 // What an item remembers about its copy on the server.
 export interface Synced {
@@ -89,16 +89,26 @@ export function applyCollectionState(
   };
 }
 
-// The server answered with the prompt as stored, so no local edit is pending.
+// The server answered with the prompt as stored. A local edit made while the
+// upload was under way is not in that answer, so the prompt stays pending.
 export function applyPromptState(
   library: Library,
   id: string,
   state: PromptState,
+  uploaded: Pick<LocalPrompt, "promptText" | "type">,
 ): Library {
   return {
     ...library,
     prompts: library.prompts.map((prompt) =>
-      prompt.id === id ? { ...prompt, ...state, dirty: false } : prompt,
+      prompt.id === id
+        ? {
+            ...prompt,
+            ...state,
+            dirty:
+              prompt.promptText !== uploaded.promptText ||
+              prompt.type !== uploaded.type,
+          }
+        : prompt,
     ),
   };
 }

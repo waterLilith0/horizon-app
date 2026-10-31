@@ -11,9 +11,10 @@ export function useCurrentUser() {
     queryKey: currentUserQueryKey,
     queryFn: async ({ signal }): Promise<UserProfile | null> => {
       const res = await getApiAuthMe({ signal });
+      const status: number = res.status;
       if (res.status === 200) return res.data;
       if (res.status === 401) return null;
-      throw new Error(`Failed to load user: aaa`);
+      throw new Error(`Failed to load user (HTTP ${status})`);
     },
     staleTime: 5 * 60 * 1000,
     retry: false,

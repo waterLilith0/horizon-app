@@ -31,8 +31,9 @@ export function countPendingChanges(library: Library): number {
 }
 
 const deleteOnServer = {
-  promptIds: deleteApiPromptPromptId,
-  collectionIds: deleteApiCollectionCollectionId,
+  promptIds: (id: number) => deleteApiPromptPromptId(id),
+  collectionIds: (id: number) =>
+    deleteApiCollectionCollectionId(id, { deletePrompts: true }),
 };
 
 // Brings the server in line with the library. New items arrive private, as
@@ -43,9 +44,9 @@ export function syncLibrary(access: LibraryAccess) {
     for (const { id } of collectionsToCreate(access.get())) {
       await uploadCollection(access, id);
     }
-    // Uploads, edits and moves before any deletion: a prompt has to leave a
-    // collection before the server deletes that collection, as the deletion
-    // takes its prompts along.
+    // Uploads, edits and moves before any deletion: a prompt that was moved out
+    // of a collection has to leave it first, or deleting the collection would
+    // delete the prompt too.
     for (const { id } of promptsToPush(access.get())) {
       await uploadPrompt(access, id);
     }

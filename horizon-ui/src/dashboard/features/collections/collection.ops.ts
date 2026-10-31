@@ -23,8 +23,8 @@ export function deleteCollection(library: Library, id: string): Library {
   const collection = library.collections.find((c) => c.id === id);
   if (!collection) return library;
 
-  // The server deletes a collection's linked prompts with it. Prompts that
-  // are linked elsewhere on the server need their own deletion.
+  // The server deletes the prompts that are linked to a deleted collection
+  // along with it. The others, not uploaded or linked elsewhere, need their own.
   const needsOwnDeletion = (prompt: Library["prompts"][number]) =>
     collection.serverId === undefined ||
     prompt.syncedCollectionId !== collection.serverId;

@@ -19,13 +19,15 @@ interface PendingImport {
 
 // Imports each JSON file the app-wide uploader receives. Prompts that come
 // without a collection join the target, or stand alone when there is none. A
-// file that clashes with existing items waits for the user's decision.
+// file that clashes with existing items waits for the user's decision, one
+// file at a time.
 export function useLibraryImport(targetId: string | undefined) {
   const { uploader } = useUploadContext();
   const store = useStore();
   const setLibrary = useSetAtom(libraryAtom);
-  const [pending, setPending] = useState<PendingImport | null>(null);
+  const [queue, setQueue] = useState<PendingImport[]>([]);
   const [error, setError] = useState<string>();
+  const pending = queue.at(0);
 
   useEffect(
     () =>
@@ -44,7 +46,10 @@ export function useLibraryImport(targetId: string | undefined) {
               prompts: found.prompts.length,
             };
             if (duplicates.collections + duplicates.prompts > 0) {
-              setPending({ file, targetId, duplicates });
+              setQueue((waiting) => [
+                ...waiting,
+                { file, targetId, duplicates },
+              ]);
             } else {
               setLibrary((library) =>
                 mergeLibrary(library, file, targetId, false),
@@ -62,12 +67,16 @@ export function useLibraryImport(targetId: string | undefined) {
     [uploader, store, setLibrary, targetId],
   );
 
+  function cancel() {
+    setQueue((waiting) => waiting.slice(1));
+  }
+
   function resolve(skipDuplicates: boolean) {
     if (!pending) return;
     setLibrary((library) =>
       mergeLibrary(library, pending.file, pending.targetId, skipDuplicates),
     );
-    setPending(null);
+    cancel();
   }
 
   return {
@@ -75,7 +84,7 @@ export function useLibraryImport(targetId: string | undefined) {
     error,
     skipDuplicates: () => resolve(true),
     keepBoth: () => resolve(false),
-    cancel: () => setPending(null),
+    cancel,
     dismissError: () => setError(undefined),
   };
 }

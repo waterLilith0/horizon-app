@@ -272,19 +272,35 @@ namespace horizon_api.Controllers
         }
 
         /// <summary>Delete a collection</summary>
-        /// <remarks>Deletes a specific collection owned by the current user.</remarks>
+        /// <remarks>Deletes a specific collection owned by the current user. Optionally also deletes the current user's prompts in it.</remarks>
         /// <param name="collectionId">The collection ID.</param>
+        /// <param name="deletePrompts">Also delete the current user's prompts that are in the collection. Prompts owned by other users are never deleted.</param>
         /// <response code="204">Collection deleted.</response>
         /// <response code="404">Collection not found.</response>
         [HttpDelete("{collectionId:long:min(1)}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> DeleteCollection([FromRoute] long collectionId, CancellationToken cancellationToken)
+        public async Task<IActionResult> DeleteCollection(
+            [FromRoute] long collectionId,
+            [FromQuery] bool deletePrompts,
+            CancellationToken cancellationToken)
         {
-            logger.LogDebug("DeleteCollection action called for collection: {collectionId}", collectionId);
+            logger.LogDebug("DeleteCollection action called for collection: {collectionId} (deletePrompts: {deletePrompts})", collectionId, deletePrompts);
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+            await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+            // Prompts must go first: deleting the collection cascades its links away, so they could no longer be found.
+            if (deletePrompts)
+            {
+                await connection.ExecuteAsync(new CommandDefinition(
+                    sqlQueryStore.Get("DeletePromptsInCollection"),
+                    new { collectionId, userId = CurrentUserId },
+                    transaction,
+                    cancellationToken: cancellationToken));
+            }
+
             var sql = sqlQueryStore.Get("DeleteCollectionById");
-            var command = new CommandDefinition(sql, new { collectionId, userId = CurrentUserId }, cancellationToken: cancellationToken);
+            var command = new CommandDefinition(sql, new { collectionId, userId = CurrentUserId }, transaction, cancellationToken: cancellationToken);
             var rowsAffected = await connection.ExecuteAsync(command);
 
             if (rowsAffected == 0)
@@ -296,6 +312,7 @@ namespace horizon_api.Controllers
                     statusCode: StatusCodes.Status404NotFound
                 );
             }
+            await transaction.CommitAsync(cancellationToken);
             logger.LogInformation("Successfully deleted collection with ID: {collectionId}", collectionId);
             return NoContent();
         }

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useAtomValue } from "jotai";
+import { useAtomValue, useStore } from "jotai";
 import { useServerAction } from "@/shared/useServerAction";
 import type { Library } from "../library/library.schema";
 import { libraryAtom } from "../library/library.store";
@@ -13,6 +13,7 @@ const DEBOUNCE_MS = 1000;
 // instead of retrying in a loop.
 export function useLibrarySync(auto: boolean) {
   const access = useLibraryAccess();
+  const store = useStore();
   const library = useAtomValue(libraryAtom);
   const [failedAt, setFailedAt] = useState<Library>();
   const {
@@ -23,7 +24,7 @@ export function useLibrarySync(auto: boolean) {
   const changes = countPendingChanges(library);
 
   async function sync() {
-    if (!(await run())) setFailedAt(access.get());
+    if (!(await run())) setFailedAt(store.get(libraryAtom));
   }
 
   useEffect(() => {

@@ -3,11 +3,12 @@ import { RiMenuLine } from "@remixicon/react";
 import { cn } from "cn";
 
 export default function SidebarTrigger() {
-  const { toggleSidebar } = useSidebar();
-  const { open } = useSidebar();
+  const { toggleSidebar, open } = useSidebar();
 
   return (
     <button
+      type="button"
+      aria-label={open ? "Close sidebar" : "Open sidebar"}
       className={cn(
         "fixed right-2 z-10 bg-primary hover:bg-secondary transition-[left] duration-200 ease-linear rounded-4xl mask-circle border-2 w-10 h-10 ",
         open ? "md:right-[calc(var(--sidebar-width)+0.5rem)]" : "",

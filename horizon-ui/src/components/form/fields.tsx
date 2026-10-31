@@ -115,6 +115,7 @@ export function PasswordField({
 }
 
 // The form around the fields, with the submit button and what went wrong.
+// A submission that throws, such as a network failure, can be retried.
 export function AuthForm({
   submit,
   pending,
@@ -127,6 +128,9 @@ export function AuthForm({
   children?: ReactNode;
 }) {
   const form = useFormContext();
+  const [failed, setFailed] = useState(false);
+  const message =
+    error ?? (failed ? "Something went wrong. Please try again." : undefined);
 
   return (
     <form
@@ -134,14 +138,15 @@ export function AuthForm({
       onSubmit={(e) => {
         e.preventDefault();
         e.stopPropagation();
-        void form.handleSubmit();
+        setFailed(false);
+        form.handleSubmit().catch(() => setFailed(true));
       }}
     >
       <FieldGroup>
         {children}
-        {error && (
+        {message && (
           <Field data-invalid>
-            <FieldError errors={[{ message: error }]} />
+            <FieldError errors={[{ message }]} />
           </Field>
         )}
         <form.Subscribe selector={(state) => state.isSubmitting}>

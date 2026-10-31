@@ -57,12 +57,14 @@ export default function AccountDropdown() {
               {user ? (
                 <>
                   <SidebarMenuSubButton
+                    render={<button type="button" />}
                     className="cursor-pointer"
                     onClick={() => setAccountShown(true)}
                   >
                     Profile
                   </SidebarMenuSubButton>
                   <SidebarMenuSubButton
+                    render={<button type="button" />}
                     className="cursor-pointer"
                     onClick={() => void handleLogout()}
                   >
@@ -70,19 +72,16 @@ export default function AccountDropdown() {
                   </SidebarMenuSubButton>
                 </>
               ) : (
-                <>
-                  <SidebarMenuSubButton
-                    className="cursor-pointer"
-                    isActive={isPending}
-                    onClick={() => setLoginShown(true)}
-                  >
-                    Login/Register
-                  </SidebarMenuSubButton>
-                </>
+                <SidebarMenuSubButton
+                  render={<button type="button" />}
+                  className="cursor-pointer"
+                  isActive={isPending}
+                  onClick={() => setLoginShown(true)}
+                >
+                  Login/Register
+                </SidebarMenuSubButton>
               )}
-              <>
-                <ThemeMenu />
-              </>
+              <ThemeMenu />
             </SidebarMenuSub>
           </SidebarMenuItem>
         </CollapsibleContent>

@@ -145,12 +145,12 @@ export interface VerifyEmailRequest {
 }
 
 export type GetApiAuthParams = {
-/**
- * The username to check.
- * @minLength 3
- * @maxLength 30
- */
-userName: string;
+  /**
+   * The username to check.
+   * @minLength 3
+   * @maxLength 30
+   */
+  userName: string;
 };
 
 const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {

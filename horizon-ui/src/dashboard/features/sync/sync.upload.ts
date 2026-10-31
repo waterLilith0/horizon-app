@@ -133,7 +133,7 @@ export async function uploadPrompt(
     serverCollectionOf(library, prompt),
     isPublic ?? prompt.public,
   );
-  access.update((current) => applyPromptState(current, id, state));
+  access.update((current) => applyPromptState(current, id, state, prompt));
   if (
     prompt.serverId === undefined &&
     !access.get().prompts.some((p) => p.id === id)

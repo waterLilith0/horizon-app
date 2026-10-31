@@ -215,80 +215,79 @@ export interface VisibilityDto {
   public: boolean;
 }
 
+export type DeleteApiCollectionCollectionIdParams = {
+  /** Also delete the current user's prompts that are in the collection. Prompts owned by other users are never deleted. */
+  deletePrompts?: boolean;
+};
+
 export type GetApiCollectionParams = {
-/**
- * Page number, starting at 1.
- * @minimum 1
- * @maximum 2147483647
- * @pattern ^-?(?:0|[1-9]\d*)$
- */
-page?: number | string;
-/**
- * Number of collections per page (1-100).
- * @minimum 1
- * @maximum 100
- * @pattern ^-?(?:0|[1-9]\d*)$
- */
-pageSize?: number | string;
-/**
- * all (default), owned, or others (public collections of other users).
- */
-scope?: ListScope;
-/**
- * Only return collections created by this user ID.
- * @pattern ^-?(?:0|[1-9]\d*)$
- */
-userId?: number | string;
-/**
- * Partial match (contains) on the collection name.
- * @minLength 0
- * @maxLength 100
- */
-search?: string;
+  /**
+   * Page number, starting at 1.
+   * @minimum 1
+   * @maximum 2147483647
+   * @pattern ^-?(?:0|[1-9]\d*)$
+   */
+  page?: number | string;
+  /**
+   * Number of collections per page (1-100).
+   * @minimum 1
+   * @maximum 100
+   * @pattern ^-?(?:0|[1-9]\d*)$
+   */
+  pageSize?: number | string;
+  /** all (default), owned, or others (public collections of other users). */
+  scope?: ListScope;
+  /**
+   * Only return collections created by this user ID.
+   * @pattern ^-?(?:0|[1-9]\d*)$
+   */
+  userId?: number | string;
+  /**
+   * Partial match (contains) on the collection name.
+   * @minLength 0
+   * @maxLength 100
+   */
+  search?: string;
 };
 
 export type GetApiPromptParams = {
-/**
- * Page number, starting at 1.
- * @minimum 1
- * @maximum 2147483647
- * @pattern ^-?(?:0|[1-9]\d*)$
- */
-page?: number | string;
-/**
- * Number of prompts per page (1-100).
- * @minimum 1
- * @maximum 100
- * @pattern ^-?(?:0|[1-9]\d*)$
- */
-pageSize?: number | string;
-/**
- * all (default), owned, or others (public prompts of other users).
- */
-scope?: ListScope;
-/**
- * Also return the IDs of the collections each prompt belongs to.
- */
-includeCollectionIds?: boolean;
-/**
- * Only return prompts created by this user ID.
- * @pattern ^-?(?:0|[1-9]\d*)$
- */
-userId?: number | string;
-/**
- * Partial match (contains) on the prompt text.
- * @minLength 0
- * @maxLength 100
- */
-search?: string;
+  /**
+   * Page number, starting at 1.
+   * @minimum 1
+   * @maximum 2147483647
+   * @pattern ^-?(?:0|[1-9]\d*)$
+   */
+  page?: number | string;
+  /**
+   * Number of prompts per page (1-100).
+   * @minimum 1
+   * @maximum 100
+   * @pattern ^-?(?:0|[1-9]\d*)$
+   */
+  pageSize?: number | string;
+  /** all (default), owned, or others (public prompts of other users). */
+  scope?: ListScope;
+  /** Also return the IDs of the collections each prompt belongs to. */
+  includeCollectionIds?: boolean;
+  /**
+   * Only return prompts created by this user ID.
+   * @pattern ^-?(?:0|[1-9]\d*)$
+   */
+  userId?: number | string;
+  /**
+   * Partial match (contains) on the prompt text.
+   * @minLength 0
+   * @maxLength 100
+   */
+  search?: string;
 };
 
 export type GetApiPromptRandomParams = {
-/**
- * Only pick from this collection.
- * @pattern ^-?(?:0|[1-9]\d*)$
- */
-collectionId?: number | string;
+  /**
+   * Only pick from this collection.
+   * @pattern ^-?(?:0|[1-9]\d*)$
+   */
+  collectionId?: number | string;
 };
 
 const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {
@@ -707,21 +706,30 @@ export type deleteApiCollectionCollectionIdResponseError = (deleteApiCollectionC
 
 export type deleteApiCollectionCollectionIdResponse = (deleteApiCollectionCollectionIdResponseError)
 
-export const getDeleteApiCollectionCollectionIdUrl = (collectionId: number,) => {
+export const getDeleteApiCollectionCollectionIdUrl = (collectionId: number,
+    params?: DeleteApiCollectionCollectionIdParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/Collection/${collectionId}`
+  return stringifiedParams.length > 0 ? `/api/Collection/${collectionId}?${stringifiedParams}` : `/api/Collection/${collectionId}`
 }
 
 /**
- * Deletes a specific collection owned by the current user.
+ * Deletes a specific collection owned by the current user. Optionally also deletes the current user's prompts in it.
  * @summary Delete a collection
  */
-export const deleteApiCollectionCollectionId = async (collectionId: number, options?: RequestInit): Promise<deleteApiCollectionCollectionIdResponse> => {
+export const deleteApiCollectionCollectionId = async (collectionId: number,
+    params?: DeleteApiCollectionCollectionIdParams, options?: RequestInit): Promise<deleteApiCollectionCollectionIdResponse> => {
 
-  const res = await fetch(getDeleteApiCollectionCollectionIdUrl(collectionId),
+  const res = await fetch(getDeleteApiCollectionCollectionIdUrl(collectionId,params),
   {
     ...options,
     method: 'DELETE'
@@ -758,9 +766,9 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
 
 
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteApiCollectionCollectionId>>, DeleteApiCollectionCollectionIdMutationVariables> = (props) => {
-          const {collectionId} = props ?? {};
+          const {collectionId,params} = props ?? {};
 
-          return  deleteApiCollectionCollectionId(collectionId,fetchOptions)
+          return  deleteApiCollectionCollectionId(collectionId,params,fetchOptions)
         }
 
 
@@ -773,7 +781,7 @@ const {mutation: mutationOptions, fetch: fetchOptions} = options ?
     export type DeleteApiCollectionCollectionIdMutationResult = NonNullable<Awaited<ReturnType<typeof deleteApiCollectionCollectionId>>>
 
     export type DeleteApiCollectionCollectionIdMutationError = ProblemDetails
-    export type DeleteApiCollectionCollectionIdMutationVariables = {collectionId: number}
+    export type DeleteApiCollectionCollectionIdMutationVariables = {collectionId: number;params?: DeleteApiCollectionCollectionIdParams}
 
     /**
  * @summary Delete a collection

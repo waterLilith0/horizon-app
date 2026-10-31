@@ -1,4 +1,4 @@
-﻿using Dapper;
+using Dapper;
 using FluentAssertions;
 using horizon_api.Infrastructure;
 using horizon_api.Shared;
@@ -280,6 +280,66 @@ namespace horizon_api_integration_tests
             var deletedRows = await connection.ExecuteAsync(command);
 
             deletedRows.Should().Be(0);
+        }
+
+        [Fact]
+        public async Task DeletePromptsInCollection_ShouldDeleteOwnedPromptsInCollection()
+        {
+            var (_, collectionId) = await AddEntriesToPromptsDatabase();
+            var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
+
+            var deletedRows = await connection.ExecuteAsync(new CommandDefinition(
+                sqlQueryStore.Get("DeletePromptsInCollection"),
+                new { collectionId, userId = TestUserId },
+                cancellationToken: TestContext.Current.CancellationToken));
+
+            deletedRows.Should().Be(1);
+        }
+
+        [Fact]
+        public async Task DeletePromptsInCollection_ShouldNotDeletePromptsOwnedByOtherUsers()
+        {
+            const long otherUserId = 2;
+            var (_, collectionId) = await AddEntriesToPromptsDatabase();
+            var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
+            var otherPromptId = await connection.QuerySingleAsync<long>(new CommandDefinition(
+                "INSERT INTO WheelSpinPrompts (promptText, type, `public`, userId) VALUES ('Other', 'Wheel Spin', 1, @otherUserId); SELECT LAST_INSERT_ID();",
+                new { otherUserId },
+                cancellationToken: TestContext.Current.CancellationToken));
+            await connection.ExecuteAsync(new CommandDefinition(
+                "INSERT INTO PromptToCollection (collectionId, promptId) VALUES (@collectionId, @otherPromptId)",
+                new { collectionId, otherPromptId },
+                cancellationToken: TestContext.Current.CancellationToken));
+
+            await connection.ExecuteAsync(new CommandDefinition(
+                sqlQueryStore.Get("DeletePromptsInCollection"),
+                new { collectionId, userId = TestUserId },
+                cancellationToken: TestContext.Current.CancellationToken));
+
+            var remaining = await connection.ExecuteScalarAsync<long>(new CommandDefinition(
+                "SELECT COUNT(*) FROM WheelSpinPrompts WHERE promptId = @otherPromptId",
+                new { otherPromptId },
+                cancellationToken: TestContext.Current.CancellationToken));
+            remaining.Should().Be(1);
+        }
+
+        [Fact]
+        public async Task DeletePromptsInCollection_ShouldNotDeletePromptsInOtherCollections()
+        {
+            var (otherPrompt, _) = await AddEntriesToPromptsDatabase();
+            var (_, collectionId) = await AddEntriesToPromptsDatabase();
+            var (connection, sqlQueryStore) = await InitializeConnectionAndQueryStore();
+
+            await connection.ExecuteAsync(new CommandDefinition(
+                sqlQueryStore.Get("DeletePromptsInCollection"),
+                new { collectionId, userId = TestUserId },
+                cancellationToken: TestContext.Current.CancellationToken));
+
+            var remaining = await connection.ExecuteScalarAsync<long>(new CommandDefinition(
+                "SELECT COUNT(*) FROM WheelSpinPrompts WHERE promptId = @promptId",
+                new { promptId = otherPrompt.PromptId },
+                cancellationToken: TestContext.Current.CancellationToken));
+            remaining.Should().Be(1);
         }
 
         // ------------------------------------------------------------------------------------------------- //
