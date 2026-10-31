@@ -9,8 +9,13 @@ env:
   BACKEND_IMAGE: ${{ secrets.DOCKER_USERNAME }}/horizonapp-backend
 
 jobs:
+  # --- CHECK THE FRONTEND BEFORE ANYTHING IS SHIPPED ---
+  frontend-checks:
+    uses: ./.github/workflows/frontend.yml
+
   # --- BUILD FRONTEND AND BACKEND ---
   build-images:
+    needs: frontend-checks
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code

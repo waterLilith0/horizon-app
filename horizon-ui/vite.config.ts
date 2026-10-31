@@ -1,4 +1,4 @@
-import { defineConfig, loadEnv } from "vite";
+import { defineConfig, loadEnv, type PluginOption } from "vite";
 import pkg from "./package.json" with { type: "json" };
 import react, { reactCompilerPreset } from "@vitejs/plugin-react";
 import babel from "@rolldown/plugin-babel";
@@ -37,7 +37,7 @@ export default defineConfig(({ mode }) => {
               stackId: env.FARO_STACK_ID,
               apiKey: env.FARO_API_KEY,
               gzipContents: true,
-            }),
+            }) as PluginOption,
           ]
         : []),
     ],

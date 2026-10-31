@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "typecheck": "tsc -b",
     "lint": "eslint --config configs/eslint.config.js .",
     "preview": "vite preview",
     "update-patches": "npx npm-check-updates --target patch -u && npm install",

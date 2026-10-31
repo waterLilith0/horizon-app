@@ -49,6 +49,8 @@ export default defineConfig(
     },
     rules: {
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+      // The legal texts use non-breaking spaces on purpose.
+      'no-irregular-whitespace': ['error', { skipJSXText: true }],
 
       '@typescript-eslint/consistent-type-imports': [
         'error',

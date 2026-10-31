@@ -26,7 +26,9 @@ export default function AccountDialog({
     setIsDeleting(true);
   }
 
-  function handleConfirmDeletion() {}
+  function handleConfirmDeletion() {
+    // TODO: delete the account
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
