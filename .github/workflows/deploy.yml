@@ -26,6 +26,8 @@ jobs:
   build-images:
     needs: frontend-checks
     runs-on: ubuntu-latest
+    # Selects the GitHub environment whose variables (FARO_URL) apply to this branch.
+    environment: ${{ github.ref_name == 'master' && 'production' || github.ref_name }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -50,7 +52,7 @@ jobs:
           # Baked into the static bundle and visible to every visitor, so none of these are secrets.
           build-args: |
             VITE_FARO_ENABLED=true
-            VITE_FARO_URL=https://faro.waterlilith.space/collect
+            VITE_FARO_URL=${{ vars.FARO_URL }}
             VITE_APP_ENV=${{ github.ref_name == 'master' && 'production' || github.ref_name }}
           platforms: linux/arm64
           push: true
