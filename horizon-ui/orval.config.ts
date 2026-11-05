@@ -17,5 +17,5 @@ const api = (name: "public" | "internal", mock = false) => ({
 
 export default defineConfig({
   public: api("public", true),
-  internal: api("internal"),
+  internal: api("internal", true),
 });
