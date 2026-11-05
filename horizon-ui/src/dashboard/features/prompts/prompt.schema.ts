@@ -1,5 +1,5 @@
 import z from "zod";
-import type { Prompt as ApiPrompt } from "@/api/generated/public/horizonAPI";
+import type { Prompt as ApiPrompt } from "@/api/generated/public/schemas";
 import { FIELD_MAX } from "@/api/limits";
 import { syncedShape, type Synced } from "../sync/sync.state";
 

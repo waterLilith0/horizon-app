@@ -159,20 +159,23 @@ namespace horizon_api.Controllers
         [ProducesResponseType<IReadOnlyList<Collection>>(StatusCodes.Status200OK)]
         [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<IReadOnlyList<Collection>>> GetAllCollections(
-            [FromQuery, Range(1, int.MaxValue)] int page = 1,
-            [FromQuery, Range(1, 100)] int pageSize = 50,
+            [FromQuery, Range(1, int.MaxValue)] int? page = null,
+            [FromQuery, Range(1, 100)] int? pageSize = null,
             [FromQuery] ListScope scope = ListScope.All,
             [FromQuery] long? userId = null,
             [FromQuery, StringLength(100)] string? search = null,
             CancellationToken cancellationToken = default)
         {
+            var resolvedPage = page ?? 1;
+            var resolvedPageSize = pageSize ?? 50;
+
             logger.LogDebug("GetAllCollections method called in CollectionController.");
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
             var sql = sqlQueryStore.Get("GetAllCollections");
             var command = new CommandDefinition(sql, new
             {
-                pageSize,
-                offset = (page - 1) * pageSize,
+                pageSize = resolvedPageSize,
+                offset = (resolvedPage - 1) * resolvedPage,
                 userId = CurrentUserId,
                 authorId = userId,
                 search = string.IsNullOrWhiteSpace(search) ? null : search.Trim(),

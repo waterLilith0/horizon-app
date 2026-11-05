@@ -1,4 +1,4 @@
-import type { Collection as ApiCollection } from "@/api/generated/public/horizonAPI";
+import type { Collection as ApiCollection } from "@/api/generated/public/schemas";
 import z from "zod";
 import { FIELD_MAX } from "@/api/limits";
 import { syncedShape, type Synced } from "../sync/sync.state";

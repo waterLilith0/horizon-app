@@ -7,24 +7,18 @@
  */
 import * as zod from 'zod';
 
-export const getApiPromptParamsPageDefaultOne = 1;
 export const getApiPromptParamsPageMaxOne = 2147483647;
 
-export const getApiPromptParamsPageDefaultTwo = 1;
 export const getApiPromptParamsPageRegExpTwo = new RegExp('^-?(?:0|[1-9]\\d*)$');
 
 export const getApiPromptParamsPageMaxTwo = 2147483647;
 
-export const getApiPromptParamsPageDefault = 1;
-export const getApiPromptParamsPageSizeDefaultOne = 50;
 export const getApiPromptParamsPageSizeMaxOne = 100;
 
-export const getApiPromptParamsPageSizeDefaultTwo = 50;
 export const getApiPromptParamsPageSizeRegExpTwo = new RegExp('^-?(?:0|[1-9]\\d*)$');
 
 export const getApiPromptParamsPageSizeMaxTwo = 100;
 
-export const getApiPromptParamsPageSizeDefault = 50;
 export const getApiPromptParamsScopeDefault = `All`;
 export const getApiPromptParamsIncludeCollectionIdsDefault = false;
 export const getApiPromptParamsUserIdRegExpTwo = new RegExp('^-?(?:0|[1-9]\\d*)$');
@@ -33,8 +27,8 @@ export const getApiPromptParamsSearchMax = 100;
 
 
 export const GetApiPromptParams = zod.object({
-  "page": zod.union([zod.int().min(1).max(getApiPromptParamsPageMaxOne).default(getApiPromptParamsPageDefaultOne),zod.stringFormat('int32', getApiPromptParamsPageRegExpTwo).min(1).max(getApiPromptParamsPageMaxTwo).default(getApiPromptParamsPageDefaultTwo)]).optional(),
-  "pageSize": zod.union([zod.int().min(1).max(getApiPromptParamsPageSizeMaxOne).default(getApiPromptParamsPageSizeDefaultOne),zod.stringFormat('int32', getApiPromptParamsPageSizeRegExpTwo).min(1).max(getApiPromptParamsPageSizeMaxTwo).default(getApiPromptParamsPageSizeDefaultTwo)]).optional(),
+  "page": zod.union([zod.int().min(1).max(getApiPromptParamsPageMaxOne),zod.stringFormat('int32', getApiPromptParamsPageRegExpTwo).min(1).max(getApiPromptParamsPageMaxTwo)]).optional(),
+  "pageSize": zod.union([zod.int().min(1).max(getApiPromptParamsPageSizeMaxOne),zod.stringFormat('int32', getApiPromptParamsPageSizeRegExpTwo).min(1).max(getApiPromptParamsPageSizeMaxTwo)]).optional(),
   "scope": zod.enum(['All', 'Owned', 'Others']).default(getApiPromptParamsScopeDefault).describe('Which items a list endpoint returns for the current user.'),
   "includeCollectionIds": zod.boolean().default(getApiPromptParamsIncludeCollectionIdsDefault),
   "userId": zod.union([zod.int(),zod.stringFormat('int64', getApiPromptParamsUserIdRegExpTwo)]).optional(),

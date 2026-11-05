@@ -3,9 +3,9 @@ import {
   getApiCollectionAllCollectionId,
   getApiLibraryVersionPublic,
   getApiPrompt,
-  ListScope,
-  type GetApiPromptParams,
 } from "@/api/generated/public/horizonAPI";
+import type { GetApiPromptParams } from "@/api/generated/public/schemas/getApiPromptParams.zod";
+import { ListScope } from "@/api/generated/public/schemas/listScope.zod";
 import { ok } from "@/api/http";
 import { PUBLIC_POLL_MS } from "@/api/polling";
 import {
@@ -62,7 +62,7 @@ function usePublicPages<T>(
           ...filter,
           page: pageParam,
           pageSize: PAGE_SIZE,
-          scope: ListScope.Others,
+          scope: ListScope.enum.Others,
         },
         signal,
       ),

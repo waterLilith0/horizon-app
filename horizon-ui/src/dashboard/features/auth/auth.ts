@@ -1,7 +1,5 @@
-import {
-  getApiAuthMe,
-  type UserProfile,
-} from "@/api/generated/internal/horizonInternal";
+import { getApiAuthMe } from "@/api/generated/internal/horizonInternal";
+import type { UserProfile } from "@/api/generated/internal/schemas";
 import { useQuery } from "@tanstack/react-query";
 
 export const currentUserQueryKey = ["auth", "me"] as const;

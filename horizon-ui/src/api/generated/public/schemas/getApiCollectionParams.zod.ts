@@ -7,24 +7,18 @@
  */
 import * as zod from 'zod';
 
-export const getApiCollectionParamsPageDefaultOne = 1;
 export const getApiCollectionParamsPageMaxOne = 2147483647;
 
-export const getApiCollectionParamsPageDefaultTwo = 1;
 export const getApiCollectionParamsPageRegExpTwo = new RegExp('^-?(?:0|[1-9]\\d*)$');
 
 export const getApiCollectionParamsPageMaxTwo = 2147483647;
 
-export const getApiCollectionParamsPageDefault = 1;
-export const getApiCollectionParamsPageSizeDefaultOne = 50;
 export const getApiCollectionParamsPageSizeMaxOne = 100;
 
-export const getApiCollectionParamsPageSizeDefaultTwo = 50;
 export const getApiCollectionParamsPageSizeRegExpTwo = new RegExp('^-?(?:0|[1-9]\\d*)$');
 
 export const getApiCollectionParamsPageSizeMaxTwo = 100;
 
-export const getApiCollectionParamsPageSizeDefault = 50;
 export const getApiCollectionParamsScopeDefault = `All`;
 export const getApiCollectionParamsUserIdRegExpTwo = new RegExp('^-?(?:0|[1-9]\\d*)$');
 export const getApiCollectionParamsSearchMin = 0;
@@ -32,8 +26,8 @@ export const getApiCollectionParamsSearchMax = 100;
 
 
 export const GetApiCollectionParams = zod.object({
-  "page": zod.union([zod.int().min(1).max(getApiCollectionParamsPageMaxOne).default(getApiCollectionParamsPageDefaultOne),zod.stringFormat('int32', getApiCollectionParamsPageRegExpTwo).min(1).max(getApiCollectionParamsPageMaxTwo).default(getApiCollectionParamsPageDefaultTwo)]).optional(),
-  "pageSize": zod.union([zod.int().min(1).max(getApiCollectionParamsPageSizeMaxOne).default(getApiCollectionParamsPageSizeDefaultOne),zod.stringFormat('int32', getApiCollectionParamsPageSizeRegExpTwo).min(1).max(getApiCollectionParamsPageSizeMaxTwo).default(getApiCollectionParamsPageSizeDefaultTwo)]).optional(),
+  "page": zod.union([zod.int().min(1).max(getApiCollectionParamsPageMaxOne),zod.stringFormat('int32', getApiCollectionParamsPageRegExpTwo).min(1).max(getApiCollectionParamsPageMaxTwo)]).optional(),
+  "pageSize": zod.union([zod.int().min(1).max(getApiCollectionParamsPageSizeMaxOne),zod.stringFormat('int32', getApiCollectionParamsPageSizeRegExpTwo).min(1).max(getApiCollectionParamsPageSizeMaxTwo)]).optional(),
   "scope": zod.enum(['All', 'Owned', 'Others']).default(getApiCollectionParamsScopeDefault).describe('Which items a list endpoint returns for the current user.'),
   "userId": zod.union([zod.int(),zod.stringFormat('int64', getApiCollectionParamsUserIdRegExpTwo)]).optional(),
   "search": zod.string().min(getApiCollectionParamsSearchMin).max(getApiCollectionParamsSearchMax).optional()

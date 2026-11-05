@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { RiArrowDownSLine, RiArrowUpSLine } from "@remixicon/react";
-import type { Collection, Prompt } from "@/api/generated/public/horizonAPI";
+import type { Collection, Prompt } from "@/api/generated/public/schemas";
 import { Button } from "@/components/ui/button";
 import { withId } from "@/shared/format";
 import {

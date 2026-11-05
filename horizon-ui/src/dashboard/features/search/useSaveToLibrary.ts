@@ -1,6 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useSetAtom } from "jotai";
-import type { Collection, Prompt } from "@/api/generated/public/horizonAPI";
+import type { Collection, Prompt } from "@/api/generated/public/schemas";
 import { addPrompt } from "../prompts/prompt.ops";
 import { mergeLibrary } from "../library/library.merge";
 import type { LibraryFile } from "../library/library.schema";

@@ -2,8 +2,8 @@ import {
   getApiCollection,
   getApiLibraryVersion,
   getApiPrompt,
-  ListScope,
 } from "@/api/generated/public/horizonAPI";
+import { ListScope } from "@/api/generated/public/schemas";
 import { ok } from "@/api/http";
 import { exclusive, type LibraryAccess } from "./sync.access";
 import { applyPull } from "./sync.state";
@@ -20,7 +20,7 @@ async function fetchAll<T>(fetchPage: (page: number) => Promise<T[]>) {
 }
 
 async function fetchOwned() {
-  const params = { pageSize: PAGE_SIZE, scope: ListScope.Owned };
+  const params = { pageSize: PAGE_SIZE, scope: ListScope.enum.Owned };
   const collections = await fetchAll(async (page) =>
     ok(await getApiCollection({ ...params, page })),
   );

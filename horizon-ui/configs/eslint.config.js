@@ -23,6 +23,7 @@ export default defineConfig(
       'src/components/global-upload.tsx',
       'src/hooks/use-mobile.ts',
       'src/lib/utils.ts',
+      'src/api/generated',
     ],
   },
   {
