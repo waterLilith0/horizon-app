@@ -166,22 +166,25 @@ namespace horizon_api.Controllers
         [ProducesResponseType<IReadOnlyList<Prompt>>(StatusCodes.Status200OK)]
         [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<IReadOnlyList<Prompt>>> GetAllPrompts(
-            [FromQuery, Range(1, int.MaxValue)] int page = 1,
-            [FromQuery, Range(1, 100)] int pageSize = 50,
+            [FromQuery, Range(1, int.MaxValue)] int? page = null,
+            [FromQuery, Range(1, 100)] int? pageSize = null,
             [FromQuery] ListScope scope = ListScope.All,
             [FromQuery] bool includeCollectionIds = false,
             [FromQuery] long? userId = null,
             [FromQuery, StringLength(100)] string? search = null,
             CancellationToken cancellationToken = default)
         {
-            logger.LogDebug("GetAllPrompts called (Page: {Page}, PageSize: {PageSize})", page, pageSize);
+            var resolvedPage = page ?? 1;
+            var resolvedPageSize = pageSize ?? 50;
+
+            logger.LogDebug("GetAllPrompts called (Page: {Page}, PageSize: {PageSize})", resolvedPage, resolvedPageSize);
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
             var sql = sqlQueryStore.Get("GetAll");
             var currentUserId = CurrentUserIdOrAnonymous;
             var command = new CommandDefinition(sql, new
             {
-                pageSize,
-                offset = (long)(page - 1) * pageSize,
+                resolvedPageSize,
+                offset = (long)(resolvedPage - 1) * resolvedPage,
                 userId = currentUserId,
                 authorId = userId,
                 search = string.IsNullOrWhiteSpace(search) ? null : search.Trim(),

@@ -1,8 +1,8 @@
 import {
   getApiAuth,
   postApiAuthRegister,
-  type ValidationProblemDetails,
 } from "@/api/generated/internal/horizonInternal";
+import type { ValidationProblemDetails } from "@/api/generated/internal/schemas";
 import { useAppForm } from "@/components/form";
 import { registerSchema, usernameSchema } from "./auth.schema";
 

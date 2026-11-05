@@ -24,282 +24,28 @@ import type {
   UseQueryResult
 } from '@tanstack/react-query';
 
-/**
- * A named group of prompts.
- */
-export interface Collection {
-  /**
-     * The collection ID.
-     * @pattern ^-?(?:0|[1-9]\d*)$
-     */
-  collectionId: number | string;
-  /** The collection name. */
-  name: string;
-  /** When the collection was created. */
-  creationDate: string;
-  /**
-     * The ID of the user who created the collection (its author).
-     * @pattern ^-?(?:0|[1-9]\d*)$
-     */
-  userId: number | string;
-  /**
-     * The username of the collection's author. Only set in list results.
-     * @nullable
-     */
-  userName?: string | null;
-  /** Whether the collection is visible to other users. */
-  public: boolean;
-}
-
-/**
- * Request body for creating a collection.
- */
-export interface CollectionCreateDto {
-  /** The collection name (1-255 characters). */
-  collectionName: string;
-  /** Whether other users can see the collection. Defaults to private. */
-  public?: boolean;
-}
-
-/**
- * Request body for changing a collection's visibility.
- */
-export interface CollectionVisibilityDto {
-  /** Whether the collection is visible to other users. */
-  public: boolean;
-  /** Also apply the visibility to the current user's prompts in the collection. */
-  includePrompts?: boolean;
-}
-
-/**
- * Request body for creating a prompt.
- */
-export interface CreatePromptDto {
-  /** The prompt text (1-255 characters). */
-  promptText: string;
-  /** The prompt category (1-255 characters). */
-  type: string;
-  /**
-     * Optional collection to add the prompt to. Must be owned by the current user.
-     * @nullable
-     * @pattern ^-?(?:0|[1-9]\d*)$
-     */
-  collectionId?: number | string | null;
-  /** Whether other users can see and use the prompt. Defaults to private. */
-  public?: boolean;
-}
-
-/**
- * A prompt that can be added to collections.
- */
-export interface Prompt {
-  /**
-     * The prompt ID.
-     * @pattern ^-?(?:0|[1-9]\d*)$
-     */
-  promptId: number | string;
-  /** The prompt text. */
-  promptText: string;
-  /** The prompt category. */
-  type: string;
-  /** When the prompt was created. */
-  creationDate: string;
-  /**
-     * The ID of the user who created the prompt (its author).
-     * @pattern ^-?(?:0|[1-9]\d*)$
-     */
-  userId: number | string;
-  /**
-     * The username of the prompt's author. Only set in list results.
-     * @nullable
-     */
-  userName?: string | null;
-  /** Whether the prompt is visible to other users. */
-  public: boolean;
-  /**
-     * IDs of the collections the prompt belongs to. Only set when requested.
-     * @nullable
-     * @items.pattern ^-?(?:0|[1-9]\d*)$
-     */
-  collectionIds?: (number | string)[] | null;
-}
-
-/**
- * Response body after creating a prompt.
- */
-export interface CreatePromptResponse {
-  /** The created prompt. */
-  prompt: Prompt;
-  /**
-     * The collection the prompt was added to, if any.
-     * @nullable
-     * @pattern ^-?(?:0|[1-9]\d*)$
-     */
-  collectionId: number | string | null;
-}
-
-/**
- * Response body for the library version.
- */
-export interface LibraryVersionResponse {
-  /** An opaque value that changes whenever the user's prompts, collections or collection memberships change. */
-  version: string;
-}
-
-/**
- * Which items a list endpoint returns for the current user.
- */
-export type ListScope = typeof ListScope[keyof typeof ListScope];
+import type {
+  Collection,
+  CollectionCreateDto,
+  CollectionVisibilityDto,
+  CreatePromptDto,
+  CreatePromptResponse,
+  DeleteApiCollectionCollectionIdParams,
+  GetApiCollectionParams,
+  GetApiPromptParams,
+  GetApiPromptRandomParams,
+  LibraryVersionResponse,
+  ProblemDetails,
+  Prompt,
+  UpdateCollectionDto,
+  UpdatePromptDto,
+  ValidationProblemDetails,
+  VisibilityDto
+} from './schemas';
 
 
-export const ListScope = {
-  All: 'All',
-  Owned: 'Owned',
-  Others: 'Others',
-} as const;
 
-export interface ProblemDetails {
-  /** @nullable */
-  type?: string | null;
-  /** @nullable */
-  title?: string | null;
-  /**
-     * @nullable
-     * @pattern ^-?(?:0|[1-9]\d*)$
-     */
-  status?: number | string | null;
-  /** @nullable */
-  detail?: string | null;
-  /** @nullable */
-  instance?: string | null;
-}
 
-/**
- * Request body for updating a collection.
- */
-export interface UpdateCollectionDto {
-  /** The new collection name (1-255 characters). */
-  name: string;
-  /** Whether other users can see the collection. Defaults to private. */
-  public?: boolean;
-}
-
-/**
- * Request body for replacing a prompt.
- */
-export interface UpdatePromptDto {
-  /** The new prompt text (1-255 characters). */
-  promptText: string;
-  /** The new prompt category (1-255 characters). */
-  type: string;
-  /** Whether other users can see and use the prompt. Defaults to private. */
-  public?: boolean;
-}
-
-export type ValidationProblemDetailsErrors = {[key: string]: string[]};
-
-export interface ValidationProblemDetails {
-  /** @nullable */
-  type?: string | null;
-  /** @nullable */
-  title?: string | null;
-  /**
-     * @nullable
-     * @pattern ^-?(?:0|[1-9]\d*)$
-     */
-  status?: number | string | null;
-  /** @nullable */
-  detail?: string | null;
-  /** @nullable */
-  instance?: string | null;
-  errors?: ValidationProblemDetailsErrors;
-}
-
-/**
- * Request body for changing a prompt's visibility.
- */
-export interface VisibilityDto {
-  /** Whether the prompt is visible to other users. */
-  public: boolean;
-}
-
-export type DeleteApiCollectionCollectionIdParams = {
-  /** Also delete the current user's prompts that are in the collection. Prompts owned by other users are never deleted. */
-  deletePrompts?: boolean;
-};
-
-export type GetApiCollectionParams = {
-  /**
-   * Page number, starting at 1.
-   * @minimum 1
-   * @maximum 2147483647
-   * @pattern ^-?(?:0|[1-9]\d*)$
-   */
-  page?: number | string;
-  /**
-   * Number of collections per page (1-100).
-   * @minimum 1
-   * @maximum 100
-   * @pattern ^-?(?:0|[1-9]\d*)$
-   */
-  pageSize?: number | string;
-  /** all (default), owned, or others (public collections of other users). Without logging in, only public collections exist for you, so owned returns nothing. */
-  scope?: ListScope;
-  /**
-   * Only return collections created by this user ID.
-   * @pattern ^-?(?:0|[1-9]\d*)$
-   */
-  userId?: number | string;
-  /**
-   * Partial match (contains) on the collection name.
-   * @minLength 0
-   * @maxLength 100
-   */
-  search?: string;
-};
-
-export type GetApiPromptParams = {
-  /**
-   * Page number, starting at 1.
-   * @minimum 1
-   * @maximum 2147483647
-   * @pattern ^-?(?:0|[1-9]\d*)$
-   */
-  page?: number | string;
-  /**
-   * Number of prompts per page (1-100).
-   * @minimum 1
-   * @maximum 100
-   * @pattern ^-?(?:0|[1-9]\d*)$
-   */
-  pageSize?: number | string;
-  /**
-   * all (default), owned, or others (public prompts of other users).
-   *     Without logging in, only public prompts exist for you, so owned returns nothing.
-   */
-  scope?: ListScope;
-  /** Also return the IDs of the collections each prompt belongs to. */
-  includeCollectionIds?: boolean;
-  /**
-   * Only return prompts created by this user ID.
-   * @pattern ^-?(?:0|[1-9]\d*)$
-   */
-  userId?: number | string;
-  /**
-   * Partial match (contains) on the prompt text.
-   * @minLength 0
-   * @maxLength 100
-   */
-  search?: string;
-};
-
-export type GetApiPromptRandomParams = {
-  /**
-   * Only pick from this collection.
-   * @pattern ^-?(?:0|[1-9]\d*)$
-   */
-  collectionId?: number | string;
-};
 
 const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {
   const result = { queryKey } as T & { queryKey: K };
@@ -2579,3 +2325,4 @@ export const usePutApiPromptPromptIdVisibility = <TError = ValidationProblemDeta
       > => {
       return useMutation(getPutApiPromptPromptIdVisibilityMutationOptions(options), queryClient);
     }
+

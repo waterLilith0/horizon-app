@@ -2,7 +2,7 @@ import z from "zod";
 import type {
   Collection as ApiCollection,
   Prompt as ApiPrompt,
-} from "@/api/generated/public/horizonAPI";
+} from "@/api/generated/public/schemas";
 import type {
   CollectionState,
   LocalCollection,

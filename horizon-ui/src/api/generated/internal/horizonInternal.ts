@@ -24,134 +24,23 @@ import type {
   UseQueryResult
 } from '@tanstack/react-query';
 
-/**
- * Request body for changing the password of the logged in user.
- */
-export interface ChangePasswordRequest {
-  /** The current password. */
-  currentPassword: string;
-  /** The new password (8-128 characters). Must differ from the current password. */
-  newPassword: string;
-}
+import type {
+  ChangePasswordRequest,
+  ForgotPasswordRequest,
+  GetApiAuthParams,
+  LoginRequest,
+  ProblemDetails,
+  RegisterRequest,
+  ResendVerificationRequest,
+  ResetPasswordRequest,
+  UserProfile,
+  ValidationProblemDetails,
+  VerifyEmailRequest
+} from './schemas';
 
-/**
- * Request body for requesting a password reset email.
- */
-export interface ForgotPasswordRequest {
-  /** The email address of the account. */
-  email: string;
-}
 
-/**
- * Request body for logging in.
- */
-export interface LoginRequest {
-  /** The account's user name. */
-  userName: string;
-  /** The account's password. */
-  password: string;
-}
 
-export interface ProblemDetails {
-  /** @nullable */
-  type?: string | null;
-  /** @nullable */
-  title?: string | null;
-  /**
-     * @nullable
-     * @pattern ^-?(?:0|[1-9]\d*)$
-     */
-  status?: number | string | null;
-  /** @nullable */
-  detail?: string | null;
-  /** @nullable */
-  instance?: string | null;
-}
 
-/**
- * Request body for registering a new account.
- */
-export interface RegisterRequest {
-  /** The email address the verification link is sent to (up to 255 characters). */
-  email: string;
-  /** The desired user name (3-30 characters). */
-  userName: string;
-  /** The desired password (8-128 characters). */
-  password: string;
-}
-
-/**
- * Request body for resending the verification email.
- */
-export interface ResendVerificationRequest {
-  /** The email address of the account. */
-  email: string;
-}
-
-/**
- * Request body for resetting a forgotten password.
- */
-export interface ResetPasswordRequest {
-  /** The reset token from the emailed link. */
-  token: string;
-  /** The new password (8-128 characters). */
-  newPassword: string;
-}
-
-/**
- * The public profile of a user.
- */
-export interface UserProfile {
-  /**
-     * The user ID.
-     * @pattern ^-?(?:0|[1-9]\d*)$
-     */
-  userId: number | string;
-  /** The user name. */
-  userName: string;
-  /** When the account was created. */
-  creationDate: string;
-  /** Whether the user is a developer account. */
-  dev: boolean;
-  /** The user's email address. */
-  email: string;
-}
-
-export type ValidationProblemDetailsErrors = {[key: string]: string[]};
-
-export interface ValidationProblemDetails {
-  /** @nullable */
-  type?: string | null;
-  /** @nullable */
-  title?: string | null;
-  /**
-     * @nullable
-     * @pattern ^-?(?:0|[1-9]\d*)$
-     */
-  status?: number | string | null;
-  /** @nullable */
-  detail?: string | null;
-  /** @nullable */
-  instance?: string | null;
-  errors?: ValidationProblemDetailsErrors;
-}
-
-/**
- * Request body for verifying an email address.
- */
-export interface VerifyEmailRequest {
-  /** The verification token from the emailed link. */
-  token: string;
-}
-
-export type GetApiAuthParams = {
-  /**
-   * The username to check.
-   * @minLength 3
-   * @maxLength 30
-   */
-  userName: string;
-};
 
 const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {
   const result = { queryKey } as T & { queryKey: K };
@@ -1449,3 +1338,4 @@ export const usePutApiAuthPassword = <TError = ValidationProblemDetails | Proble
       > => {
       return useMutation(getPutApiAuthPasswordMutationOptions(options), queryClient);
     }
+

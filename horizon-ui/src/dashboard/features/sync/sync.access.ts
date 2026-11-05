@@ -1,6 +1,6 @@
 import { useSetAtom, useStore } from "jotai";
 import { useQueryClient } from "@tanstack/react-query";
-import type { UserProfile } from "@/api/generated/internal/horizonInternal";
+import type { UserProfile } from "@/api/generated/internal/schemas";
 import { currentUserQueryKey, useCurrentUser } from "../auth/auth";
 import { libraryAtom } from "../library/library.store";
 import type { Library } from "../library/library.schema";
