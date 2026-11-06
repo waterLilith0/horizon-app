@@ -74,11 +74,18 @@ namespace horizon_api.Controllers
         {
             var sanitizedPromptTextForLog = (promptDto.PromptText ?? string.Empty)
                 .Replace("\r", string.Empty)
-                .Replace("\n", string.Empty);
+                .Replace("\n", string.Empty)
+                .Replace("\u2028", string.Empty)
+                .Replace("\u2029", string.Empty);
+            var sanitizedTypeForLog = (promptDto.Type ?? string.Empty)
+                .Replace("\r", string.Empty)
+                .Replace("\n", string.Empty)
+                .Replace("\u2028", string.Empty)
+                .Replace("\u2029", string.Empty);
             logger.LogDebug(
                 "Create action called in PromptController with PromptText: {PromptText}, Type: {Type}, CollectionId: {CollectionId}, Public: {Public}",
                 sanitizedPromptTextForLog,
-                promptDto.Type,
+                sanitizedTypeForLog,
                 promptDto.CollectionId,
                 promptDto.Public);
 
