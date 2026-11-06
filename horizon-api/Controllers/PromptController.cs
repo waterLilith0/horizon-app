@@ -72,7 +72,15 @@ namespace horizon_api.Controllers
             [FromBody] CreatePromptDto promptDto,
             CancellationToken cancellationToken)
         {
-            logger.LogDebug("Create action called in PromptController with: {@PromptDto}", promptDto);
+            var sanitizedPromptTextForLog = (promptDto.PromptText ?? string.Empty)
+                .Replace("\r", string.Empty)
+                .Replace("\n", string.Empty);
+            logger.LogDebug(
+                "Create action called in PromptController with PromptText: {PromptText}, Type: {Type}, CollectionId: {CollectionId}, Public: {Public}",
+                sanitizedPromptTextForLog,
+                promptDto.Type,
+                promptDto.CollectionId,
+                promptDto.Public);
 
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
             var userId = long.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
