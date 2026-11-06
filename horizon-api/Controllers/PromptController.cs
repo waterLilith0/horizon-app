@@ -72,7 +72,22 @@ namespace horizon_api.Controllers
             [FromBody] CreatePromptDto promptDto,
             CancellationToken cancellationToken)
         {
-            logger.LogDebug("Create action called in PromptController with: {@PromptDto}", promptDto);
+            var sanitizedPromptTextForLog = (promptDto.PromptText ?? string.Empty)
+                .Replace("\r", string.Empty)
+                .Replace("\n", string.Empty)
+                .Replace("\u2028", string.Empty)
+                .Replace("\u2029", string.Empty);
+            var sanitizedTypeForLog = (promptDto.Type ?? string.Empty)
+                .Replace("\r", string.Empty)
+                .Replace("\n", string.Empty)
+                .Replace("\u2028", string.Empty)
+                .Replace("\u2029", string.Empty);
+            logger.LogDebug(
+                "Create action called in PromptController with PromptText: {PromptText}, Type: {Type}, CollectionId: {CollectionId}, Public: {Public}",
+                sanitizedPromptTextForLog,
+                sanitizedTypeForLog,
+                promptDto.CollectionId,
+                promptDto.Public);
 
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
             var userId = long.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
@@ -105,7 +120,12 @@ namespace horizon_api.Controllers
             if (createdPrompt == null)
             {
                 // The transaction rolls back on dispose.
-                logger.LogError("Database returned no result when creating prompt with text: {PromptText}", promptDto.PromptText);
+                var sanitizedPromptText = (promptDto.PromptText ?? string.Empty)
+                    .Replace("\r", " ")
+                    .Replace("\n", " ")
+                    .Replace("\u2028", " ")
+                    .Replace("\u2029", " ");
+                logger.LogError("Database returned no result when creating prompt with text: {PromptText}", sanitizedPromptText);
                 return Problem(
                     title: "Database Error",
                     detail: "The insert statement executed, but no prompt record was returned.",
