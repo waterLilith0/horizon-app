@@ -103,8 +103,10 @@ with the `staging` tag, using the `staging` GitHub environment. Pushes to
 Pushes to `dev` do not publish deployment images.
 
 The deployment host must pull the appropriate image tags; this workflow only
-builds and publishes images. Configure `FARO_URL` in the corresponding GitHub
-environment for the frontend build.
+builds and publishes images. The frontend build sends telemetry to a fixed Faro
+collector. To upload sourcemaps, configure `FARO_UPLOAD_ENDPOINT`,
+`FARO_APP_ID` and `FARO_STACK_ID` as variables and `FARO_API_KEY` as a secret in
+the corresponding GitHub environment. Without the key the upload is skipped.
 
 ## License
 

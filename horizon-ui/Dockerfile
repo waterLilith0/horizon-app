@@ -8,7 +8,13 @@ COPY horizon-ui/ .
 ARG VITE_FARO_ENABLED=false
 ARG VITE_FARO_URL=
 ARG VITE_APP_ENV=
-RUN npm run build
+ARG FARO_UPLOAD_ENDPOINT
+ARG FARO_APP_ID
+ARG FARO_STACK_ID
+ARG FARO_GIT_HASH
+# The API key is a build secret so it never ends up in an image layer.
+RUN --mount=type=secret,id=faro_api_key FARO_API_KEY="$(cat /run/secrets/faro_api_key 2>/dev/null)" npm run build \
+    && find dist -name "*.map" -delete
 
 # Stage 2: Production Runtime
 FROM nginx:alpine

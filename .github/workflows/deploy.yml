@@ -26,7 +26,7 @@ jobs:
   build-images:
     needs: frontend-checks
     runs-on: ubuntu-latest
-    # Selects the GitHub environment whose variables (FARO_URL) apply to this branch.
+    # Selects the GitHub environment whose Faro variables and secret apply to this branch.
     environment: ${{ github.ref_name == 'master' && 'production' || github.ref_name }}
     steps:
       - name: Checkout code
@@ -49,11 +49,18 @@ jobs:
         with:
           context: .
           file: ./horizon-ui/Dockerfile
-          # Baked into the static bundle and visible to every visitor, so none of these are secrets.
+          # The VITE_ values are baked into the static bundle and visible to every visitor, so none of these are secrets.
           build-args: |
             VITE_FARO_ENABLED=true
-            VITE_FARO_URL=${{ vars.FARO_URL }}
+            VITE_FARO_URL=https://faro-collector-prod-eu-west-2.grafana.net/collect/2e287856121a949cb739c514462482ca
             VITE_APP_ENV=${{ github.ref_name == 'master' && 'production' || github.ref_name }}
+            FARO_UPLOAD_ENDPOINT=${{ vars.FARO_UPLOAD_ENDPOINT }}
+            FARO_APP_ID=${{ vars.FARO_APP_ID }}
+            FARO_STACK_ID=${{ vars.FARO_STACK_ID }}
+            FARO_GIT_HASH=${{ github.sha }}
+          # Mounted only for the build step, so it never ends up in an image layer.
+          secrets: |
+            faro_api_key=${{ secrets.FARO_API_KEY }}
           platforms: linux/arm64
           push: true
           tags: ${{ env.FRONTEND_IMAGE }}:${{ github.ref_name == 'master' && 'prod' || github.ref_name }}
