@@ -1,0 +1,23 @@
+SELECT MD5(CONCAT_WS(':',
+  p.cnt, p.crc,
+  c.cnt, c.crc,
+  m.cnt, m.crc)) AS Version
+FROM (
+  SELECT COUNT(*) AS cnt,
+       COALESCE(SUM(CRC32(CONCAT_WS('|', promptId, promptText, `type`, `public`))), 0) AS crc
+  FROM WheelSpinPrompts
+  WHERE userId = @userId
+) p,
+(
+  SELECT COUNT(*) AS cnt,
+       COALESCE(SUM(CRC32(CONCAT_WS('|', collectionId, `name`, `public`))), 0) AS crc
+  FROM PromptCollections
+  WHERE userId = @userId
+) c,
+(
+  SELECT COUNT(*) AS cnt,
+       COALESCE(SUM(CRC32(CONCAT_WS('|', ptc.collectionId, ptc.promptId))), 0) AS crc
+  FROM PromptToCollection ptc
+  INNER JOIN PromptCollections pc ON pc.collectionId = ptc.collectionId
+  WHERE pc.userId = @userId
+) m;

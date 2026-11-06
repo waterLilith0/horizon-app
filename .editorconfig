@@ -1,0 +1,13 @@
+root = true
+
+[*]
+end_of_line = lf
+charset = utf-8
+insert_final_newline = true
+indent_style = space
+indent_size = 2
+
+[*.cs]
+indent_size = 4
+# Visual Studio's default, and what most of the existing C# files have.
+charset = utf-8-bom

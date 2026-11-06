@@ -1,0 +1,5 @@
+DELETE p
+FROM WheelSpinPrompts p
+JOIN PromptToCollection pc ON pc.promptId = p.promptId
+WHERE pc.collectionId = @collectionId
+  AND p.userId = @userId;

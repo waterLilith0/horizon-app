@@ -1,32 +1,34 @@
-import { defineConfig, loadEnv } from "vite";
+import { defineConfig } from "vite";
+import pkg from "./package.json" with { type: "json" };
 import react, { reactCompilerPreset } from "@vitejs/plugin-react";
 import babel from "@rolldown/plugin-babel";
 import path from "path";
 import tailwindcss from "@tailwindcss/vite";
-import faroUploader from "@grafana/faro-rollup-plugin";
 
-// https://vite.dev/config/
-export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), "");
-
-  return {
-    plugins: [
-      react(),
-      babel({ presets: [reactCompilerPreset()] }),
-      tailwindcss(),
-      faroUploader({
-        appName: "horizon-ui",
-        endpoint: "https://faro-api-prod-eu-west-2.grafana.net/faro/api/v1",
-        appId: "7883",
-        stackId: "1602980",
-        apiKey: env.FARO_API_KEY,
-        gzipContents: true,
-      }),
-    ],
-    resolve: {
-      alias: {
-        "@": path.resolve(__dirname, "./src"),
+export default defineConfig({
+  server: {
+    proxy: {
+      "/api": {
+        target: "https://dev.waterlilith.space",
+        changeOrigin: true,
+        secure: true,
+        cookieDomainRewrite: "localhost", // so session cookies stick locally
       },
     },
-  };
+  },
+  define: {
+    __APP_VERSION__: JSON.stringify(pkg.version),
+  },
+  // Alloy's faro.receiver downloads these to de-minify stack traces.
+  build: { sourcemap: true },
+  plugins: [
+    react(),
+    babel({ presets: [reactCompilerPreset()] }),
+    tailwindcss(),
+  ],
+  resolve: {
+    alias: {
+      "@": path.resolve(import.meta.dirname, "./src"),
+    },
+  },
 });

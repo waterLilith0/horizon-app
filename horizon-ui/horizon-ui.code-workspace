@@ -1,0 +1,16 @@
+{
+  "folders": [
+    {
+      "path": ".",
+    },
+    {
+      "path": "../.git",
+    },
+    {
+      "path": "../.github",
+    },
+  ],
+  "settings": {
+    "powershell.cwd": "horizon-ui",
+  },
+}

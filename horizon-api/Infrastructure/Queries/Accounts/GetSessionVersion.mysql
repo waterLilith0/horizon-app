@@ -1,0 +1,3 @@
+SELECT sessionVersion
+FROM Users
+WHERE userId = @userId;
