@@ -2,7 +2,7 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [dev, staging, master]
+    branches: [staging, master]
 
 permissions:
   contents: read
