@@ -75,7 +75,8 @@ namespace horizon_api.Controllers
             [FromBody] CollectionCreateDto creationDto,
             CancellationToken cancellationToken)
         {
-            logger.LogDebug("Create action called in CollectionController with name: {collectionName}", creationDto.CollectionName);
+            var safeCollectionName = (creationDto.CollectionName ?? string.Empty).Replace("\r", "").Replace("\n", "");
+            logger.LogDebug("Create action called in CollectionController with name: {collectionName}", safeCollectionName);
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
             await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
 
@@ -87,7 +88,7 @@ namespace horizon_api.Controllers
 
             if (collectionId == null)
             {
-                logger.LogError("Database returned no result when creating collection with name: {collectionName}", creationDto.CollectionName);
+                logger.LogError("Database returned no result when creating collection with name: {collectionName}", safeCollectionName);
                 return Problem(
                         title: "Database Error",
                         detail: "The insert statement executed, but no ID was returned.",
@@ -96,7 +97,7 @@ namespace horizon_api.Controllers
             }
             else if (collectionId <= 0)
             {
-                logger.LogWarning("Failed to create a new collection with name: {collectionName}", creationDto);
+                logger.LogWarning("Failed to create a new collection with name: {collectionName}", safeCollectionName);
                 return Problem(
                         title: "Creation Failed",
                         detail: $"The database failed to generate a valid ID for the new collection.",
@@ -104,7 +105,7 @@ namespace horizon_api.Controllers
                     );
             }
             await transaction.CommitAsync(cancellationToken);
-            logger.LogInformation("Successfully created a new collection with name: {collectionName}", creationDto);
+            logger.LogInformation("Successfully created a new collection with name: {collectionName}", safeCollectionName);
 
             var collection = await connection.QuerySingleAsync<Collection>(new CommandDefinition(
                 sqlQueryStore.Get("GetCollectionById"),
