@@ -113,7 +113,12 @@ namespace horizon_api.Controllers
             if (createdPrompt == null)
             {
                 // The transaction rolls back on dispose.
-                logger.LogError("Database returned no result when creating prompt with text: {PromptText}", promptDto.PromptText);
+                var sanitizedPromptText = (promptDto.PromptText ?? string.Empty)
+                    .Replace("\r", " ")
+                    .Replace("\n", " ")
+                    .Replace("\u2028", " ")
+                    .Replace("\u2029", " ");
+                logger.LogError("Database returned no result when creating prompt with text: {PromptText}", sanitizedPromptText);
                 return Problem(
                     title: "Database Error",
                     detail: "The insert statement executed, but no prompt record was returned.",
