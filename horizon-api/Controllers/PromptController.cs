@@ -203,8 +203,8 @@ namespace horizon_api.Controllers
             var currentUserId = CurrentUserIdOrAnonymous;
             var command = new CommandDefinition(sql, new
             {
-                resolvedPageSize,
-                offset = (long)(resolvedPage - 1) * resolvedPage,
+                pageSize = resolvedPageSize,
+                offset = (long)(resolvedPage - 1) * resolvedPageSize,
                 userId = currentUserId,
                 authorId = userId,
                 search = string.IsNullOrWhiteSpace(search) ? null : search.Trim(),

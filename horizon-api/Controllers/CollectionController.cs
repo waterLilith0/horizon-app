@@ -176,7 +176,7 @@ namespace horizon_api.Controllers
             var command = new CommandDefinition(sql, new
             {
                 pageSize = resolvedPageSize,
-                offset = (resolvedPage - 1) * resolvedPage,
+                offset = (long)(resolvedPage - 1) * resolvedPageSize,
                 userId = CurrentUserId,
                 authorId = userId,
                 search = string.IsNullOrWhiteSpace(search) ? null : search.Trim(),
