@@ -3,6 +3,7 @@ version: 2
 updates:
   - package-ecosystem: npm
     directory: /horizon-ui
+    target-branch: dev
     schedule:
       interval: weekly
       day: monday
@@ -26,14 +27,12 @@ updates:
       npm-minor-and-patch:
         applies-to: version-updates
         update-types: [minor, patch]
-      npm-security:
-        applies-to: security-updates
-        patterns: ["*"]
 
   - package-ecosystem: nuget
     directories:
       - /horizon-api
       - /horizon-api-integration-tests
+    target-branch: dev
     schedule:
       interval: weekly
       day: monday
@@ -49,12 +48,10 @@ updates:
       nuget-minor-and-patch:
         applies-to: version-updates
         update-types: [minor, patch]
-      nuget-security:
-        applies-to: security-updates
-        patterns: ["*"]
 
   - package-ecosystem: github-actions
     directory: /
+    target-branch: dev
     schedule:
       interval: weekly
       day: monday
@@ -70,14 +67,12 @@ updates:
       actions:
         applies-to: version-updates
         patterns: ["*"]
-      actions-security:
-        applies-to: security-updates
-        patterns: ["*"]
 
   - package-ecosystem: docker
     directories:
       - /horizon-ui
       - /horizon-api
+    target-branch: dev
     schedule:
       interval: weekly
       day: monday
@@ -90,6 +85,71 @@ updates:
     commit-message:
       prefix: "chore(deps)"
     # Odd Node and .NET majors are short-lived non-LTS releases.
+    ignore:
+      - dependency-name: node
+        versions: ["25.x", "27.x", "29.x"]
+      - dependency-name: mcr.microsoft.com/dotnet/*
+        versions: ["11.x", "13.x"]
+
+  # Security updates always target the default branch. Separate entries preserve
+  # their settings without also creating scheduled version updates on master.
+  - package-ecosystem: npm
+    directory: /horizon-ui
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 0
+    labels: [dependencies]
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(deps-dev)"
+    ignore:
+      - dependency-name: "@types/node"
+        versions: [">=25"]
+      - dependency-name: "@typescript/typescript6"
+        update-types: ["version-update:semver-major"]
+    groups:
+      npm-security:
+        applies-to: security-updates
+        patterns: ["*"]
+
+  - package-ecosystem: nuget
+    directories:
+      - /horizon-api
+      - /horizon-api-integration-tests
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 0
+    labels: [dependencies]
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      nuget-security:
+        applies-to: security-updates
+        patterns: ["*"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 0
+    labels: [dependencies]
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      actions-security:
+        applies-to: security-updates
+        patterns: ["*"]
+
+  - package-ecosystem: docker
+    directories:
+      - /horizon-ui
+      - /horizon-api
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 0
+    labels: [dependencies]
+    commit-message:
+      prefix: "chore(deps)"
     ignore:
       - dependency-name: node
         versions: ["25.x", "27.x", "29.x"]
