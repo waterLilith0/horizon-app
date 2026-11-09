@@ -26,11 +26,20 @@ jobs:
   build-images:
     needs: frontend-checks
     runs-on: ubuntu-latest
-    # Selects the GitHub environment whose Faro variables and secret apply to this branch.
+    # Selects the GitHub environment whose deployment variables and secrets apply to this branch.
     environment: ${{ github.ref_name == 'master' && 'production' || github.ref_name }}
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Check blog URL configuration
+        env:
+          VITE_BLOG_URL: ${{ vars.VITE_BLOG_URL }}
+        run: |
+          if [ -z "$VITE_BLOG_URL" ]; then
+            echo "::error::Set VITE_BLOG_URL in the selected GitHub environment."
+            exit 1
+          fi
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4
@@ -54,6 +63,7 @@ jobs:
             VITE_FARO_ENABLED=true
             VITE_FARO_URL=https://faro-collector-prod-eu-west-2.grafana.net/collect/2e287856121a949cb739c514462482ca
             VITE_APP_ENV=${{ github.ref_name == 'master' && 'production' || github.ref_name }}
+            VITE_BLOG_URL=${{ vars.VITE_BLOG_URL }}
             FARO_UPLOAD_ENDPOINT=${{ vars.FARO_UPLOAD_ENDPOINT }}
             FARO_APP_ID=${{ vars.FARO_APP_ID }}
             FARO_STACK_ID=${{ vars.FARO_STACK_ID }}
