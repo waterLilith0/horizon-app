@@ -6,7 +6,7 @@ export const footerRows = [
         text: "Home",
       },
       {
-        url: "https://waterlilith.space",
+        url: import.meta.env.VITE_BLOG_URL ?? "https://waterlilith.space",
         text: "Blog & Portfolio",
         external: true,
       },

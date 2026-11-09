@@ -335,6 +335,18 @@ Features:
 
 ## Build and Deployment 📦
 
+### Blog link configuration
+
+Set the `VITE_BLOG_URL` GitHub Actions environment variable for both the
+`staging` and `production` environments. The `staging` branch uses `staging`;
+`master` uses `production`. Set the production value to
+`https://waterlilith.space` and the staging value to its intended blog URL.
+Deployment fails if the selected environment does not provide a value.
+
+The URL is baked into the frontend at build time and is public. For local
+development or builds without `VITE_BLOG_URL`, the link defaults to
+`https://waterlilith.space`.
+
 ### Docker Multi-Stage Build
 
 **Stage 1**: Node.js build environment (install deps & run `npm run build`)  
