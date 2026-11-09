@@ -3,6 +3,7 @@ name: CI/CD Pipeline
 on:
   push:
     branches: [staging, master]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -18,8 +19,22 @@ env:
   BACKEND_IMAGE: ${{ secrets.DOCKER_USERNAME }}/horizonapp-backend
 
 jobs:
+  validate-ref:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate deployment branch
+        run: |
+          case "$GITHUB_REF" in
+            refs/heads/staging|refs/heads/master) ;;
+            *)
+              echo "::error::Deployments can only run from the staging or master branch."
+              exit 1
+              ;;
+          esac
+
   # --- CHECK THE FRONTEND BEFORE ANYTHING IS SHIPPED ---
   frontend-checks:
+    needs: validate-ref
     uses: ./.github/workflows/frontend.yml
 
   # --- BUILD FRONTEND AND BACKEND ---
