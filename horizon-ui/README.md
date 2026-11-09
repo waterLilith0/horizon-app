@@ -335,6 +335,11 @@ Features:
 
 ## Build and Deployment 📦
 
+To manually rerun deployment, select **CI/CD Pipeline** under GitHub Actions,
+choose **Run workflow**, and select `staging` or `master`. Manual runs use the
+same checks, environment, and image tags as push-triggered runs. Other branches
+and tags are rejected.
+
 ### Blog link configuration
 
 Set the `VITE_BLOG_URL` GitHub Actions environment variable for both the
