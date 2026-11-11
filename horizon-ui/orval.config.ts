@@ -1,6 +1,6 @@
 import { defineConfig } from "orval";
 
-const api = (name: "public" | "internal", mock = false) => ({
+const api = (name: "public" | "internal") => ({
   input: { target: `http://localhost:5079/api/openapi/${name}.json` },
   output: {
     mode: "split" as const,
@@ -11,11 +11,13 @@ const api = (name: "public" | "internal", mock = false) => ({
     },
     client: "react-query" as const,
     httpClient: "fetch" as const,
-    mock,
+    mock: {
+      generators: [{ type: "msw" as const }],
+    },
   },
 });
 
 export default defineConfig({
-  public: api("public", true),
-  internal: api("internal", true),
+  public: api("public"),
+  internal: api("internal"),
 });

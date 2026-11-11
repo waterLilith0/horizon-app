@@ -13,7 +13,8 @@
     "format": "prettier --write \"src/**/*.{ts,tsx,css,json}\" --ignore-path configs/.prettierignore --end-of-line lf",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,css,json}\" --ignore-path configs/.prettierignore --end-of-line lf",
     "deps:clean": "knip --fix",
-    "api:generate": "orval --config orval.config.ts"
+    "api:generate": "orval --config orval.config.ts",
+    "test": "vitest"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
@@ -72,7 +73,8 @@
     "prettier": "^3.9.10",
     "typescript": "npm:@typescript/typescript6@^6.0.2",
     "typescript-eslint": "^8.59.4",
-    "vite": "^8.3.5"
+    "vite": "^8.3.5",
+    "vitest": "^5.1.0"
   },
   "overrides": {
     "minimatch": "^11.0.3"

@@ -6,6 +6,10 @@
  * OpenAPI spec version: v1.0.0
  */
 import {
+  faker
+} from '@faker-js/faker';
+
+import {
   HttpResponse,
   http
 } from 'msw';
@@ -14,11 +18,6 @@ import type {
   PathParams,
   RequestHandlerOptions
 } from 'msw';
-
-import {
-  getGetApiAuthMeResponseMock,
-  getPostApiAuthRegisterResponseMock
-} from './horizonInternal.faker';
 
 import type {
   ChangePasswordRequest,
@@ -31,7 +30,10 @@ import type {
   VerifyEmailRequest
 } from './schemas';
 
-export { getGetApiAuthMeResponseMock, getPostApiAuthRegisterResponseMock } from './horizonInternal.faker';
+
+export const getGetApiAuthMeResponseMock = (overrideResponse: Partial<Extract<UserProfile, object>> = {}): UserProfile => ({userId: faker.helpers.arrayElement([faker.number.int(),faker.helpers.fromRegExp("^-?(?:0|[1-9]\\d*)$"),]), userName: faker.string.alpha({length: {min: 10, max: 20}}), creationDate: faker.date.past().toISOString().slice(0, 19) + 'Z', dev: faker.datatype.boolean(), email: faker.string.alpha({length: {min: 10, max: 20}}), ...overrideResponse})
+
+export const getPostApiAuthRegisterResponseMock = (overrideResponse: Partial<Extract<UserProfile, object>> = {}): UserProfile => ({userId: faker.helpers.arrayElement([faker.number.int(),faker.helpers.fromRegExp("^-?(?:0|[1-9]\\d*)$"),]), userName: faker.string.alpha({length: {min: 10, max: 20}}), creationDate: faker.date.past().toISOString().slice(0, 19) + 'Z', dev: faker.datatype.boolean(), email: faker.string.alpha({length: {min: 10, max: 20}}), ...overrideResponse})
 
 
 export const getGetApiAuthMockHandler = (overrideResponse?: unknown | ((info: Parameters<HttpResponseResolver>[0]) => Promise<unknown> | unknown), options?: RequestHandlerOptions) => {

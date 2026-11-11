@@ -23,3 +23,6 @@ dist-ssr
 *.sln
 *.sw?
 App.tsx
+
+# Vitest reports and artifacts
+.vitest/
