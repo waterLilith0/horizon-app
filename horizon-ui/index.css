@@ -130,12 +130,6 @@
   --sidebar-ring: oklch(0.667 0.295 322.15 / 70%);
 }
 
-@utility bg-image {
-  background-image: url("https://pub-b6429b14f529453ba6124fb797bc3df6.r2.dev/bg.jpg");
-  background-size: contain;
-  background-position: center;
-}
-
 @layer components {
   .legal :where(p, h1, h2, h3, h4, h5, h6) {
     @apply m-1;
@@ -148,7 +142,7 @@
   }
   body {
     @apply text-base leading-relaxed md:text-lg;
-    @apply bg-background text-foreground font-mono bg-image;
+    @apply bg-background text-foreground font-mono;
   }
   h1 {
     @apply text-2xl font-bold md:text-4xl;

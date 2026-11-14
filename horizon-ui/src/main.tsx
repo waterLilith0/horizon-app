@@ -2,8 +2,8 @@ import "@/../index.css";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { RouterProvider } from "react-router/dom";
-import { initTelemetry } from "@/shared/telemetry/faro.ts";
-import { createAppRouter } from "@/app/router";
+import { initTelemetry } from "@/features/telemetry/faro";
+import { createAppRouter } from "@/router";
 
 initTelemetry();
 
