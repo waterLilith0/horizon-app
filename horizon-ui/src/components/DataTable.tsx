@@ -120,9 +120,9 @@ export function DataTable<TData extends RowData>({
                 </SelectTrigger>
                 <SelectContent side="top">
                   <SelectItem value="">All Types</SelectItem>
-                  {...PROMPT_TYPES.map((promptType) => (
-                    <SelectItem key={promptType} value={`${promptType}`}>
-                      {promptType}
+                  {...PROMPT_TYPES.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {type}
                     </SelectItem>
                   ))}
                 </SelectContent>
